@@ -1,0 +1,40 @@
+name: love_connect
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.2.2
+  google_fonts: ^6.3.2
+  flutter_launcher_icons: ^0.14.4
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+flutter_icons:
+  android: true
+  ios: true
+  remove_alpha_icon: true
+  image_path: 'assets/app_icon/app_icon.jpg'
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/svg/app_logo.svg
+    - assets/images/app_logo.png

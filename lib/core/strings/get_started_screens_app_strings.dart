@@ -1,0 +1,7 @@
+class AppStrings {
+  static const String appTitle = 'Plan, Share & Relive Your Love Moments';
+  static const String subtitle = 'From date nights to sweet surprises, keep your relationship alive.';
+  static const String getStarted = 'Get Started';
+  static const String app_logo_strings = 'assets/images/app_logo.png';
+  static const String heart_logo_strings = 'assets/images/heart.png';
+}
