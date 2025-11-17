@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../screens/get_started/view/get_started_screen.dart';
+import 'package:get/get.dart';
+import 'package:love_connect/screens/splash_screen/view/splash_view.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -7,8 +8,20 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: GetStartedScreen(),
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      defaultTransition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 800),
+      theme: ThemeData(
+        // Enable smooth scrolling and animations
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
+      ),
+      home: const SplashView(),
     );
   }
 }
