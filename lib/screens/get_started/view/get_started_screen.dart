@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/strings/get_started_screens_app_strings.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
-import 'package:love_connect/core/utils/responsive_helper.dart';
+import 'package:love_connect/core/utils/media_query_extensions.dart';
 import '../view_model/get_started_view_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -85,38 +85,15 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       // Responsive values
-                      final horizontalPadding = ResponsiveHelper.width(
-                        context,
-                        2.5,
-                      );
-                      final logoWidth = ResponsiveHelper.imageSize(
-                        context,
-                        170,
-                      );
-                      final logoHeight = ResponsiveHelper.imageSize(
-                        context,
-                        67,
-                      );
-                      final heartImageSize = ResponsiveHelper.imageSize(
-                        context,
-                        300,
-                      );
-                      final titleFontSize = ResponsiveHelper.fontSize(
-                        context,
-                        30,
-                      );
-                      final subtitleFontSize = ResponsiveHelper.fontSize(
-                        context,
-                        16,
-                      );
-                      final buttonWidth = ResponsiveHelper.width(context, 58);
-                      final buttonHeight = ResponsiveHelper.buttonHeight(
-                        context,
-                      );
-                      final buttonFontSize = ResponsiveHelper.fontSize(
-                        context,
-                        16,
-                      );
+                      final horizontalPadding = context.widthPct(2.5);
+                      final logoWidth = context.responsiveImage(170);
+                      final logoHeight = context.responsiveImage(67);
+                      final heartImageSize = context.responsiveImage(300);
+                      final titleFontSize = context.responsiveFont(30);
+                      final subtitleFontSize = context.responsiveFont(16);
+                      final buttonWidth = context.widthPct(58);
+                      final buttonHeight = context.responsiveButtonHeight();
+                      final buttonFontSize = context.responsiveFont(16);
 
                       return SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
@@ -132,7 +109,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(
-                                  height: ResponsiveHelper.spacing(context, 20),
+                                  height: context.responsiveSpacing(20),
                                 ),
 
                                 Row(
@@ -147,7 +124,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                 ),
 
                                 SizedBox(
-                                  height: ResponsiveHelper.spacing(context, 20),
+                                  height: context.responsiveSpacing(20),
                                 ),
 
                                 Center(
@@ -160,7 +137,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                 ),
 
                                 SizedBox(
-                                  height: ResponsiveHelper.spacing(context, 25),
+                                  height: context.responsiveSpacing(25),
                                 ),
 
                                 Center(
@@ -184,7 +161,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                 ),
 
                                 SizedBox(
-                                  height: ResponsiveHelper.spacing(context, 16),
+                                  height: context.responsiveSpacing(16),
                                 ),
 
                                 Center(
@@ -198,7 +175,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                       style: TextStyle(
                                         fontSize: subtitleFontSize,
                                         fontFamily:
-                                            GoogleFonts.inter().fontFamily,
+                                        GoogleFonts.inter().fontFamily,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.textLightPink,
                                         height: 1.5,
@@ -208,7 +185,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                 ),
 
                                 SizedBox(
-                                  height: ResponsiveHelper.spacing(context, 80),
+                                  height: context.responsiveSpacing(80),
                                 ),
 
                                 Center(
@@ -231,7 +208,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                         style: TextStyle(
                                           fontSize: buttonFontSize,
                                           fontFamily:
-                                              GoogleFonts.poppins().fontFamily,
+                                          GoogleFonts.poppins().fontFamily,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.textWhite,
                                         ),
@@ -240,7 +217,7 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                                   ),
                                 ),
                                 SizedBox(
-                                  height: ResponsiveHelper.spacing(context, 40),
+                                  height: context.responsiveSpacing(40),
                                 ),
                               ],
                             ),

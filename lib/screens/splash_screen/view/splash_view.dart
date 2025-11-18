@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
-import 'package:love_connect/core/utils/responsive_helper.dart';
+import 'package:love_connect/core/utils/media_query_extensions.dart';
 import '../view_model/splash_viewmodel.dart';
 
 class SplashView extends StatefulWidget {
@@ -87,9 +87,9 @@ class _SplashViewState extends State<SplashView>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 // Use responsive sizing
-                final logoSize = ResponsiveHelper.imageSize(context, 220);
-                final spacing = ResponsiveHelper.spacing(context, 150);
-                final loadingSize = ResponsiveHelper.imageSize(context, 50);
+                final logoSize = context.responsiveImage(220);
+                final spacing = context.responsiveSpacing(150);
+                final loadingSize = context.responsiveImage(50);
 
                 return Center(
                   child: SingleChildScrollView(

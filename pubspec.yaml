@@ -38,5 +38,5 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/svg/app_logo.svg
+    - assets/svg/
     - assets/images/app_logo.png
