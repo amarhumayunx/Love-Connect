@@ -14,10 +14,17 @@ class AppColors {
   // Primary Colors
   static const Color primaryRed = Color(0xFFE5364B);
 
+  static const Color hinttext = Color(0xFFCAB1B8);
+
   // Text Colors
   static const Color textDarkPink = Color(0xFF96435D);
   static const Color textLightPink = Color(0xFFD892A1);
   static const Color textWhite = Colors.white;
+
+  static const Color backArrow = Color(0xFF96435D);
+
+  static const Color textFieldBorder = Color(0xFFEF95A9);
+
 
   // Surfaces
   static const Color translucentWhite30 = Color(0x4DFFFFFF);

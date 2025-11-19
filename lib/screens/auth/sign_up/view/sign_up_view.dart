@@ -56,24 +56,6 @@ class _SignUpViewState extends State<SignUpView> {
     );
   }
 
-  Widget _buildFieldWithLabel(BuildContext context, String label, Widget field) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: context.responsiveFont(14),
-            color: AppColors.textDarkPink,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        SizedBox(height: context.responsiveSpacing(4)),
-        field,
-      ],
-    );
-  }
-
   Widget _buildFormCard(BuildContext context, _SignUpLayoutMetrics metrics) {
     return Expanded(
       child: Container(
@@ -88,33 +70,42 @@ class _SignUpViewState extends State<SignUpView> {
             topRight: Radius.circular(32),
           ),
         ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: viewModel.formKey,
-            child: Column(
-              crossAxisAlignment: .start,
-              mainAxisSize: .min,
-              children: [
-                _buildTitle(metrics),
-                SizedBox(height: context.responsiveSpacing(2)),
-                _buildSubtitle(metrics),
-                SizedBox(height: metrics.spacingLarge),
-                _buildNameField(context),
-                SizedBox(height: metrics.spacingMedium),
-                _buildEmailField(context),
-                SizedBox(height: metrics.spacingMedium),
-                _buildPasswordField(context),
-                SizedBox(height: metrics.spacingMedium),
-                _buildConfirmPasswordField(context),
-                SizedBox(height: metrics.spacingLarge),
-                _buildSignUpButton(context),
-                SizedBox(height: metrics.spacingMedium),
-                _buildOrDivider(context),
-                SizedBox(height: metrics.spacingMedium),
-                _buildSocialButtonsRow(),
-                SizedBox(height: metrics.spacingLarge),
-                _buildLoginRedirect(),
-              ],
+        child: Padding(
+          padding: EdgeInsets.only(bottom: metrics.spacingscrollview),
+          child: SingleChildScrollView(
+            child: Form(
+              key: viewModel.formKey,
+              child: Column(
+                crossAxisAlignment: .start,
+                mainAxisSize: .min,
+                children: [
+                  Center(
+                    child: Column(
+                      children: [
+                        _buildTitle(metrics),
+                        SizedBox(height: context.responsiveSpacing(2)),
+                        _buildSubtitle(metrics),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: metrics.spacingLarge),
+                  _buildNameField(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildEmailField(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildPasswordField(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildConfirmPasswordField(context),
+                  SizedBox(height: metrics.spacingLarge),
+                  _buildSignUpButton(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildOrDivider(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildSocialButtonsRow(),
+                  SizedBox(height: metrics.spacingLarge),
+                  _buildLoginRedirect(),
+                ],
+              ),
             ),
           ),
         ),
@@ -145,92 +136,157 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   Widget _buildNameField(BuildContext context) {
-    return _buildTextField(
-      context: context,
-      controller: viewModel.nameController,
-      hint: AuthStrings.nameHint,
-      keyboardType: TextInputType.name,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Name is required';
-        }
-        return null;
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4, left: 3), // label aur field ke beech gap
+          child: Text(
+            'Name', // ye label
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textDarkPink,
+            ),
+          ),
+        ),
+        _buildTextField(
+          context: context,
+          controller: viewModel.nameController,
+          hint: AuthStrings.nameHint,
+          keyboardType: TextInputType.name,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Name is required';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 
+
   Widget _buildEmailField(BuildContext context) {
-    return _buildTextField(
-      context: context,
-      controller: viewModel.emailController,
-      hint: AuthStrings.emailHint,
-      keyboardType: TextInputType.emailAddress,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Email is required';
-        }
-        if (!GetUtils.isEmail(value)) {
-          return 'Enter a valid email';
-        }
-        return null;
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4, left: 3), // upar se gap
+          child: Text(
+            'Email',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textDarkPink,
+            ),
+          ),
+        ),
+        _buildTextField(
+          context: context,
+          controller: viewModel.emailController,
+          hint: 'Enter your email',
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Email is required';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
+
 
   Widget _buildPasswordField(BuildContext context) {
     return Obx(
-      () => _buildTextField(
-        context: context,
-        controller: viewModel.passwordController,
-        hint: AuthStrings.passwordHint,
-        obscureText: viewModel.obscurePassword.value,
-        suffixIcon: IconButton(
-          icon: Icon(
-            viewModel.obscurePassword.value
-                ? Icons.visibility_off
-                : Icons.visibility,
-            color: AppColors.textLightPink,
+          () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4, left: 3), // label aur field ke beech gap
+            child: Text(
+              'Password', // ye label
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textDarkPink,
+              ),
+            ),
           ),
-          onPressed: viewModel.togglePasswordVisibility,
-        ),
-        validator: (value) {
-          if (value == null || value.length < 6) {
-            return 'Password must be at least 6 characters';
-          }
-          return null;
-        },
+          _buildTextField(
+            context: context,
+            controller: viewModel.passwordController,
+            hint: AuthStrings.passwordHint,
+            obscureText: viewModel.obscurePassword.value,
+            suffixIcon: IconButton(
+              icon: Icon(
+                viewModel.obscurePassword.value
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+                color: AppColors.textLightPink,
+              ),
+              onPressed: viewModel.togglePasswordVisibility,
+            ),
+            validator: (value) {
+              if (value == null || value.length < 6) {
+                return 'Password must be at least 6 characters';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }
 
+
   Widget _buildConfirmPasswordField(BuildContext context) {
     return Obx(
-      () => _buildTextField(
-        context: context,
-        controller: viewModel.confirmPasswordController,
-        hint: AuthStrings.confirmPasswordHint,
-        obscureText: viewModel.obscureConfirmPassword.value,
-        suffixIcon: IconButton(
-          icon: Icon(
-            viewModel.obscureConfirmPassword.value
-                ? Icons.visibility_off
-                : Icons.visibility,
-            color: AppColors.textLightPink,
+          () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4, left: 3), // label aur field ke beech gap
+            child: Text(
+              'Confirm Password', // ye label
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textDarkPink,
+              ),
+            ),
           ),
-          onPressed: viewModel.toggleConfirmPasswordVisibility,
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Confirm your password';
-          }
-          if (value != viewModel.passwordController.text) {
-            return 'Passwords do not match';
-          }
-          return null;
-        },
+          _buildTextField(
+            context: context,
+            controller: viewModel.confirmPasswordController,
+            hint: AuthStrings.confirmPasswordHint,
+            obscureText: viewModel.obscureConfirmPassword.value,
+            suffixIcon: IconButton(
+              icon: Icon(
+                viewModel.obscureConfirmPassword.value
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+                color: AppColors.textLightPink,
+              ),
+              onPressed: viewModel.toggleConfirmPasswordVisibility,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Confirm your password';
+              }
+              if (value != viewModel.passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }
+
 
   Widget _buildSignUpButton(BuildContext context) {
     return SizedBox(
@@ -241,14 +297,14 @@ class _SignUpViewState extends State<SignUpView> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryRed,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: Text(
           AuthStrings.signUp,
           style: GoogleFonts.poppins(
             color: Colors.white,
-            fontSize: context.responsiveFont(16),
+            fontSize: context.responsiveFont(18),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -261,7 +317,7 @@ class _SignUpViewState extends State<SignUpView> {
       children: [
         Expanded(
           child: Divider(
-            color: AppColors.textLightPink.withOpacity(0.4),
+            color: AppColors.textFieldBorder,
           ),
         ),
         Padding(
@@ -271,6 +327,7 @@ class _SignUpViewState extends State<SignUpView> {
           child: Text(
             AuthStrings.orText,
             style: GoogleFonts.inter(
+              fontSize: 14,
               color: AppColors.textLightPink,
               fontWeight: FontWeight.w600,
             ),
@@ -278,7 +335,7 @@ class _SignUpViewState extends State<SignUpView> {
         ),
         Expanded(
           child: Divider(
-            color: AppColors.textLightPink.withOpacity(0.4),
+            color: AppColors.textFieldBorder,
           ),
         ),
       ],
@@ -316,7 +373,7 @@ class _SignUpViewState extends State<SignUpView> {
                 text: AuthStrings.login,
                 style: GoogleFonts.inter(
                   color: AppColors.primaryRed,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -341,37 +398,37 @@ class _SignUpViewState extends State<SignUpView> {
       keyboardType: keyboardType,
       validator: validator,
       style: GoogleFonts.inter(
-        color: AppColors.textDarkPink,
+        color: AppColors.textFieldBorder,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.inter(
-          color: AppColors.textLightPink,
+          color: AppColors.hinttext,
         ),
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 18,
+          horizontal: 16,
+          vertical: 12,
         ),
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.textLightPink.withOpacity(0.4),
+            color: AppColors.textFieldBorder,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.textLightPink.withOpacity(0.3),
+            color: AppColors.textFieldBorder,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: AppColors.primaryRed,
+            color: AppColors.textFieldBorder,
           ),
         ),
       ),
@@ -392,21 +449,16 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double size = context.responsiveImage(60);
+    final double size = context.responsiveImage(50);
     return Semantics(
       button: true,
       label: tooltip,
       child: InkWell(
         onTap: onTap,
-        customBorder: const CircleBorder(),
         child: Container(
           width: size * 0.9,
           height: size * 0.9,
-          padding: const EdgeInsets.all(12),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-          ),
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
           child: SvgPicture.asset(
             assetPath,
             fit: BoxFit.contain,
@@ -426,6 +478,9 @@ class _SignUpLayoutMetrics {
 
   final double spacingTop;
 
+  final double spacingscrollview;
+
+
   const _SignUpLayoutMetrics({
     required this.titleSize,
     required this.subtitleSize,
@@ -433,15 +488,17 @@ class _SignUpLayoutMetrics {
     required this.spacingMedium,
     required this.logoHeight,
     required this.spacingTop,
+    required this.spacingscrollview,
   });
 
   factory _SignUpLayoutMetrics.fromContext(BuildContext context) {
     return _SignUpLayoutMetrics(
       titleSize: context.responsiveFont(28),
       subtitleSize: context.responsiveFont(15),
-      spacingLarge: context.responsiveSpacing(14),
-      spacingMedium: context.responsiveSpacing(14),
-      spacingTop: context.responsiveSpacing(80),
+      spacingLarge: context.responsiveSpacing(10),
+      spacingMedium: context.responsiveSpacing(10),
+      spacingscrollview: context.responsiveSpacing(20),
+      spacingTop: context.responsiveSpacing(70),
       logoHeight: context.responsiveImage(200),
     );
   }

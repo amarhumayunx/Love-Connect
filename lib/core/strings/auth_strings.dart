@@ -34,9 +34,9 @@ class AuthStrings {
 
   // Assets
   static const String forgotPasswordIllustration =
-      'assets/svg/forgot_password_illustration.svg';
-  static const String facebookIcon = 'assets/svg/facebook_icon.svg';
-  static const String googleIcon = 'assets/svg/google_icon.svg';
-  static const String appleIcon = 'assets/svg/apple_icon.svg';
+      'assets/images/forgotimage.jpg';
+  static const String facebookIcon = 'assets/svg/facebook.svg';
+  static const String googleIcon = 'assets/svg/google.svg';
+  static const String appleIcon = 'assets/svg/apple.svg';
 }
 

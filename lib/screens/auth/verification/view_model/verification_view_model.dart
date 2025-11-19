@@ -7,8 +7,8 @@ class VerificationViewModel extends GetxController {
   final VerificationModel model = const VerificationModel();
   final RxString statusMessage = ''.obs;
   final List<TextEditingController> otpControllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> focusNodes = List.generate(6, (_) => FocusNode());
+      List.generate(5, (_) => TextEditingController());
+  final List<FocusNode> focusNodes = List.generate(5, (_) => FocusNode());
 
   String get otpCode =>
       otpControllers.map((controller) => controller.text).join();
