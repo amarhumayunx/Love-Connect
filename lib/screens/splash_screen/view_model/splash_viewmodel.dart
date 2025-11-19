@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import '../../get_started/view/get_started_screen.dart';

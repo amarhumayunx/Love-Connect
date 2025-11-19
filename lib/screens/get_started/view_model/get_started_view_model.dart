@@ -1,10 +1,8 @@
-import 'package:flutter/animation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/get_started_screens_app_strings.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
-import 'package:love_connect/screens/auth/reset_password/view/reset_password_view.dart';
 import '../model/get_started_model.dart';
 
 class GetStartedViewModel extends GetxController {
