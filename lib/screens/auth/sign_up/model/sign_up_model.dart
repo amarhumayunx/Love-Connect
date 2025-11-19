@@ -11,10 +11,6 @@ class SignUpModel {
     this.subtitle = AuthStrings.createAccountSubtitle,
     this.socialButtons = const [
       SocialButtonModel(
-        assetPath: AuthStrings.facebookIcon,
-        tooltip: 'Facebook signup',
-      ),
-      SocialButtonModel(
         assetPath: AuthStrings.googleIcon,
         tooltip: 'Google signup',
       ),
@@ -25,4 +21,3 @@ class SignUpModel {
     ],
   });
 }
-

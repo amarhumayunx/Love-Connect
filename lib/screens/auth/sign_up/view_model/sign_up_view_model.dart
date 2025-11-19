@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/screens/auth/common/models/social_button_model.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
 import 'package:love_connect/screens/auth/sign_up/model/sign_up_model.dart';
 
@@ -33,16 +35,24 @@ class SignUpViewModel extends GetxController {
   }
 
   void onLoginTap() {
+    // Use smooth back navigation for consistent reverse transition
+    // Get.back() will automatically reverse the cupertino transition smoothly
     if (Get.previousRoute.isNotEmpty) {
-      Get.back();
-    } else {
-      Get.off(() => const LoginView());
+      SmoothNavigator.back();
+      return;
     }
+    // Fallback: if no previous route, navigate with smooth transition
+    SmoothNavigator.off(
+      () => const LoginView(),
+      transition: Transition.cupertino,
+      duration: SmoothNavigator.extraSlowDuration,
+      curve: SmoothNavigator.smoothCurve,
+    );
   }
 
-  void onSocialTap(String provider) {
+  void onSocialTap(SocialButtonModel provider) {
     Get.snackbar(
-      provider,
+      provider.tooltip,
       AuthStrings.featurePending,
       snackPosition: SnackPosition.BOTTOM,
     );
@@ -57,4 +67,3 @@ class SignUpViewModel extends GetxController {
     super.onClose();
   }
 }
-

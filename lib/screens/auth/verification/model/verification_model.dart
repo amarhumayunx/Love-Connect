@@ -13,4 +13,3 @@ class VerificationModel {
     this.resendText = AuthStrings.resendCode,
   });
 }
-

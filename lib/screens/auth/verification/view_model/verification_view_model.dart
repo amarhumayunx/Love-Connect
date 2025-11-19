@@ -6,8 +6,10 @@ import 'package:love_connect/screens/auth/verification/model/verification_model.
 class VerificationViewModel extends GetxController {
   final VerificationModel model = const VerificationModel();
   final RxString statusMessage = ''.obs;
-  final List<TextEditingController> otpControllers =
-      List.generate(5, (_) => TextEditingController());
+  final List<TextEditingController> otpControllers = List.generate(
+    5,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> focusNodes = List.generate(5, (_) => FocusNode());
 
   String get otpCode =>
@@ -59,4 +61,3 @@ class VerificationViewModel extends GetxController {
     super.onClose();
   }
 }
-

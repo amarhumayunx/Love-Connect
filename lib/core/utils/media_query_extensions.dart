@@ -58,7 +58,9 @@ extension MediaQueryResponsive on BuildContext {
 
   /// Size for images and icons that scales with the smaller screen dimension.
   double responsiveImage(double baseSize) {
-    final minDimension = screenWidth < screenHeight ? screenWidth : screenHeight;
+    final minDimension = screenWidth < screenHeight
+        ? screenWidth
+        : screenHeight;
     if (minDimension < 360) {
       return baseSize * 0.7;
     } else if (minDimension < 414) {
@@ -99,4 +101,3 @@ extension MediaQueryResponsive on BuildContext {
     }
   }
 }
-

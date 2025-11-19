@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/screens/auth/common/models/social_button_model.dart';
 import 'package:love_connect/screens/auth/forgot_password/view/forgot_password_view.dart';
-import 'package:love_connect/screens/auth/sign_up/view/sign_up_view.dart';
 import 'package:love_connect/screens/auth/login/model/login_model.dart';
+import 'package:love_connect/screens/auth/sign_up/view/sign_up_view.dart';
 
 class LoginViewModel extends GetxController {
   final LoginModel model = const LoginModel();
@@ -31,19 +33,27 @@ class LoginViewModel extends GetxController {
   }
 
   void onForgotPasswordTap() {
-    Get.to(() => const ForgotPasswordView());
+    SmoothNavigator.to(
+      () => const ForgotPasswordView(),
+      transition: Transition.downToUp,
+    );
   }
 
-  void onSocialTap(String provider) {
+  void onSocialTap(SocialButtonModel provider) {
     Get.snackbar(
-      provider,
+      provider.tooltip,
       AuthStrings.featurePending,
       snackPosition: SnackPosition.BOTTOM,
     );
   }
 
   void onSignUpTap() {
-    Get.to(() => const SignUpView());
+    SmoothNavigator.to(
+      () => const SignUpView(),
+      transition: Transition.cupertino,
+      duration: SmoothNavigator.extraSlowDuration,
+      curve: SmoothNavigator.smoothCurve,
+    );
   }
 
   @override
@@ -53,4 +63,3 @@ class LoginViewModel extends GetxController {
     super.onClose();
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import '../../get_started/view/get_started_screen.dart';
 
 class SplashViewModel extends GetxController {
@@ -27,11 +28,10 @@ class SplashViewModel extends GetxController {
     await Future.delayed(const Duration(milliseconds: 500));
 
     // Navigate to get started screen with smooth fade transition
-    Get.off(
+    SmoothNavigator.off(
       () => const GetStartedScreen(),
       transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeInOutCubic,
+      duration: SmoothNavigator.slowDuration,
     );
   }
 }

@@ -11,4 +11,3 @@ class ForgotPasswordModel {
     this.emailHint = AuthStrings.emailHint,
   });
 }
-

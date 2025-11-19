@@ -3,8 +3,12 @@ import 'package:get/get.dart';
 import 'package:love_connect/core/strings/get_started_screens_app_strings.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/screens/get_started/view/widgets/get_started_cta_button.dart';
+import 'package:love_connect/screens/get_started/view/widgets/get_started_illustration.dart';
+import 'package:love_connect/screens/get_started/view/widgets/get_started_logo.dart';
+import 'package:love_connect/screens/get_started/view/widgets/get_started_subtitle.dart';
+import 'package:love_connect/screens/get_started/view/widgets/get_started_title.dart';
 import '../view_model/get_started_view_model.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class GetStartedScreen extends StatefulWidget {
   const GetStartedScreen({super.key});
@@ -108,117 +112,61 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(
-                                  height: context.responsiveSpacing(20),
-                                ),
+                                SizedBox(height: context.responsiveSpacing(20)),
 
                                 Row(
                                   children: [
-                                    Image.asset(
-                                      AppStrings.app_logo_strings,
+                                    GetStartedLogo(
                                       width: logoWidth,
                                       height: logoHeight,
-                                      fit: BoxFit.contain,
                                     ),
                                   ],
                                 ),
 
-                                SizedBox(
-                                  height: context.responsiveSpacing(20),
-                                ),
+                                SizedBox(height: context.responsiveSpacing(20)),
 
                                 Center(
-                                  child: Image.asset(
-                                    AppStrings.heart_logo_strings,
-                                    width: heartImageSize,
-                                    height: heartImageSize,
-                                    fit: BoxFit.contain,
+                                  child: GetStartedIllustration(
+                                    size: heartImageSize,
                                   ),
                                 ),
 
-                                SizedBox(
-                                  height: context.responsiveSpacing(25),
-                                ),
+                                SizedBox(height: context.responsiveSpacing(25)),
 
                                 Center(
-                                  child: Padding(
+                                  child: GetStartedTitle(
+                                    text: viewModel.data.title,
+                                    fontSize: titleFontSize,
                                     padding: EdgeInsets.symmetric(
                                       horizontal: horizontalPadding,
                                     ),
-                                    child: Text(
-                                      viewModel.data.title,
-                                      textAlign: TextAlign.left,
-                                      style: GoogleFonts.inter(
-                                        fontSize: titleFontSize,
-                                        fontWeight: FontWeight.w600,
-                                        fontStyle: FontStyle.italic,
-                                        color: AppColors.textDarkPink,
-                                        letterSpacing: 0,
-                                        height: 1.2,
-                                      ),
-                                    ),
                                   ),
                                 ),
 
-                                SizedBox(
-                                  height: context.responsiveSpacing(16),
-                                ),
+                                SizedBox(height: context.responsiveSpacing(16)),
 
                                 Center(
-                                  child: Padding(
+                                  child: GetStartedSubtitle(
+                                    text: viewModel.data.subtitle,
+                                    fontSize: subtitleFontSize,
                                     padding: EdgeInsets.symmetric(
                                       horizontal: horizontalPadding,
                                     ),
-                                    child: Text(
-                                      viewModel.data.subtitle,
-                                      textAlign: TextAlign.left,
-                                      style: TextStyle(
-                                        fontSize: subtitleFontSize,
-                                        fontFamily:
-                                        GoogleFonts.inter().fontFamily,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.textLightPink,
-                                        height: 1.5,
-                                      ),
-                                    ),
                                   ),
                                 ),
 
-                                SizedBox(
-                                  height: context.responsiveSpacing(80),
-                                ),
+                                SizedBox(height: context.responsiveSpacing(80)),
 
                                 Center(
-                                  child: SizedBox(
+                                  child: GetStartedCtaButton(
                                     width: buttonWidth,
                                     height: buttonHeight,
-                                    child: ElevatedButton(
-                                      onPressed: viewModel.onGetStartedClick,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primaryRed,
-                                        elevation: 2,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            28,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        AppStrings.getStarted,
-                                        style: TextStyle(
-                                          fontSize: buttonFontSize,
-                                          fontFamily:
-                                          GoogleFonts.poppins().fontFamily,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textWhite,
-                                        ),
-                                      ),
-                                    ),
+                                    fontSize: buttonFontSize,
+                                    label: AppStrings.getStarted,
+                                    onPressed: viewModel.onGetStartedClick,
                                   ),
                                 ),
-                                SizedBox(
-                                  height: context.responsiveSpacing(40),
-                                ),
+                                SizedBox(height: context.responsiveSpacing(40)),
                               ],
                             ),
                           ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/screens/splash_screen/view/widgets/splash_loading_indicator.dart';
+import 'package:love_connect/screens/splash_screen/view/widgets/splash_logo.dart';
 import '../view_model/splash_viewmodel.dart';
 
 class SplashView extends StatefulWidget {
@@ -113,7 +114,7 @@ class _SplashViewState extends State<SplashView>
                                       _bounceAnimation.value,
                                   child: Opacity(
                                     opacity: _fadeAnimation.value,
-                                    child: _buildLogo(context, logoSize),
+                                    child: SplashLogo(size: logoSize),
                                   ),
                                 );
                               },
@@ -131,9 +132,8 @@ class _SplashViewState extends State<SplashView>
                               maintainState: true,
                               child: FadeTransition(
                                 opacity: _fadeAnimation,
-                                child: _buildLoadingIndicator(
-                                  context,
-                                  loadingSize,
+                                child: SplashLoadingIndicator(
+                                  size: loadingSize,
                                 ),
                               ),
                             ),
@@ -148,33 +148,6 @@ class _SplashViewState extends State<SplashView>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildLogo(BuildContext context, double size) {
-    return Center(
-      child: Image.asset(
-        'assets/images/splash_screen_logo.jpg',
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-        alignment: Alignment.topCenter,
-        filterQuality: FilterQuality.high,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(
-            Icons.error,
-            size: size * 0.5,
-            color: AppColors.primaryRed,
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator(BuildContext context, double size) {
-    return LoadingAnimationWidget.staggeredDotsWave(
-      color: AppColors.primaryRed,
-      size: size,
     );
   }
 }

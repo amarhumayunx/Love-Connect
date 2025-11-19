@@ -15,10 +15,6 @@ class LoginModel {
     this.passwordHint = AuthStrings.passwordHint,
     this.socialButtons = const [
       SocialButtonModel(
-        assetPath: AuthStrings.facebookIcon,
-        tooltip: 'Facebook login',
-      ),
-      SocialButtonModel(
         assetPath: AuthStrings.googleIcon,
         tooltip: 'Google login',
       ),
@@ -29,4 +25,3 @@ class LoginModel {
     ],
   });
 }
-

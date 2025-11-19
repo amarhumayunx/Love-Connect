@@ -25,7 +25,6 @@ class AppColors {
 
   static const Color textFieldBorder = Color(0xFFEF95A9);
 
-
   // Surfaces
   static const Color translucentWhite30 = Color(0x4DFFFFFF);
   static const Color translucentWhite12 = Color(0x1FFFFFFF);
