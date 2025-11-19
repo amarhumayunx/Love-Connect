@@ -32,268 +32,318 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    final double titleSize = context.responsiveFont(30);
-    final double subtitleSize = context.responsiveFont(14);
-    final double spacingLarge = context.responsiveSpacing(13);
-    final double spacingMedium = context.responsiveSpacing(10);
-    final double spacingSmall = context.responsiveSpacing(12);
-    final double spacingTop = context.responsiveSpacing(40);
-    final double logoHeight = context.responsiveImage(200);
-
+    final _LoginLayoutMetrics metrics = _LoginLayoutMetrics.fromContext(context);
     return Scaffold(
       backgroundColor: AppColors.backgroundPink,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: spacingTop),
-              child: Image.asset(
-                AppStrings.heart_logo_strings,
-                height: logoHeight,
-              ),
-            ),
-            SizedBox(height: spacingLarge),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(32),
-                  topRight: Radius.circular(32),
-                ),
-                child: Container(
-                  color: Colors.white,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                      top: spacingMedium,
-                      right: spacingMedium,
-                      left: spacingMedium,
-                      bottom: spacingMedium,
-                    ),
-                    child: Form(
-                      key: viewModel.formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Column(
-                              children: [
-                                Text(
-                                  viewModel.model.title,
-                                  style: GoogleFonts.inter(
-                                    fontSize: titleSize,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textDarkPink,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  viewModel.model.subtitle,
-                                  style: GoogleFonts.inter(
-                                    fontSize: subtitleSize,
-                                    color: AppColors.textLightPink,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: spacingLarge),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 2, left: 3),
-                            child: Text(
-                              'Email',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textDarkPink,
-                              ),
-                            ),
-                          ),
-                          _buildTextField(
-                            context: context,
-                            controller: viewModel.emailController,
-                            hint: viewModel.model.emailHint,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Email is required';
-                              }
-                              if (!GetUtils.isEmail(value)) {
-                                return 'Enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: spacingMedium),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 2, left: 3),
-                            child: Text(
-                              'Password',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textDarkPink,
-                              ),
-                            ),
-                          ),
-                          Obx(
-                                () => _buildTextField(
-                              context: context,
-                              controller: viewModel.passwordController,
-                              hint: viewModel.model.passwordHint,
-                              obscureText: viewModel.obscurePassword.value,
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  viewModel.obscurePassword.value
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: AppColors.textLightPink,
-                                ),
-                                onPressed: viewModel.togglePasswordVisibility,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.length < 8) {
-                                  return 'Password must be at least 8 characters';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          SizedBox(height: spacingMedium),
-                          Row(
-                            children: [
-                              Obx(
-                                    () => Checkbox(
-                                  value: viewModel.rememberMe.value,
-                                  onChanged: viewModel.toggleRememberMe,
-                                  activeColor: AppColors.textFieldBorder,
-                                  checkColor: Colors.white,
-                                  side: const BorderSide(
-                                    color: AppColors.textFieldBorder,
-                                    width: 2,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  AuthStrings.rememberMe,
-                                  style: GoogleFonts.inter(
-                                    color: AppColors.textLightPink,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: context.responsiveFont(13),
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: viewModel.onForgotPasswordTap,
-                                child: Text(
-                                  AuthStrings.forgotPassword,
-                                  style: GoogleFonts.inter(
-                                    color: AppColors.primaryRed,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: spacingMedium),
-                          SizedBox(
-                            width: double.infinity,
-                            height: context.responsiveButtonHeight(),
-                            child: ElevatedButton(
-                              onPressed: viewModel.onLoginTap,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryRed,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: Text(
-                                AuthStrings.login,
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: context.responsiveFont(18),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: spacingMedium),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: AppColors.textFieldBorder,
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: spacingSmall,
-                                ),
-                                child: Text(
-                                  AuthStrings.orText,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: AppColors.textLightPink,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: AppColors.textFieldBorder,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: spacingMedium),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: viewModel.model.socialButtons
-                                .map(
-                                  (social) => _SocialButton(
-                                assetPath: social.assetPath,
-                                tooltip: social.tooltip,
-                                onTap: () => viewModel.onSocialTap(
-                                  social.tooltip,
-                                ),
-                              ),
-                            )
-                                .toList(),
-                          ),
-                          SizedBox(height: spacingLarge),
-                          Center(
-                            child: GestureDetector(
-                              onTap: viewModel.onSignUpTap,
-                              child: RichText(
-                                text: TextSpan(
-                                  text: AuthStrings.dontHaveAccount,
-                                  style: GoogleFonts.inter(
-                                    color: AppColors.textLightPink,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: AuthStrings.signUp,
-                                      style: GoogleFonts.inter(
-                                        color: AppColors.primaryRed,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: metrics.spacingTop),
+            child: _buildLogo(metrics),
+          ),
+          SizedBox(height: metrics.spacingLarge),
+          _buildFormCard(context, metrics),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogo(_LoginLayoutMetrics metrics) {
+    return Image.asset(
+      AppStrings.heart_logo_strings,
+      height: metrics.logoHeight,
+    );
+  }
+
+  Widget _buildFormCard(BuildContext context, _LoginLayoutMetrics metrics) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.only(
+          top: metrics.spacingMedium,
+          right: metrics.spacingMedium,
+          left: metrics.spacingMedium,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: metrics.spacingScrollView),
+          child: SingleChildScrollView(
+            child: Form(
+              key: viewModel.formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Column(
+                      children: [
+                        _buildTitle(metrics),
+                        SizedBox(height: context.responsiveSpacing(2)),
+                        _buildSubtitle(metrics),
+                      ],
                     ),
                   ),
-                ),
+                  SizedBox(height: metrics.spacingLarge),
+                  _buildEmailField(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildPasswordField(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildRememberMeAndForgotPassword(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildLoginButton(context),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildOrDivider(context, metrics),
+                  SizedBox(height: metrics.spacingMedium),
+                  _buildSocialButtonsRow(),
+                  SizedBox(height: metrics.spacingLarge),
+                  _buildSignUpRedirect(),
+                ],
               ),
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitle(_LoginLayoutMetrics metrics) {
+    return Text(
+      viewModel.model.title,
+      style: GoogleFonts.inter(
+        fontSize: metrics.titleSize,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textDarkPink,
+      ),
+    );
+  }
+
+  Widget _buildSubtitle(_LoginLayoutMetrics metrics) {
+    return Text(
+      viewModel.model.subtitle,
+      style: GoogleFonts.inter(
+        fontSize: metrics.subtitleSize,
+        color: AppColors.textLightPink,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildEmailField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4, left: 3),
+          child: Text(
+            'Email',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textDarkPink,
+            ),
+          ),
+        ),
+        _buildTextField(
+          context: context,
+          controller: viewModel.emailController,
+          hint: viewModel.model.emailHint,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Email is required';
+            }
+            if (!GetUtils.isEmail(value)) {
+              return 'Enter a valid email';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(BuildContext context) {
+    return Obx(
+          () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4, left: 3),
+            child: Text(
+              'Password',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textDarkPink,
+              ),
+            ),
+          ),
+          _buildTextField(
+            context: context,
+            controller: viewModel.passwordController,
+            hint: viewModel.model.passwordHint,
+            obscureText: viewModel.obscurePassword.value,
+            suffixIcon: IconButton(
+              icon: Icon(
+                viewModel.obscurePassword.value
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+                color: AppColors.textLightPink,
+              ),
+              onPressed: viewModel.togglePasswordVisibility,
+            ),
+            validator: (value) {
+              if (value == null || value.length < 8) {
+                return 'Password must be at least 8 characters';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRememberMeAndForgotPassword(BuildContext context) {
+    return Row(
+      children: [
+        Obx(
+              () => Checkbox(
+            value: viewModel.rememberMe.value,
+            onChanged: viewModel.toggleRememberMe,
+            activeColor: AppColors.textFieldBorder,
+            checkColor: Colors.white,
+            side: const BorderSide(
+              color: AppColors.textFieldBorder,
+              width: 2,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            AuthStrings.rememberMe,
+            style: GoogleFonts.inter(
+              color: AppColors.textLightPink,
+              fontWeight: FontWeight.w600,
+              fontSize: context.responsiveFont(13),
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: viewModel.onForgotPasswordTap,
+          child: Text(
+            AuthStrings.forgotPassword,
+            style: GoogleFonts.inter(
+              color: AppColors.primaryRed,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: context.responsiveButtonHeight(),
+      child: ElevatedButton(
+        onPressed: viewModel.onLoginTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryRed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          AuthStrings.login,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: context.responsiveFont(18),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrDivider(BuildContext context, _LoginLayoutMetrics metrics) {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: AppColors.textFieldBorder,
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: metrics.spacingSmall,
+          ),
+          child: Text(
+            AuthStrings.orText,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.textLightPink,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            color: AppColors.textFieldBorder,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButtonsRow() {
+    return Row(
+      mainAxisAlignment: .center,
+      children: viewModel.model.socialButtons
+          .map(
+            (social) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: _SocialButton(
+                        assetPath: social.assetPath,
+                        tooltip: social.tooltip,
+                        onTap: () => viewModel.onSocialTap(social.tooltip),
+                      ),
+            ),
+      )
+          .toList(),
+    );
+  }
+
+  Widget _buildSignUpRedirect() {
+    return Center(
+      child: GestureDetector(
+        onTap: viewModel.onSignUpTap,
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            text: AuthStrings.dontHaveAccount,
+            style: GoogleFonts.inter(
+              color: AppColors.textLightPink,
+            ),
+            children: [
+              TextSpan(
+                text: AuthStrings.signUp,
+                style: GoogleFonts.inter(
+                  color: AppColors.primaryRed,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -381,6 +431,41 @@ class _SocialButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LoginLayoutMetrics {
+  final double titleSize;
+  final double subtitleSize;
+  final double spacingLarge;
+  final double spacingMedium;
+  final double spacingSmall;
+  final double logoHeight;
+  final double spacingTop;
+  final double spacingScrollView;
+
+  const _LoginLayoutMetrics({
+    required this.titleSize,
+    required this.subtitleSize,
+    required this.spacingLarge,
+    required this.spacingMedium,
+    required this.spacingSmall,
+    required this.logoHeight,
+    required this.spacingTop,
+    required this.spacingScrollView,
+  });
+
+  factory _LoginLayoutMetrics.fromContext(BuildContext context) {
+    return _LoginLayoutMetrics(
+      titleSize: context.responsiveFont(30),
+      subtitleSize: context.responsiveFont(14),
+      spacingLarge: context.responsiveSpacing(13),
+      spacingMedium: context.responsiveSpacing(10),
+      spacingSmall: context.responsiveSpacing(12),
+      spacingTop: context.responsiveSpacing(40),
+      logoHeight: context.responsiveImage(200),
+      spacingScrollView: context.responsiveSpacing(20),
     );
   }
 }

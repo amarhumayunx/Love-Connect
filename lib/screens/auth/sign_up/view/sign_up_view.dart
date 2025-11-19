@@ -344,13 +344,16 @@ class _SignUpViewState extends State<SignUpView> {
 
   Widget _buildSocialButtonsRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: .center,
       children: viewModel.model.socialButtons
           .map(
-            (social) => _SocialButton(
-              assetPath: social.assetPath,
-              tooltip: social.tooltip,
-              onTap: () => viewModel.onSocialTap(social.tooltip),
+            (social) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: _SocialButton(
+                assetPath: social.assetPath,
+                tooltip: social.tooltip,
+                onTap: () => viewModel.onSocialTap(social.tooltip),
+              ),
             ),
           )
           .toList(),
@@ -498,7 +501,7 @@ class _SignUpLayoutMetrics {
       spacingLarge: context.responsiveSpacing(10),
       spacingMedium: context.responsiveSpacing(10),
       spacingscrollview: context.responsiveSpacing(20),
-      spacingTop: context.responsiveSpacing(70),
+      spacingTop: context.responsiveSpacing(40),
       logoHeight: context.responsiveImage(200),
     );
   }
