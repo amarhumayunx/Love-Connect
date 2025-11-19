@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
-import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/screens/auth/forgot_password/view_model/forgot_password_view_model.dart';
 
 class ForgotPasswordView extends StatefulWidget {
@@ -40,7 +38,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     final double horizontalPadding = screenWidth * 0.05; // 6% of width
     final double topPadding = screenHeight * 0.01; // 2% of height
     final double spacingLarge = screenHeight * 0.032; // 3.5% of height
-    final double spacingMedium = screenHeight * 0.020; // 2.2% of height
+// 2.2% of height
     final double spacingSmall = screenHeight * 0.010; // 1.2% of height
 
     // Responsive font sizes
@@ -173,7 +171,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                                   hintText: 'Enter your email',
                                   hintStyle: GoogleFonts.inter(
                                     fontSize: hintFontSize,
-                                    color: AppColors.textLightPink.withOpacity(0.6),
+                                    color: AppColors.textLightPink
                                   ),
                                   filled: true,
                                   fillColor: Colors.white,
