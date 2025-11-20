@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_bottom_nav.dart';
 import 'package:love_connect/screens/home/view/widgets/home_header.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
@@ -22,6 +25,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   late final AnimationController _slideController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
+  DateTime? _lastBackPressTime;
 
   @override
   void initState() {
@@ -70,13 +74,38 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      SnackbarHelper.showSafe(
+        title: 'Press back again to exit',
+        message: '',
+        duration: const Duration(seconds: 2),
+      );
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final metrics = HomeLayoutMetrics.fromContext(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPink,
-      body: FadeTransition(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if (didPop) return;
+        _onWillPop().then((shouldPop) {
+          if (shouldPop && mounted) {
+            SystemNavigator.pop();
+          }
+        });
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundPink,
+        body: FadeTransition(
         opacity: _fadeAnimation,
         child: Column(
           children: [
@@ -85,8 +114,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
             // Header
             Obx(
               () => HomeHeader(
-                userName: viewModel.model.userName,
-                userTagline: viewModel.model.userTagline,
+                userName: viewModel.userName.value,
+                userTagline: viewModel.userTagline.value,
                 onSearchTap: viewModel.onSearchTap,
                 onNotificationTap: viewModel.onNotificationTap,
                 notificationCount: viewModel.notificationCount.value,
@@ -232,6 +261,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
             ),
           ],
         ),
+      ),
       ),
     );
   }

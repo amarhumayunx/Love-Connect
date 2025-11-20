@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "960358609510",
+    "project_id": "love-connect-e79a5",
+    "storage_bucket": "love-connect-e79a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960358609510:android:96025917c0a2431aeef3a7",
+        "android_client_info": {
+          "package_name": "com.example.love_connect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7aZX1j6dnMNHTZ11BckD4d0KKZYzwnmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.loveConnect"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

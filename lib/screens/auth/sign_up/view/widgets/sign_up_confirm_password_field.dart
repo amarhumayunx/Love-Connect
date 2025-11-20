@@ -29,7 +29,7 @@ class SignUpConfirmPasswordField extends StatelessWidget {
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Confirm your password';
+            return 'Please confirm your password';
           }
           if (value != viewModel.passwordController.text) {
             return 'Passwords do not match';

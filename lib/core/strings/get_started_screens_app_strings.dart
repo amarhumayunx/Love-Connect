@@ -6,6 +6,7 @@ class AppStrings {
   static const String stillInDevelopment = 'Still in Development';
   static const String app_logo_strings = 'assets/images/app_logo.png';
   static const String heart_logo_strings = 'assets/images/heart.png';
+  static const String app_logo_snackbar = 'assets/images/splash_screen_logo.jpg';
   static const String safeSpaceLabel = 'Your safe space to love better';
   static const List<String> highlights = <String>[
     'Shared calendar',

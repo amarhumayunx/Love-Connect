@@ -6,11 +6,13 @@ import 'package:love_connect/screens/auth/common/models/social_button_model.dart
 class AuthSocialButton extends StatelessWidget {
   final SocialButtonModel button;
   final VoidCallback onTap;
+  final bool isDisabled;
 
   const AuthSocialButton({
     super.key,
     required this.button,
     required this.onTap,
+    this.isDisabled = false,
   });
 
   @override
@@ -19,14 +21,18 @@ class AuthSocialButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: button.tooltip,
+      enabled: !isDisabled,
       child: InkWell(
-        onTap: onTap,
+        onTap: isDisabled ? null : onTap,
         borderRadius: BorderRadius.circular(size * 0.2),
-        child: Container(
-          width: size * 0.9,
-          height: size * 0.9,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: SvgPicture.asset(button.assetPath, fit: BoxFit.contain),
+        child: Opacity(
+          opacity: isDisabled ? 0.5 : 1.0,
+          child: Container(
+            width: size * 0.9,
+            height: size * 0.9,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SvgPicture.asset(button.assetPath, fit: BoxFit.contain),
+          ),
         ),
       ),
     );

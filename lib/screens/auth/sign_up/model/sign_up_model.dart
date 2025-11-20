@@ -13,10 +13,7 @@ class SignUpModel {
       SocialButtonModel(
         assetPath: AuthStrings.googleIcon,
         tooltip: 'Google signup',
-      ),
-      SocialButtonModel(
-        assetPath: AuthStrings.appleIcon,
-        tooltip: 'Apple signup',
+        type: SocialButtonType.google,
       ),
     ],
   });

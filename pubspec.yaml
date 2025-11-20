@@ -15,8 +15,20 @@ dependencies:
   flutter_svg: ^2.2.2
   google_fonts: ^6.3.2
   flutter_launcher_icons: ^0.14.4
-  get: ^4.6.6
+  get: ^4.7.2
   loading_animation_widget: ^1.3.0
+  
+  # Firebase
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  
+  # Social Sign In
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^7.0.1
+  
+  # Utilities
+  crypto: ^3.0.7
+  shared_preferences: ^2.2.2
 
 
 

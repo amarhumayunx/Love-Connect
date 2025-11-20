@@ -17,10 +17,7 @@ class LoginModel {
       SocialButtonModel(
         assetPath: AuthStrings.googleIcon,
         tooltip: 'Google login',
-      ),
-      SocialButtonModel(
-        assetPath: AuthStrings.appleIcon,
-        tooltip: 'Apple login',
+        type: SocialButtonType.google,
       ),
     ],
   });

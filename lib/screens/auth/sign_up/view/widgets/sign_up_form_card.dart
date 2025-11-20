@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
 import 'package:love_connect/screens/auth/common/widgets/auth_header.dart';
 import 'package:love_connect/screens/auth/common/widgets/auth_primary_button.dart';
@@ -66,9 +67,12 @@ class SignUpFormCard extends StatelessWidget {
                   SignUpConfirmPasswordField(viewModel: viewModel),
                   SizedBox(height: metrics.spacingtopsignpbutton),
                   Center(
-                    child: AuthPrimaryButton(
-                      label: AuthStrings.signUp,
-                      onPressed: viewModel.onSignUpTap,
+                    child: Obx(
+                      () => AuthPrimaryButton(
+                        label: AuthStrings.signUp,
+                        onPressed: viewModel.onSignUpTap,
+                        isLoading: viewModel.isLoading.value,
+                      ),
                     ),
                   ),
                   SizedBox(height: metrics.spacingMedium),

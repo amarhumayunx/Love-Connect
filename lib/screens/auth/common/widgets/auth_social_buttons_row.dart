@@ -6,12 +6,14 @@ class AuthSocialButtonsRow extends StatelessWidget {
   final List<SocialButtonModel> buttons;
   final ValueChanged<SocialButtonModel> onPressed;
   final double spacing;
+  final bool isDisabled;
 
   const AuthSocialButtonsRow({
     super.key,
     required this.buttons,
     required this.onPressed,
     this.spacing = 12,
+    this.isDisabled = false,
   });
 
   @override
@@ -25,6 +27,7 @@ class AuthSocialButtonsRow extends StatelessWidget {
             (button) => AuthSocialButton(
               button: button,
               onTap: () => onPressed(button),
+              isDisabled: isDisabled,
             ),
           )
           .toList(),

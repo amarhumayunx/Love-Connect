@@ -3,13 +3,17 @@ import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
+import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/screens/auth/common/models/social_button_model.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
 import 'package:love_connect/screens/auth/sign_up/model/sign_up_model.dart';
 import 'package:love_connect/screens/home/view/home_view.dart';
 
+import '../../../../core/models/auth/auth_result.dart';
+
 class SignUpViewModel extends GetxController {
   final SignUpModel model = const SignUpModel();
+  final AuthService _authService = AuthService();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -18,6 +22,7 @@ class SignUpViewModel extends GetxController {
       TextEditingController();
   final RxBool obscurePassword = true.obs;
   final RxBool obscureConfirmPassword = true.obs;
+  final RxBool isLoading = false.obs;
 
   void togglePasswordVisibility() {
     obscurePassword.value = !obscurePassword.value;
@@ -27,15 +32,42 @@ class SignUpViewModel extends GetxController {
     obscureConfirmPassword.value = !obscureConfirmPassword.value;
   }
 
-  void onSignUpTap() {
+  Future<void> onSignUpTap() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-    
-    // Navigate to home screen after successful signup
-    SmoothNavigator.offAll(
-      () => const HomeView(),
-      transition: Transition.fadeIn,
-      duration: SmoothNavigator.slowDuration,
-    );
+    if (isLoading.value) return;
+
+    isLoading.value = true;
+
+    try {
+      final result = await _authService.signUpWithEmailPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        displayName: nameController.text.trim(),
+      );
+
+      if (result.success) {
+        // Show success message
+        SnackbarHelper.showSafe(
+          title: 'Account Created',
+          message: 'Please verify your email address. A verification email has been sent.',
+          duration: const Duration(seconds: 4),
+        );
+
+        // Navigate to home screen after successful signup
+        SmoothNavigator.offAll(
+          () => const HomeView(),
+          transition: Transition.fadeIn,
+          duration: SmoothNavigator.slowDuration,
+        );
+      } else {
+        SnackbarHelper.showSafe(
+          title: 'Sign Up Failed',
+          message: result.errorMessage ?? 'An error occurred. Please try again.',
+        );
+      }
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void onLoginTap() {
@@ -54,11 +86,48 @@ class SignUpViewModel extends GetxController {
     );
   }
 
-  void onSocialTap(SocialButtonModel provider) {
-    SnackbarHelper.showSafe(
-      title: provider.tooltip,
-      message: AuthStrings.featurePending,
-    );
+  Future<void> onSocialTap(SocialButtonModel provider) async {
+    if (isLoading.value) return;
+
+    isLoading.value = true;
+
+    try {
+      AuthResult result;
+
+      switch (provider.type) {
+        case SocialButtonType.google:
+          result = await _authService.signUpWithGoogle();
+          break;
+        case SocialButtonType.apple:
+          result = await _authService.signUpWithApple();
+          break;
+        default:
+          SnackbarHelper.showSafe(
+            title: provider.tooltip,
+            message: AuthStrings.featurePending,
+          );
+          return;
+      }
+
+      if (result.success) {
+        // Navigate to home screen after successful signup
+        SmoothNavigator.offAll(
+          () => const HomeView(),
+          transition: Transition.fadeIn,
+          duration: SmoothNavigator.slowDuration,
+        );
+      } else {
+        // Only show error if user didn't cancel
+        if (result.errorCode != 'sign-in-canceled') {
+          SnackbarHelper.showSafe(
+            title: '${provider.tooltip} Failed',
+            message: result.errorMessage ?? 'An error occurred. Please try again.',
+          );
+        }
+      }
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override

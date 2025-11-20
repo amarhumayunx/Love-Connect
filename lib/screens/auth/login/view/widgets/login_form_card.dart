@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
 import 'package:love_connect/screens/auth/common/widgets/auth_header.dart';
 import 'package:love_connect/screens/auth/common/widgets/auth_primary_button.dart';
@@ -62,9 +63,12 @@ class LoginFormCard extends StatelessWidget {
                   SizedBox(height: metrics.spacingMedium),
                   LoginRememberForgotRow(viewModel: viewModel),
                   SizedBox(height: metrics.spacingMedium),
-                  AuthPrimaryButton(
-                    label: AuthStrings.login,
-                    onPressed: viewModel.onLoginTap,
+                  Obx(
+                    () => AuthPrimaryButton(
+                      label: AuthStrings.login,
+                      onPressed: viewModel.onLoginTap,
+                      isLoading: viewModel.isLoading.value,
+                    ),
                   ),
                   SizedBox(height: metrics.spacingMedium),
                   LoginOrDivider(horizontalPadding: metrics.spacingSmall),

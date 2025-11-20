@@ -39,11 +39,14 @@ class ForgotPasswordEmailForm extends StatelessWidget {
             },
           ),
           SizedBox(height: metrics.spacingLarge),
-          AuthPrimaryButton(
-            label: AuthStrings.sendCode,
-            onPressed: viewModel.onSendCode,
-            height: metrics.buttonHeight,
-            expanded: true,
+          Obx(
+            () => AuthPrimaryButton(
+              label: AuthStrings.sendCode,
+              onPressed: viewModel.onSendCode,
+              height: metrics.buttonHeight,
+              expanded: true,
+              isLoading: viewModel.isLoading.value,
+            ),
           ),
         ],
       ),
