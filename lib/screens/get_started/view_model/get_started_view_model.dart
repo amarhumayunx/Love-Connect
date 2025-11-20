@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/get_started_screens_app_strings.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
+import 'package:love_connect/screens/home/view/home_view.dart';
 import '../model/get_started_model.dart';
 
 class GetStartedViewModel extends GetxController {
@@ -20,7 +21,7 @@ class GetStartedViewModel extends GetxController {
     await HapticFeedback.lightImpact();
     await Future.delayed(const Duration(milliseconds: 220));
     await SmoothNavigator.to(
-      () => const LoginView(),
+      () => const HomeView(),
       transition: Transition.cupertino,
       duration: SmoothNavigator.extraSlowDuration,
       curve: SmoothNavigator.smoothCurve,

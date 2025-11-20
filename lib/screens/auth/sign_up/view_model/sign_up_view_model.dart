@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/auth/common/models/social_button_model.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
 import 'package:love_connect/screens/auth/sign_up/model/sign_up_model.dart';
+import 'package:love_connect/screens/home/view/home_view.dart';
 
 class SignUpViewModel extends GetxController {
   final SignUpModel model = const SignUpModel();
@@ -27,10 +29,12 @@ class SignUpViewModel extends GetxController {
 
   void onSignUpTap() {
     if (!(formKey.currentState?.validate() ?? false)) return;
-    Get.snackbar(
-      AuthStrings.signUp,
-      AuthStrings.featurePending,
-      snackPosition: SnackPosition.BOTTOM,
+    
+    // Navigate to home screen after successful signup
+    SmoothNavigator.offAll(
+      () => const HomeView(),
+      transition: Transition.fadeIn,
+      duration: SmoothNavigator.slowDuration,
     );
   }
 
@@ -51,10 +55,9 @@ class SignUpViewModel extends GetxController {
   }
 
   void onSocialTap(SocialButtonModel provider) {
-    Get.snackbar(
-      provider.tooltip,
-      AuthStrings.featurePending,
-      snackPosition: SnackPosition.BOTTOM,
+    SnackbarHelper.showSafe(
+      title: provider.tooltip,
+      message: AuthStrings.featurePending,
     );
   }
 

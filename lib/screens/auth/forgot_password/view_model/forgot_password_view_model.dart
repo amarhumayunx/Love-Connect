@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/auth/forgot_password/model/forgot_password_model.dart';
 import 'package:love_connect/screens/auth/verification/view/verification_view.dart';
 
@@ -13,10 +14,9 @@ class ForgotPasswordViewModel extends GetxController {
   void onSendCode() {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
-    Get.snackbar(
-      AuthStrings.sendCode,
-      AuthStrings.codeSent,
-      snackPosition: SnackPosition.BOTTOM,
+    SnackbarHelper.showSafe(
+      title: AuthStrings.sendCode,
+      message: AuthStrings.codeSent,
     );
     SmoothNavigator.to(
       () => VerificationView(email: emailController.text),

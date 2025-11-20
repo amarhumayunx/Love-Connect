@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/auth/verification/model/verification_model.dart';
 
 class VerificationViewModel extends GetxController {
@@ -25,28 +26,25 @@ class VerificationViewModel extends GetxController {
 
   void onVerifyTap() {
     if (otpCode.length != otpControllers.length) {
-      Get.snackbar(
-        AuthStrings.verifyCode,
-        'Enter the complete code',
-        snackPosition: SnackPosition.BOTTOM,
+      SnackbarHelper.showSafe(
+        title: AuthStrings.verifyCode,
+        message: 'Enter the complete code',
       );
       return;
     }
 
-    Get.snackbar(
-      AuthStrings.verifyCode,
-      AuthStrings.codeVerified,
-      snackPosition: SnackPosition.BOTTOM,
+    SnackbarHelper.showSafe(
+      title: AuthStrings.verifyCode,
+      message: AuthStrings.codeVerified,
     );
   }
 
   void onResendTap() {
     otpControllers.forEach((controller) => controller.clear());
     focusNodes.first.requestFocus();
-    Get.snackbar(
-      AuthStrings.resendCode,
-      AuthStrings.codeSent,
-      snackPosition: SnackPosition.BOTTOM,
+    SnackbarHelper.showSafe(
+      title: AuthStrings.resendCode,
+      message: AuthStrings.codeSent,
     );
   }
 

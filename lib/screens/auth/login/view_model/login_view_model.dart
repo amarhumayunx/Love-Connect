@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/auth/common/models/social_button_model.dart';
 import 'package:love_connect/screens/auth/forgot_password/view/forgot_password_view.dart';
 import 'package:love_connect/screens/auth/login/model/login_model.dart';
 import 'package:love_connect/screens/auth/sign_up/view/sign_up_view.dart';
+import 'package:love_connect/screens/home/view/home_view.dart';
 
 class LoginViewModel extends GetxController {
   final LoginModel model = const LoginModel();
@@ -25,10 +27,12 @@ class LoginViewModel extends GetxController {
 
   void onLoginTap() {
     if (!(formKey.currentState?.validate() ?? false)) return;
-    Get.snackbar(
-      AuthStrings.login,
-      AuthStrings.featurePending,
-      snackPosition: SnackPosition.BOTTOM,
+    
+    // Navigate to home screen after successful login
+    SmoothNavigator.offAll(
+      () => const HomeView(),
+      transition: Transition.fadeIn,
+      duration: SmoothNavigator.slowDuration,
     );
   }
 
@@ -40,10 +44,9 @@ class LoginViewModel extends GetxController {
   }
 
   void onSocialTap(SocialButtonModel provider) {
-    Get.snackbar(
-      provider.tooltip,
-      AuthStrings.featurePending,
-      snackPosition: SnackPosition.BOTTOM,
+    SnackbarHelper.showSafe(
+      title: provider.tooltip,
+      message: AuthStrings.featurePending,
     );
   }
 

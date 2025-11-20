@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/auth/reset_password/model/reset_password_model.dart';
 
 class ResetPasswordViewModel extends GetxController {
@@ -24,10 +25,9 @@ class ResetPasswordViewModel extends GetxController {
   void onResetPasswordTap() {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
-    Get.snackbar(
-      AuthStrings.resetPassword,
-      AuthStrings.passwordResetSuccess,
-      snackPosition: SnackPosition.BOTTOM,
+    SnackbarHelper.showSafe(
+      title: AuthStrings.resetPassword,
+      message: AuthStrings.passwordResetSuccess,
     );
 
     // Navigate back after successful reset
