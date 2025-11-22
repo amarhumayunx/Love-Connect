@@ -521,7 +521,7 @@ class _ProfileViewState extends State<ProfileView> {
         trailing: Switch(
           value: viewModel.settings[key] ?? false,
           onChanged: (value) => viewModel.updateSetting(key, value),
-          activeColor: AppColors.primaryRed,
+          activeThumbColor: AppColors.primaryRed,
         ),
         contentPadding: EdgeInsets.symmetric(
           horizontal: metrics.cardPadding,

@@ -34,7 +34,7 @@ class HomeHeader extends StatelessWidget {
       child: Row(
         children: [
           // Profile Picture
-          Container(
+          SizedBox(
             width: metrics.profileImageSize,
             height: metrics.profileImageSize,
             child: ClipOval(

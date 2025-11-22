@@ -6,7 +6,6 @@ import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
 import 'package:love_connect/core/models/plan_model.dart';
-import 'package:love_connect/core/models/notification_model.dart';
 import 'package:love_connect/core/widgets/quote_modal.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';

@@ -7,7 +7,7 @@ import 'package:love_connect/screens/splash_screen/view/widgets/splash_logo.dart
 import '../view_model/splash_viewmodel.dart';
 
 class SplashView extends StatefulWidget {
-  const SplashView({Key? key}) : super(key: key);
+  const SplashView({super.key});
 
   @override
   State<SplashView> createState() => _SplashViewState();

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
-import 'package:love_connect/screens/home/view/widgets/home_bottom_nav.dart';
 import 'package:love_connect/screens/home/view/widgets/home_header.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view/widgets/quick_action_card.dart';

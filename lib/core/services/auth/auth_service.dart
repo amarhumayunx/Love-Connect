@@ -268,7 +268,7 @@ class AuthService {
   Future<OAuthCredential> _createFirebaseCredential(
     GoogleSignInAccount googleUser,
   ) async {
-    final googleAuth = await googleUser.authentication;
+    final googleAuth = googleUser.authentication;
     final idToken = googleAuth.idToken;
 
     if (idToken == null || idToken.isEmpty) {

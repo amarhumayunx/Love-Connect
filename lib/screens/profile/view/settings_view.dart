@@ -458,7 +458,7 @@ class _SettingsViewState extends State<SettingsView> {
         trailing: Switch(
           value: viewModel.settings[key] ?? false,
           onChanged: (value) => viewModel.updateSetting(key, value),
-          activeColor: AppColors.primaryRed,
+          activeThumbColor: AppColors.primaryRed,
         ),
         contentPadding: EdgeInsets.symmetric(
           horizontal: metrics.cardPadding,
