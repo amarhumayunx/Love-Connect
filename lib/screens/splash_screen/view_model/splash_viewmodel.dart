@@ -4,7 +4,7 @@ import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/app_preferences_service.dart';
 import '../../get_started/view/get_started_screen.dart';
 import '../../auth/login/view/login_view.dart';
-import '../../home/view/home_view.dart';
+import '../../home/view/main_navigation_view.dart';
 
 class SplashViewModel extends GetxController {
   final RxBool isLoading = true.obs;
@@ -38,9 +38,9 @@ class SplashViewModel extends GetxController {
     final hasSeenGetStarted = await _prefsService.hasSeenGetStarted();
 
     if (isAuthenticated) {
-      // User is logged in, go directly to home
+      // User is logged in, go directly to home with navbar
       SmoothNavigator.offAll(
-        () => const HomeView(),
+        () => const MainNavigationView(),
         transition: Transition.fadeIn,
         duration: SmoothNavigator.slowDuration,
       );

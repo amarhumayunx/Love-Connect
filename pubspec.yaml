@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  flutter_svg: ^2.2.2
+  flutter_svg: ^2.2.3
   google_fonts: ^6.3.2
   flutter_launcher_icons: ^0.14.4
   get: ^4.7.2
@@ -23,18 +23,21 @@ dependencies:
   firebase_auth: ^6.1.2
   
   # Social Sign In
-  google_sign_in: ^6.2.1
+  google_sign_in: ^7.2.0
   sign_in_with_apple: ^7.0.1
   
   # Utilities
   crypto: ^3.0.7
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.3
+  intl: ^0.19.0
+  uuid: ^4.5.1
 
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^6.0.0
 
 
 flutter_icons:
@@ -42,8 +45,6 @@ flutter_icons:
   ios: true
   remove_alpha_icon: true
   image_path: 'assets/app_icon/app_icon.jpg'
-
-  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

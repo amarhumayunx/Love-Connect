@@ -25,6 +25,7 @@ class HomeLayoutMetrics {
   final double bottomNavFontSize;
   final double contentBottomSpacing;
   final double notificationBadgeSize;
+  final double quickActionPadding;
 
   const HomeLayoutMetrics({
     required this.headerTopPadding,
@@ -50,6 +51,7 @@ class HomeLayoutMetrics {
     required this.bottomNavFontSize,
     required this.contentBottomSpacing,
     required this.notificationBadgeSize,
+    required this.quickActionPadding,
   });
 
   factory HomeLayoutMetrics.fromContext(BuildContext context) {
@@ -90,15 +92,16 @@ class HomeLayoutMetrics {
     final combinedScale = (scaleFactor + heightScaleFactor) / 2;
 
     return HomeLayoutMetrics(
-      headerTopPadding: (safeAreaTop + (20 * combinedScale)).clamp(30.0, 120.0),
-      headerHorizontalPadding: (screenWidth * 0.05).clamp(16.0, 24.0),
+      headerTopPadding: (safeAreaTop + (18 * combinedScale)).clamp(30.0, 110.0),
+      headerHorizontalPadding: (screenWidth * 0.04).clamp(16.0, 24.0),
       headerBottomPadding: (4 * combinedScale).clamp(8.0, 20.0),
+      quickActionPadding: (screenHeight * 0.01).clamp(12.0, 32.0),
       profileImageSize: (40 * combinedScale).clamp(48.0, 72.0),
       userNameFontSize: context.responsiveFont(16),
       userTaglineFontSize: context.responsiveFont(12),
       iconSize: context.responsiveImage(20),
       sectionTitleFontSize: context.responsiveFont(24),
-      sectionSpacing: (screenHeight * 0.02).clamp(16.0, 32.0),
+      sectionSpacing: (screenHeight * 0.02).clamp(18.0, 32.0),
       cardPadding: (screenWidth * 0.04).clamp(10.0, 18.0),
       cardBorderRadius: (20 * combinedScale).clamp(16.0, 24.0),
       upcomingPlansCardPadding: (24 * combinedScale).clamp(20.0, 32.0),

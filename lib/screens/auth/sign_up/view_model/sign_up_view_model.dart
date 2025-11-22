@@ -7,7 +7,8 @@ import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/screens/auth/common/models/social_button_model.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
 import 'package:love_connect/screens/auth/sign_up/model/sign_up_model.dart';
-import 'package:love_connect/screens/home/view/home_view.dart';
+import 'package:love_connect/screens/auth/verification/view/verification_view.dart';
+import 'package:love_connect/screens/home/view/main_navigation_view.dart';
 
 import '../../../../core/models/auth/auth_result.dart';
 
@@ -53,9 +54,9 @@ class SignUpViewModel extends GetxController {
           duration: const Duration(seconds: 4),
         );
 
-        // Navigate to home screen after successful signup
+        // Navigate to verification screen after successful signup
         SmoothNavigator.offAll(
-          () => const HomeView(),
+          () => VerificationView(email: emailController.text.trim()),
           transition: Transition.fadeIn,
           duration: SmoothNavigator.slowDuration,
         );
@@ -110,9 +111,9 @@ class SignUpViewModel extends GetxController {
       }
 
       if (result.success) {
-        // Navigate to home screen after successful signup
+        // Navigate to home screen with navbar after successful signup
         SmoothNavigator.offAll(
-          () => const HomeView(),
+          () => const MainNavigationView(),
           transition: Transition.fadeIn,
           duration: SmoothNavigator.slowDuration,
         );

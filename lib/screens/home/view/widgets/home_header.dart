@@ -125,17 +125,29 @@ class HomeHeader extends StatelessWidget {
                     right: 6,
                     top: 6,
                     child: Container(
-                      width: metrics.notificationBadgeSize,
-                      height: metrics.notificationBadgeSize,
+                      constraints: BoxConstraints(
+                        minWidth: metrics.notificationBadgeSize,
+                        minHeight: metrics.notificationBadgeSize,
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: notificationCount > 9 ? 4 : 0,
+                      ),
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
+                        shape: notificationCount > 9 
+                            ? BoxShape.rectangle 
+                            : BoxShape.circle,
+                        borderRadius: notificationCount > 9 
+                            ? BorderRadius.circular(metrics.notificationBadgeSize / 2)
+                            : null,
                         color: AppColors.primaryRed,
                       ),
                       child: Center(
                         child: Text(
-                          notificationCount.toString(),
+                          notificationCount > 99 ? '99+' : notificationCount.toString(),
                           style: GoogleFonts.inter(
-                            fontSize: metrics.notificationBadgeSize * 0.55,
+                            fontSize: notificationCount > 9 
+                                ? metrics.notificationBadgeSize * 0.45
+                                : metrics.notificationBadgeSize * 0.55,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),

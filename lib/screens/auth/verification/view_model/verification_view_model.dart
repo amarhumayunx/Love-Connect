@@ -1,61 +1,126 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:get/get.dart';
-import 'package:love_connect/core/strings/auth_strings.dart';
+import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
+import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/screens/auth/verification/model/verification_model.dart';
+import 'package:love_connect/screens/home/view/main_navigation_view.dart';
 
 class VerificationViewModel extends GetxController {
   final VerificationModel model = const VerificationModel();
+  final AuthService _authService = AuthService();
   final RxString statusMessage = ''.obs;
-  final List<TextEditingController> otpControllers = List.generate(
-    5,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> focusNodes = List.generate(5, (_) => FocusNode());
+  final RxBool isLoading = false.obs;
+  final RxBool isChecking = false.obs;
+  Timer? _verificationCheckTimer;
 
-  String get otpCode =>
-      otpControllers.map((controller) => controller.text).join();
+  @override
+  void onInit() {
+    super.onInit();
+    // Start periodic check for email verification
+    _startVerificationCheck();
+  }
 
-  void onChangedOtp(String value, int index) {
-    if (value.length == 1 && index < focusNodes.length - 1) {
-      focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      focusNodes[index - 1].requestFocus();
+  void _startVerificationCheck() {
+    // Check every 3 seconds
+    _verificationCheckTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _checkEmailVerification(),
+    );
+  }
+
+  Future<void> _checkEmailVerification() async {
+    if (isChecking.value) return;
+
+    try {
+      await _authService.reloadUser();
+      final isVerified = _authService.isEmailVerified;
+
+      if (isVerified) {
+        _verificationCheckTimer?.cancel();
+        // Navigate to home screen
+        SmoothNavigator.offAll(
+          () => const MainNavigationView(),
+          transition: Transition.fadeIn,
+          duration: SmoothNavigator.slowDuration,
+        );
+        SnackbarHelper.showSafe(
+          title: 'Email Verified',
+          message: 'Your email has been successfully verified!',
+        );
+      }
+    } catch (e) {
+      // Silently handle errors during automatic check
     }
   }
 
-  void onVerifyTap() {
-    if (otpCode.length != otpControllers.length) {
+  Future<void> onVerifyTap() async {
+    if (isLoading.value) return;
+
+    isLoading.value = true;
+    isChecking.value = true;
+
+    try {
+      await _authService.reloadUser();
+      final isVerified = _authService.isEmailVerified;
+
+      if (isVerified) {
+        _verificationCheckTimer?.cancel();
+        // Navigate to home screen
+        SmoothNavigator.offAll(
+          () => const MainNavigationView(),
+          transition: Transition.fadeIn,
+          duration: SmoothNavigator.slowDuration,
+        );
+        SnackbarHelper.showSafe(
+          title: 'Email Verified',
+          message: 'Your email has been successfully verified!',
+        );
+      } else {
+        SnackbarHelper.showSafe(
+          title: 'Not Verified Yet',
+          message: 'Please check your email and click the verification link.',
+        );
+      }
+    } catch (e) {
       SnackbarHelper.showSafe(
-        title: AuthStrings.verifyCode,
-        message: 'Enter the complete code',
+        title: 'Error',
+        message: 'Failed to check verification status. Please try again.',
       );
-      return;
+    } finally {
+      isLoading.value = false;
+      isChecking.value = false;
     }
-
-    SnackbarHelper.showSafe(
-      title: AuthStrings.verifyCode,
-      message: AuthStrings.codeVerified,
-    );
   }
 
-  void onResendTap() {
-    otpControllers.forEach((controller) => controller.clear());
-    focusNodes.first.requestFocus();
-    SnackbarHelper.showSafe(
-      title: AuthStrings.resendCode,
-      message: AuthStrings.codeSent,
-    );
+  Future<void> onResendTap() async {
+    if (isLoading.value) return;
+
+    isLoading.value = true;
+
+    try {
+      final result = await _authService.resendEmailVerification();
+
+      if (result.success) {
+        SnackbarHelper.showSafe(
+          title: 'Email Sent',
+          message: 'Verification email has been sent. Please check your inbox.',
+          duration: const Duration(seconds: 4),
+        );
+      } else {
+        SnackbarHelper.showSafe(
+          title: 'Failed to Send Email',
+          message: result.errorMessage ?? 'An error occurred. Please try again.',
+        );
+      }
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override
   void onClose() {
-    for (final controller in otpControllers) {
-      controller.dispose();
-    }
-    for (final node in focusNodes) {
-      node.dispose();
-    }
+    _verificationCheckTimer?.cancel();
     super.onClose();
   }
 }

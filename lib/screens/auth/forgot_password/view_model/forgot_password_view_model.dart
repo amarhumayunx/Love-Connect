@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
-import 'package:love_connect/core/strings/auth_strings.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/screens/auth/forgot_password/model/forgot_password_model.dart';

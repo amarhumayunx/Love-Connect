@@ -9,7 +9,8 @@ import 'package:love_connect/screens/auth/common/models/social_button_model.dart
 import 'package:love_connect/screens/auth/forgot_password/view/forgot_password_view.dart';
 import 'package:love_connect/screens/auth/login/model/login_model.dart';
 import 'package:love_connect/screens/auth/sign_up/view/sign_up_view.dart';
-import 'package:love_connect/screens/home/view/home_view.dart';
+import 'package:love_connect/screens/auth/verification/view/verification_view.dart';
+import 'package:love_connect/screens/home/view/main_navigation_view.dart';
 
 import '../../../../core/models/auth/auth_result.dart';
 
@@ -76,12 +77,28 @@ class LoginViewModel extends GetxController {
           await _prefsService.clearRememberedEmail();
         }
         
-        // Navigate to home screen after successful login
-        SmoothNavigator.offAll(
-          () => const HomeView(),
-          transition: Transition.fadeIn,
-          duration: SmoothNavigator.slowDuration,
-        );
+        // Check if email is verified
+        await _authService.reloadUser();
+        final isVerified = _authService.isEmailVerified;
+        
+        if (!isVerified) {
+          // Send verification email
+          await _authService.resendEmailVerification();
+          
+          // Navigate to verification screen
+          SmoothNavigator.offAll(
+            () => VerificationView(email: email),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        } else {
+          // Navigate to home screen with navbar after successful login
+          SmoothNavigator.offAll(
+            () => const MainNavigationView(),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        }
       } else {
         // Show user-friendly error message for authentication failures
         String errorMessage = 'Wrong email or password';
@@ -138,9 +155,9 @@ class LoginViewModel extends GetxController {
       }
 
       if (result.success) {
-        // Navigate to home screen after successful login
+        // Navigate to home screen with navbar after successful login
         SmoothNavigator.offAll(
-          () => const HomeView(),
+          () => const MainNavigationView(),
           transition: Transition.fadeIn,
           duration: SmoothNavigator.slowDuration,
         );

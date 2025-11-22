@@ -19,7 +19,7 @@ class HomeBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => Container(
+          () => Container(
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -31,64 +31,54 @@ class HomeBottomNav extends StatelessWidget {
           ],
         ),
         child: SafeArea(
-          top: false,
+          top: false, // Only respect bottom safe area
           child: SizedBox(
             height: metrics.bottomNavHeight,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: metrics.quickActionGridSpacing * 0.67,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: viewModel.bottomNavItems.map((item) {
-                  final isSelected =
-                      viewModel.selectedBottomNavIndex.value == item.index;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => viewModel.onBottomNavTap(item.index),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              item.iconPath,
-                              width: metrics.bottomNavIconSize,
-                              height: metrics.bottomNavIconSize,
-                              colorFilter: ColorFilter.mode(
-                                isSelected
-                                    ? AppColors.textDarkPink
-                                    : AppColors.textLightPink,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                            SizedBox(height: metrics.quickActionGridSpacing * 0.2),
-                            Text(
-                              item.label,
-                              style: GoogleFonts.inter(
-                                fontSize: metrics.bottomNavFontSize,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? AppColors.textDarkPink
-                                    : AppColors.textLightPink,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: viewModel.bottomNavItems.map((item) {
+                final isSelected =
+                    viewModel.selectedBottomNavIndex.value == item.index;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => viewModel.onBottomNavTap(item.index),
+                    behavior: HitTestBehavior.opaque,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          item.iconPath,
+                          width: metrics.bottomNavIconSize,
+                          height: metrics.bottomNavIconSize,
+                          colorFilter: ColorFilter.mode(
+                            isSelected
+                                ? AppColors.primaryRed
+                                : AppColors.textLightPink,
+                            BlendMode.srcIn,
+                          ),
                         ),
-                      ),
+                        SizedBox(height: metrics.quickActionGridSpacing * 0.2),
+                        Text(
+                          item.label,
+                          style: GoogleFonts.inter(
+                            fontSize: metrics.bottomNavFontSize,
+                            fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primaryRed
+                                : AppColors.textLightPink,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -96,4 +86,3 @@ class HomeBottomNav extends StatelessWidget {
     );
   }
 }
-

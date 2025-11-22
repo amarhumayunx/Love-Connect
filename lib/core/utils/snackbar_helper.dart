@@ -82,7 +82,7 @@ class SnackbarHelper {
               ),
             ],
           ),
-          backgroundColor: backgroundColor ?? AppColors.primaryRed.withOpacity(0.9),
+          backgroundColor: backgroundColor ?? AppColors.primaryRed.withValues(alpha: 0.9),
           duration: duration ?? const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),

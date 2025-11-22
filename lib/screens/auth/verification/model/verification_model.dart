@@ -1,5 +1,3 @@
-import 'package:love_connect/core/strings/auth_strings.dart';
-
 class VerificationModel {
   final String title;
   final String subtitle;
@@ -7,9 +5,9 @@ class VerificationModel {
   final String resendText;
 
   const VerificationModel({
-    this.title = AuthStrings.verificationTitle,
-    this.subtitle = AuthStrings.verificationSubtitle,
-    this.verifyButtonText = AuthStrings.verifyCode,
-    this.resendText = AuthStrings.resendCode,
+    this.title = 'Verify Your Email',
+    this.subtitle = 'We\'ve sent a verification link to your email',
+    this.verifyButtonText = 'Check Verification Status',
+    this.resendText = 'Resend Verification Email',
   });
 }

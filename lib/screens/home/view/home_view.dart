@@ -106,164 +106,160 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
       child: Scaffold(
         backgroundColor: AppColors.backgroundPink,
         body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-
-            SizedBox(height: 8,),
-            // Header
-            Obx(
-              () => HomeHeader(
-                userName: viewModel.userName.value,
-                userTagline: viewModel.userTagline.value,
-                onSearchTap: viewModel.onSearchTap,
-                onNotificationTap: viewModel.onNotificationTap,
-                notificationCount: viewModel.notificationCount.value,
-                metrics: metrics,
+          opacity: _fadeAnimation,
+          child: Column(
+            children: [
+              // Header
+              Obx(
+                    () => HomeHeader(
+                  userName: viewModel.userName.value,
+                  userTagline: viewModel.userTagline.value,
+                  onSearchTap: viewModel.onSearchTap,
+                  onNotificationTap: viewModel.onNotificationTap,
+                  notificationCount: viewModel.notificationCount.value,
+                  metrics: metrics,
+                ),
               ),
-            ),
-            SizedBox(height: 4,),
+              SizedBox(height: 4,),
 
-            Center(
-              child: Container(
-                width: 290,         // Divider width
-                height: 1,          // Thickness
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      AppColors.accentPeach,
-                      AppColors.primaryRed,
-                      AppColors.accentPeach,
-                    ],
-                    stops: [0.0, 0.5, 1.0], // midpoint darkest
+              Center(
+                child: Container(
+                  width: 290,         // Divider width
+                  height: 1,          // Thickness
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        AppColors.accentPeach,
+                        AppColors.primaryRed,
+                        AppColors.accentPeach,
+                      ],
+                      stops: [0.0, 0.5, 1.0], // midpoint darkest
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 4,),
+              SizedBox(height: 4,),
 
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Upcoming Plans Section
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: metrics.cardPadding,
-                          right: metrics.cardPadding,
-                          top: metrics.sectionSpacing * 0.5,
-                          bottom: metrics.sectionSpacing * 0.2,
-                        ),
-                        child: Text(
-                          viewModel.model.upcomingPlansTitle,
-                          style: GoogleFonts.inter(
-                            fontSize: metrics.sectionTitleFontSize,
-                            fontWeight: FontWeight.normal,
-                            color: AppColors.textDarkPink,
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Upcoming Plans Section
+                        Padding(
+                          padding: EdgeInsets.only(
+                            left: metrics.cardPadding,
+                            right: metrics.cardPadding,
+                            top: metrics.sectionSpacing * 0.5,
+                            bottom: metrics.sectionSpacing * 0.2,
+                          ),
+                          child: Text(
+                            viewModel.model.upcomingPlansTitle,
+                            style: GoogleFonts.inter(
+                              fontSize: metrics.sectionTitleFontSize,
+                              fontWeight: FontWeight.normal,
+                              color: AppColors.textDarkPink,
+                            ),
                           ),
                         ),
-                      ),
-                      UpcomingPlansCard(
-                        message: viewModel.model.noPlansMessage,
-                        buttonText: viewModel.model.addPlanButtonText,
-                        onAddTap: viewModel.onAddPlanTap,
-                        metrics: metrics,
-                      ),
-
-                      // Quick Actions Section
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: metrics.cardPadding,
-                          right: metrics.cardPadding,
-                          top: metrics.sectionSpacing,
-                        ),
-                        child: Text(
-                          viewModel.model.quickActionsTitle,
-                          style: GoogleFonts.inter(
-                            fontSize: metrics.sectionTitleFontSize,
-                            fontWeight: FontWeight.normal,
-                            color: AppColors.textDarkPink,
+                        Obx(
+                          () => UpcomingPlansCard(
+                            message: viewModel.model.noPlansMessage,
+                            buttonText: viewModel.model.addPlanButtonText,
+                            onAddTap: () => viewModel.onAddPlanTap(),
+                            onEditPlan: (plan) => viewModel.editPlan(plan),
+                            onDeletePlan: (planId) => viewModel.deletePlan(planId),
+                            plans: viewModel.plans.toList(),
+                            metrics: metrics,
                           ),
                         ),
-                      ),
 
-                      // Quick Actions Grid
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: metrics.cardPadding,
-                          right: metrics.cardPadding,
-                          top: 0,
-                        ),
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: metrics.quickActionGridSpacing,
-                            mainAxisSpacing: metrics.quickActionGridSpacing,
-                            childAspectRatio: 100 / 92,
+                        // Quick Actions Section
+                        Padding(
+                          padding: EdgeInsets.only(
+                            left: metrics.cardPadding,
+                            right: metrics.cardPadding,
+                            top: metrics.quickActionPadding,
                           ),
-                          itemCount: viewModel.quickActions.length,
-                          itemBuilder: (context, index) {
-                            final action = viewModel.quickActions[index];
-                            return TweenAnimationBuilder<double>(
-                              duration: Duration(
-                                milliseconds: 400 + (index * 100),
-                              ),
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              curve: Curves.easeOutBack,
-                              builder: (context, value, child) {
-                                // Clamp opacity to valid range [0.0, 1.0]
-                                final clampedOpacity = value.clamp(0.0, 1.0);
-                                return Transform.scale(
-                                  scale: value,
-                                  child: Opacity(
-                                    opacity: clampedOpacity,
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: QuickActionCard(
-                                title: action.title,
-                                iconPath: action.iconPath,
-                                onTap: () =>
-                                    viewModel.onQuickActionTap(action),
-                                metrics: metrics,
-                              ),
-                            );
-                          },
+                          child: Text(
+                            viewModel.model.quickActionsTitle,
+                            style: GoogleFonts.inter(
+                              fontSize: metrics.sectionTitleFontSize,
+                              fontWeight: FontWeight.normal,
+                              color: AppColors.textDarkPink,
+                            ),
+                          ),
                         ),
-                      ),
 
-                      // Bottom spacing
-                      SizedBox(height: metrics.contentBottomSpacing),
-                    ],
+                        // Quick Actions Grid
+                        Padding(
+                          padding: EdgeInsets.only(
+                            left: metrics.cardPadding,
+                            right: metrics.cardPadding,
+                            top: metrics.quickActionPadding,
+                          ),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: metrics.quickActionGridSpacing,
+                              mainAxisSpacing: metrics.quickActionGridSpacing,
+                              childAspectRatio: 100 / 92,
+                            ),
+                            itemCount: viewModel.quickActions.length,
+                            itemBuilder: (context, index) {
+                              final action = viewModel.quickActions[index];
+                              return TweenAnimationBuilder<double>(
+                                duration: Duration(
+                                  milliseconds: 400 + (index * 100),
+                                ),
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                curve: Curves.easeOutBack,
+                                builder: (context, value, child) {
+                                  // Clamp opacity to valid range [0.0, 1.0]
+                                  final clampedOpacity = value.clamp(0.0, 1.0);
+                                  return Transform.scale(
+                                    scale: value,
+                                    child: Opacity(
+                                      opacity: clampedOpacity,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: QuickActionCard(
+                                  title: action.title,
+                                  iconPath: action.iconPath,
+                                  onTap: () =>
+                                      viewModel.onQuickActionTap(action),
+                                  metrics: metrics,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        // Bottom spacing
+                        SizedBox(height: metrics.contentBottomSpacing),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-
-            // Bottom Navigation
-            HomeBottomNav(
-              viewModel: viewModel,
-              metrics: metrics,
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
 }
-

@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:love_connect/core/models/auth/auth_result.dart';
 
 /// Authentication service for handling all authentication methods
@@ -13,7 +15,28 @@ class AuthService {
   AuthService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  
+  // GoogleSignIn 7.0+ uses singleton pattern - GoogleSignIn.instance
+  // Configuration is done through initialize() method
+  GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
+  
+  // Initialize GoogleSignIn with platform-specific settings
+  Future<void> _initializeGoogleSignIn() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      // iOS configuration: clientId for native sign-in, serverClientId for Firebase Auth
+      await _googleSignIn.initialize(
+        clientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com', // iOS Client ID
+        serverClientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com', // Use iOS client ID as serverClientId (ideally should be Web Client ID)
+      );
+    } else {
+      // Android configuration: serverClientId optional if SHA-1 is configured, but recommended
+      await _googleSignIn.initialize(
+        // serverClientId is optional for Android if SHA-1 is configured in Firebase Console
+        // Uncomment below and add your Web Client ID if you have one
+        // serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+      );
+    }
+  }
 
   /// Get current user
   User? get currentUser => _auth.currentUser;
@@ -125,47 +148,169 @@ class AuthService {
   /// Sign in with Google
   Future<AuthResult> signInWithGoogle() async {
     try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
+      await _setupGoogleSignIn();
+      
+      final googleUser = await _authenticateWithGoogle();
       if (googleUser == null) {
-        // User canceled the sign-in
         return AuthResult.failure(
           errorMessage: 'Sign in was canceled',
           errorCode: 'sign-in-canceled',
         );
       }
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
-
-      return AuthResult.success(
-        userId: userCredential.user?.uid,
-        email: userCredential.user?.email,
-        displayName: userCredential.user?.displayName,
-      );
+      final credential = await _createFirebaseCredential(googleUser);
+      return await _signInToFirebase(credential);
     } on FirebaseAuthException catch (e) {
       return AuthResult.failure(
         errorMessage: _getErrorMessage(e.code),
         errorCode: e.code,
       );
     } catch (e) {
-      return AuthResult.failure(
-        errorMessage: 'Google sign in failed. Please try again.',
-        errorCode: 'google-sign-in-failed',
-      );
+      return _handleGoogleSignInError(e);
     }
+  }
+
+  /// Setup and initialize GoogleSignIn
+  Future<void> _setupGoogleSignIn() async {
+    final googleSignIn = _googleSignIn;
+    await _initializeGoogleSignIn();
+    await googleSignIn.signOut();
+  }
+
+  /// Authenticate with Google using event-based API (version 7.0+)
+  Future<GoogleSignInAccount?> _authenticateWithGoogle() async {
+    final googleSignIn = _googleSignIn;
+    GoogleSignInAccount? googleUser;
+    final completer = Completer<void>();
+
+    final subscription = _setupAuthenticationEventListener(
+      googleSignIn,
+      completer,
+      (user) => googleUser = user,
+    );
+
+    try {
+      await _triggerAuthentication(googleSignIn, subscription);
+      await _waitForAuthentication(completer, subscription);
+    } catch (e) {
+      subscription.cancel();
+      if (e is TimeoutException) {
+        throw Exception('Sign-in timed out. Please try again.');
+      }
+      rethrow;
+    } finally {
+      subscription.cancel();
+    }
+
+    return googleUser;
+  }
+
+  /// Setup authentication event listener
+  StreamSubscription<GoogleSignInAuthenticationEvent> _setupAuthenticationEventListener(
+    GoogleSignIn googleSignIn,
+    Completer<void> completer,
+    void Function(GoogleSignInAccount) onSignIn,
+  ) {
+    return googleSignIn.authenticationEvents.listen((event) {
+      if (event is GoogleSignInAuthenticationEventSignIn) {
+        onSignIn(event.user);
+        if (!completer.isCompleted) completer.complete();
+      } else if (event is GoogleSignInAuthenticationEventSignOut) {
+        if (!completer.isCompleted) completer.complete();
+      }
+    });
+  }
+
+  /// Trigger Google authentication
+  Future<void> _triggerAuthentication(
+    GoogleSignIn googleSignIn,
+    StreamSubscription subscription,
+  ) async {
+    if (!googleSignIn.supportsAuthenticate()) {
+      subscription.cancel();
+      throw Exception('Google sign in is not supported on this platform.');
+    }
+
+    try {
+      await googleSignIn.authenticate(scopeHint: ['email', 'profile']);
+    } catch (e) {
+      subscription.cancel();
+      if (e.toString().contains('canceled') || e.toString().contains('cancelled')) {
+        throw Exception('Sign in was canceled');
+      }
+      throw Exception('Google sign in failed: ${e.toString()}');
+    }
+  }
+
+  /// Wait for authentication event with timeout
+  Future<void> _waitForAuthentication(
+    Completer<void> completer,
+    StreamSubscription subscription,
+  ) async {
+    try {
+      await completer.future.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          subscription.cancel();
+          throw TimeoutException('Sign-in timed out');
+        },
+      );
+    } catch (e) {
+      subscription.cancel();
+      if (e is TimeoutException) {
+        throw Exception('Sign-in timed out. Please try again.');
+      }
+      rethrow;
+    }
+  }
+
+  /// Create Firebase credential from Google authentication
+  Future<OAuthCredential> _createFirebaseCredential(
+    GoogleSignInAccount googleUser,
+  ) async {
+    final googleAuth = await googleUser.authentication;
+    final idToken = googleAuth.idToken;
+
+    if (idToken == null || idToken.isEmpty) {
+      throw Exception('Failed to get authentication token. Please try again.');
+    }
+
+    return GoogleAuthProvider.credential(
+      accessToken: null, // accessToken is optional when idToken is present
+      idToken: idToken,
+    );
+  }
+
+  /// Sign in to Firebase with Google credential
+  Future<AuthResult> _signInToFirebase(OAuthCredential credential) async {
+    final userCredential = await _auth.signInWithCredential(credential);
+    return AuthResult.success(
+      userId: userCredential.user?.uid,
+      email: userCredential.user?.email,
+      displayName: userCredential.user?.displayName,
+    );
+  }
+
+  /// Handle Google Sign-In errors
+  AuthResult _handleGoogleSignInError(dynamic e) {
+    String errorMessage = 'Google sign in failed. Please try again.';
+    
+    if (e.toString().contains('network')) {
+      errorMessage = 'Network error. Please check your internet connection.';
+    } else if (e.toString().contains('sign_in_canceled') || 
+               e.toString().contains('canceled')) {
+      return AuthResult.failure(
+        errorMessage: 'Sign in was canceled',
+        errorCode: 'sign-in-canceled',
+      );
+    } else if (e.toString().isNotEmpty) {
+      errorMessage = e.toString().replaceFirst('Exception: ', '');
+    }
+    
+    return AuthResult.failure(
+      errorMessage: errorMessage,
+      errorCode: 'google-sign-in-failed',
+    );
   }
 
   /// Sign up with Google (same as sign in, but creates account if doesn't exist)

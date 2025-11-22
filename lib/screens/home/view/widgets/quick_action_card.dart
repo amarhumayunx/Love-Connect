@@ -30,7 +30,7 @@ class QuickActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppColors.textLightPink.withOpacity(0.1),
+              color: AppColors.textLightPink.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -49,6 +49,10 @@ class QuickActionCard extends StatelessWidget {
                 iconPath,
                 width: metrics.quickActionIconSize,
                 height: metrics.quickActionIconSize,
+                colorFilter: ColorFilter.mode(
+                  AppColors.textDarkPink,
+                  BlendMode.srcIn,
+                ),
               ),
               SizedBox(height: 8),
               Text(

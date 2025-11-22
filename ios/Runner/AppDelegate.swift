@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import GoogleSignIn
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -9,5 +10,17 @@ import UIKit
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+  
+  override func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    // Handle Google Sign-In URL callback
+    if GIDSignIn.sharedInstance.handle(url) {
+      return true
+    }
+    return super.application(app, open: url, options: options)
   }
 }
