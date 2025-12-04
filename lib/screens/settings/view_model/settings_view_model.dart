@@ -5,7 +5,13 @@ import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
-import 'package:love_connect/screens/profile/model/settings_model.dart';
+import 'package:love_connect/screens/settings/model/settings_model.dart';
+import 'package:love_connect/screens/settings/change_password/view/change_password_view.dart';
+import 'package:love_connect/screens/settings/terms_privacy/view/terms_of_service_view.dart';
+import 'package:love_connect/screens/settings/terms_privacy/view/privacy_policy_view.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
 
 class SettingsViewModel extends GetxController {
@@ -33,8 +39,12 @@ class SettingsViewModel extends GetxController {
   }
 
   Future<void> loadAppVersion() async {
-    // App version from pubspec.yaml - version: 1.0.0+1
-    appVersion.value = '1.0.0 (1)';
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      appVersion.value = '${packageInfo.version} (${packageInfo.buildNumber})';
+    } catch (e) {
+      appVersion.value = '1.0.0 (1)';
+    }
   }
 
   Map<String, bool> _getDefaultSettings() {
@@ -109,40 +119,106 @@ class SettingsViewModel extends GetxController {
 
   Future<void> contactSupport() async {
     final email = 'support@loveconnect.app';
-    SnackbarHelper.showSafe(
-      title: 'Contact Support',
-      message: 'Email: $email',
-      duration: const Duration(seconds: 5),
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: email,
+      query: 'subject=Love Connect Support Request',
     );
+
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+      } else {
+        // Fallback: Copy email to clipboard
+        await Clipboard.setData(ClipboardData(text: email));
+        SnackbarHelper.showSafe(
+          title: 'Email Copied',
+          message: 'Email address copied to clipboard: $email',
+          duration: const Duration(seconds: 5),
+        );
+      }
+    } catch (e) {
+      // Fallback: Copy email to clipboard
+      await Clipboard.setData(ClipboardData(text: email));
+      SnackbarHelper.showSafe(
+        title: 'Email Copied',
+        message: 'Email address copied to clipboard: $email',
+        duration: const Duration(seconds: 5),
+      );
+    }
   }
 
   Future<void> rateApp() async {
-    SnackbarHelper.showSafe(
-      title: 'Rate App',
-      message: 'Thank you for using Love Connect! Rating feature coming soon.',
-    );
+    try {
+      // Play Store package name
+      const String packageName = 'com.example.love_connect';
+      
+      // Try to open Play Store
+      final Uri playStoreUri = Uri.parse(
+        'https://play.google.com/store/apps/details?id=$packageName',
+      );
+      
+      // For iOS, use App Store link (you'll need to replace with actual App Store ID)
+      // final Uri appStoreUri = Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID');
+      
+      if (await canLaunchUrl(playStoreUri)) {
+        await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+      } else {
+        SnackbarHelper.showSafe(
+          title: 'Unable to Open',
+          message: 'Could not open Play Store. Please search for "Love Connect" manually.',
+        );
+      }
+    } catch (e) {
+      SnackbarHelper.showSafe(
+        title: 'Error',
+        message: 'Failed to open app store. Please try again later.',
+      );
+    }
   }
 
   Future<void> shareApp() async {
-    final text = 'Check out Love Connect - the perfect app for couples!';
-    await Clipboard.setData(ClipboardData(text: text));
-    SnackbarHelper.showSafe(
-      title: 'Copied to Clipboard',
-      message: 'Share link copied!',
-    );
+    try {
+      const String packageName = 'com.example.love_connect';
+      const String playStoreLink = 'https://play.google.com/store/apps/details?id=$packageName';
+      const String shareText = 'Check out Love Connect - the perfect app for couples!\n\n$playStoreLink';
+      
+      await Share.share(
+        shareText,
+        subject: 'Love Connect - App for Couples',
+      );
+    } catch (e) {
+      // Fallback: Copy to clipboard
+      const String packageName = 'com.example.love_connect';
+      const String playStoreLink = 'https://play.google.com/store/apps/details?id=$packageName';
+      const String shareText = 'Check out Love Connect - the perfect app for couples!\n\n$playStoreLink';
+      
+      await Clipboard.setData(ClipboardData(text: shareText));
+      SnackbarHelper.showSafe(
+        title: 'Link Copied',
+        message: 'App link copied to clipboard!',
+      );
+    }
   }
 
   void showTermsOfService() {
-    SnackbarHelper.showSafe(
-      title: 'Terms of Service',
-      message: 'Terms of Service will be available soon.',
+    SmoothNavigator.to(
+      () => const TermsOfServiceView(),
+      transition: Transition.rightToLeft,
     );
   }
 
   void showPrivacyPolicy() {
-    SnackbarHelper.showSafe(
-      title: 'Privacy Policy',
-      message: 'Privacy Policy will be available soon.',
+    SmoothNavigator.to(
+      () => const PrivacyPolicyView(),
+      transition: Transition.rightToLeft,
+    );
+  }
+
+  void navigateToChangePassword() {
+    SmoothNavigator.to(
+      () => const ChangePasswordView(),
+      transition: Transition.rightToLeft,
     );
   }
 

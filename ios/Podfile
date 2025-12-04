@@ -4,6 +4,9 @@ platform :ios, '15.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Use CDN source for faster and more reliable downloads
+source 'https://cdn.cocoapods.org/'
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,

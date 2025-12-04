@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/models/plan_model.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
+import 'package:love_connect/core/services/plans_database_service.dart';
+import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/add_plan/model/add_plan_model.dart';
 import 'package:uuid/uuid.dart';
 
 class AddPlanViewModel extends GetxController {
   final LocalStorageService _storageService = LocalStorageService();
+  final PlansDatabaseService _plansDbService = PlansDatabaseService();
+  final AuthService _authService = AuthService();
   final Rx<AddPlanModel> model = AddPlanModel().obs;
   final RxBool isSaving = false.obs;
   final String? planId; // If editing
@@ -24,16 +28,50 @@ class AddPlanViewModel extends GetxController {
   }
 
   Future<void> _loadPlan() async {
-    final plans = await _storageService.getPlans();
-    final plan = plans.firstWhereOrNull((p) => p.id == planId);
-    if (plan != null) {
-      model.value = AddPlanModel(
-        title: plan.title,
-        date: plan.date,
-        time: plan.time,
-        place: plan.place,
-        type: plan.type.displayName,
-      );
+    try {
+      final userId = _authService.currentUserId;
+      
+      // Try to load from Firebase first if user is authenticated
+      if (userId != null) {
+        final plans = await _plansDbService.getPlans(userId);
+        final plan = plans.firstWhereOrNull((p) => p.id == planId);
+        if (plan != null) {
+          model.value = AddPlanModel(
+            title: plan.title,
+            date: plan.date,
+            time: plan.time,
+            place: plan.place,
+            type: plan.type.displayName,
+          );
+          return;
+        }
+      }
+      
+      // Fallback to local storage
+      final plans = await _storageService.getPlans();
+      final plan = plans.firstWhereOrNull((p) => p.id == planId);
+      if (plan != null) {
+        model.value = AddPlanModel(
+          title: plan.title,
+          date: plan.date,
+          time: plan.time,
+          place: plan.place,
+          type: plan.type.displayName,
+        );
+      }
+    } catch (e) {
+      // If Firebase fails, try local storage
+      final plans = await _storageService.getPlans();
+      final plan = plans.firstWhereOrNull((p) => p.id == planId);
+      if (plan != null) {
+        model.value = AddPlanModel(
+          title: plan.title,
+          date: plan.date,
+          time: plan.time,
+          place: plan.place,
+          type: plan.type.displayName,
+        );
+      }
     }
   }
 
@@ -96,16 +134,48 @@ class AddPlanViewModel extends GetxController {
         type: planType,
       );
 
-      await _storageService.savePlan(plan);
-      if (onCloseCallback != null) {
-        onCloseCallback!();
-      } else {
-        Get.back(result: true);
+      final userId = _authService.currentUserId;
+      bool savedToFirebase = false;
+
+      // Save to Firebase if user is authenticated
+      if (userId != null) {
+        savedToFirebase = await _plansDbService.savePlan(
+          userId: userId,
+          plan: plan,
+        );
       }
-      SnackbarHelper.showSafe(
-        title: planId != null ? 'Plan Updated' : 'Plan Saved',
-        message: 'Your plan has been saved successfully',
-      );
+
+      // Also save to local storage as backup/fallback
+      try {
+        await _storageService.savePlan(plan);
+      } catch (e) {
+        print('Failed to save plan to local storage: $e');
+      }
+
+      // Show success message
+      if (savedToFirebase || userId == null) {
+        if (onCloseCallback != null) {
+          onCloseCallback!();
+        } else {
+          Get.back(result: true);
+        }
+        SnackbarHelper.showSafe(
+          title: planId != null ? 'Plan Updated' : 'Plan Saved',
+          message: 'Your plan has been saved successfully',
+        );
+      } else {
+        // Saved locally but Firebase failed - still show success but log warning
+        print('Warning: Plan saved locally but Firebase save failed');
+        if (onCloseCallback != null) {
+          onCloseCallback!();
+        } else {
+          Get.back(result: true);
+        }
+        SnackbarHelper.showSafe(
+          title: planId != null ? 'Plan Updated' : 'Plan Saved',
+          message: 'Your plan has been saved locally',
+        );
+      }
     } catch (e) {
       SnackbarHelper.showSafe(
         title: 'Error',

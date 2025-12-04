@@ -81,7 +81,7 @@ class _SplashViewState extends State<SplashView>
       backgroundColor: AppColors.backgroundPink,
       body: SafeArea(
         child: Obx(
-          () => AnimatedOpacity(
+              () => AnimatedOpacity(
             opacity: controller.isFadingOut.value ? 0.0 : 1.0,
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOut,
@@ -110,7 +110,7 @@ class _SplashViewState extends State<SplashView>
                               builder: (context, child) {
                                 return Transform.scale(
                                   scale:
-                                      _scaleAnimation.value *
+                                  _scaleAnimation.value *
                                       _bounceAnimation.value,
                                   child: Opacity(
                                     opacity: _fadeAnimation.value,

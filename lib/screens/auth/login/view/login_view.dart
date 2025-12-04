@@ -7,7 +7,9 @@ import 'package:love_connect/screens/auth/login/view/widgets/login_logo.dart';
 import 'package:love_connect/screens/auth/login/view_model/login_view_model.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+  final String? email;
+  
+  const LoginView({super.key, this.email});
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -19,12 +21,19 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
-    viewModel = Get.put(LoginViewModel());
+    // Use permanent: false to ensure proper disposal
+    viewModel = Get.put(LoginViewModel(), permanent: false);
+    // Pre-fill email if provided
+    if (widget.email != null && widget.email!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        viewModel.emailController.text = widget.email!;
+      });
+    }
   }
 
   @override
   void dispose() {
-    Get.delete<LoginViewModel>();
+    Get.delete<LoginViewModel>(force: true);
     super.dispose();
   }
 

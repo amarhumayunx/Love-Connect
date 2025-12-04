@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:love_connect/core/models/auth/auth_result.dart';
+import 'package:love_connect/core/services/user_database_service.dart';
 
 /// Authentication service for handling all authentication methods
 class AuthService {
@@ -50,6 +51,25 @@ class AuthService {
   /// Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  /// Check if an email exists in Firebase Auth by checking the database
+  /// This is a workaround since fetchSignInMethodsForEmail is not available in Flutter
+  /// We check the database which should be in sync with Firebase Auth
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      if (!_isValidEmail(email)) {
+        return false;
+      }
+
+      // Check database for user existence
+      // The database should be in sync with Firebase Auth
+      final userDbService = UserDatabaseService();
+      return await userDbService.checkUserExistsByEmail(email.trim());
+    } catch (e) {
+      // On any error, return false to be safe
+      return false;
+    }
+  }
+
   /// Sign up with email and password
   Future<AuthResult> signUpWithEmailPassword({
     required String email,
@@ -75,6 +95,8 @@ class AuthService {
       }
 
       // Create user account
+      // Note: password should not be trimmed - preserve exact user input
+      // Email is trimmed but case is preserved (Firebase Auth handles case-insensitivity)
       final UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -84,11 +106,32 @@ class AuthService {
       // Update display name if provided
       if (displayName != null && displayName.isNotEmpty) {
         await userCredential.user?.updateDisplayName(displayName.trim());
-        await userCredential.user?.reload();
+        await _safeReloadUser(userCredential.user);
       }
 
       // Send email verification
       await userCredential.user?.sendEmailVerification();
+
+      // Save user data to Firestore database
+      final userId = userCredential.user?.uid;
+      final userEmail = userCredential.user?.email;
+      if (userId != null && userEmail != null) {
+        final userDbService = UserDatabaseService();
+        await userDbService.saveUserData(
+          userId: userId,
+          email: userEmail,
+          displayName: displayName ?? userCredential.user?.displayName,
+          isEmailVerified: false,
+        );
+      }
+
+      // Verify account was created successfully
+      if (userCredential.user == null) {
+        return AuthResult.failure(
+          errorMessage: 'Account creation failed. Please try again.',
+          errorCode: 'account-creation-failed',
+        );
+      }
 
       return AuthResult.success(
         userId: userCredential.user?.uid,
@@ -96,11 +139,15 @@ class AuthService {
         displayName: userCredential.user?.displayName ?? displayName,
       );
     } on FirebaseAuthException catch (e) {
+      // Log the error for debugging
+      print('Sign up error: ${e.code} - ${e.message}');
       return AuthResult.failure(
         errorMessage: _getErrorMessage(e.code),
         errorCode: e.code,
       );
     } catch (e) {
+      // Log unexpected errors
+      print('Unexpected sign up error: $e');
       return AuthResult.failure(
         errorMessage: 'An unexpected error occurred. Please try again.',
         errorCode: 'unknown-error',
@@ -109,6 +156,7 @@ class AuthService {
   }
 
   /// Sign in with email and password
+  /// This method handles authentication and ensures database sync
   Future<AuthResult> signInWithEmailPassword({
     required String email,
     required String password,
@@ -121,11 +169,45 @@ class AuthService {
         );
       }
 
+      // Note: password should not be trimmed - preserve exact user input
+      // Email is trimmed but case is preserved (Firebase Auth handles case-insensitivity)
       final UserCredential userCredential =
           await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
+
+      // Ensure user data is synced to database after successful login
+      final userId = userCredential.user?.uid;
+      final userEmail = userCredential.user?.email;
+      if (userId != null && userEmail != null) {
+        final userDbService = UserDatabaseService();
+        // Check if user exists in database, if not, create it
+        final userExists = await userDbService.checkUserExistsById(userId);
+        if (!userExists) {
+          // User exists in Firebase Auth but not in database - sync it
+          await userDbService.saveUserData(
+            userId: userId,
+            email: userEmail,
+            displayName: userCredential.user?.displayName,
+            isEmailVerified: userCredential.user?.emailVerified ?? false,
+          );
+        } else {
+          // Update verification status if needed
+          await userDbService.updateEmailVerificationStatus(
+            userId: userId,
+            isVerified: userCredential.user?.emailVerified ?? false,
+          );
+        }
+      }
+
+      // Verify login was successful
+      if (userCredential.user == null) {
+        return AuthResult.failure(
+          errorMessage: 'Login failed. Please check your credentials and try again.',
+          errorCode: 'login-failed',
+        );
+      }
 
       return AuthResult.success(
         userId: userCredential.user?.uid,
@@ -133,11 +215,15 @@ class AuthService {
         displayName: userCredential.user?.displayName,
       );
     } on FirebaseAuthException catch (e) {
+      // Log the error for debugging
+      print('Sign in error: ${e.code} - ${e.message}');
       return AuthResult.failure(
         errorMessage: _getErrorMessage(e.code),
         errorCode: e.code,
       );
     } catch (e) {
+      // Log unexpected errors
+      print('Unexpected sign in error: $e');
       return AuthResult.failure(
         errorMessage: 'An unexpected error occurred. Please try again.',
         errorCode: 'unknown-error',
@@ -146,7 +232,8 @@ class AuthService {
   }
 
   /// Sign in with Google
-  Future<AuthResult> signInWithGoogle() async {
+  /// [skipFirestoreSave] - If true, skips automatic Firestore save (for checking user existence first)
+  Future<AuthResult> signInWithGoogle({bool skipFirestoreSave = false}) async {
     try {
       await _setupGoogleSignIn();
       
@@ -159,7 +246,7 @@ class AuthService {
       }
 
       final credential = await _createFirebaseCredential(googleUser);
-      return await _signInToFirebase(credential);
+      return await _signInToFirebase(credential, saveToFirestore: !skipFirestoreSave);
     } on FirebaseAuthException catch (e) {
       return AuthResult.failure(
         errorMessage: _getErrorMessage(e.code),
@@ -282,8 +369,24 @@ class AuthService {
   }
 
   /// Sign in to Firebase with Google credential
-  Future<AuthResult> _signInToFirebase(OAuthCredential credential) async {
+  Future<AuthResult> _signInToFirebase(OAuthCredential credential, {bool saveToFirestore = true}) async {
     final userCredential = await _auth.signInWithCredential(credential);
+    
+    // Save/update user data to Firestore database for social sign-ins (if enabled)
+    if (saveToFirestore) {
+      final userId = userCredential.user?.uid;
+      final userEmail = userCredential.user?.email;
+      if (userId != null && userEmail != null) {
+        final userDbService = UserDatabaseService();
+        await userDbService.saveUserData(
+          userId: userId,
+          email: userEmail,
+          displayName: userCredential.user?.displayName,
+          isEmailVerified: userCredential.user?.emailVerified ?? false,
+        );
+      }
+    }
+    
     return AuthResult.success(
       userId: userCredential.user?.uid,
       email: userCredential.user?.email,
@@ -314,8 +417,9 @@ class AuthService {
   }
 
   /// Sign up with Google (same as sign in, but creates account if doesn't exist)
-  Future<AuthResult> signUpWithGoogle() async {
-    return signInWithGoogle();
+  /// [skipFirestoreSave] - If true, skips automatic Firestore save (for checking user existence first)
+  Future<AuthResult> signUpWithGoogle({bool skipFirestoreSave = false}) async {
+    return signInWithGoogle(skipFirestoreSave: skipFirestoreSave);
   }
 
   /// Sign in with Apple
@@ -350,8 +454,21 @@ class AuthService {
         final displayName = '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim();
         if (displayName.isNotEmpty) {
           await userCredential.user?.updateDisplayName(displayName);
-          await userCredential.user?.reload();
+          await _safeReloadUser(userCredential.user);
         }
+      }
+
+      // Save/update user data to Firestore database for Apple sign-in
+      final userId = userCredential.user?.uid;
+      final userEmail = userCredential.user?.email ?? appleCredential.email;
+      if (userId != null && userEmail != null) {
+        final userDbService = UserDatabaseService();
+        await userDbService.saveUserData(
+          userId: userId,
+          email: userEmail,
+          displayName: userCredential.user?.displayName,
+          isEmailVerified: userCredential.user?.emailVerified ?? false,
+        );
       }
 
       return AuthResult.success(
@@ -457,9 +574,130 @@ class AuthService {
   /// Check if email is verified
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
+  /// Safely reload user data, handling iOS network errors gracefully
+  /// On iOS, network errors during reload are common and can be safely ignored
+  /// The cached user data is still available and valid
+  /// If user-not-found error occurs, the user is signed out automatically
+  Future<void> _safeReloadUser(User? user) async {
+    if (user == null) return;
+    
+    try {
+      await user.reload();
+    } on FirebaseAuthException catch (e) {
+      // Handle user-not-found error - user was deleted from Firebase
+      if (e.code == 'user-not-found') {
+        // Sign out the user since they no longer exist
+        try {
+          await signOut();
+        } catch (_) {
+          // Ignore errors during sign out
+        }
+        // Silently return - user will be treated as not authenticated
+        return;
+      }
+      
+      // On iOS, network errors during reload are common and can be safely ignored
+      if (e.code == 'network-request-failed') {
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
+          // Silently handle network errors on iOS - cached user data is still valid
+          return;
+        }
+        // Re-throw for other platforms to maintain existing behavior
+        rethrow;
+      }
+      
+      // Handle other common errors that can occur on iOS
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        // On iOS, handle user-disabled and invalid-user-token errors gracefully
+        if (e.code == 'user-disabled' || e.code == 'invalid-user-token') {
+          try {
+            await signOut();
+          } catch (_) {
+            // Ignore errors during sign out
+          }
+          return;
+        }
+      }
+      
+      // Re-throw other FirebaseAuthExceptions
+      rethrow;
+    } catch (e) {
+      // Handle any other exceptions, especially network-related ones on iOS
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('network') || 
+            errorString.contains('timeout') || 
+            errorString.contains('unreachable') ||
+            errorString.contains('interrupted')) {
+          // Silently handle network errors on iOS - cached user data is still valid
+          return;
+        }
+      }
+      // Re-throw for other platforms or non-network errors
+      rethrow;
+    }
+  }
+
   /// Reload user data
+  /// On iOS, network errors are handled gracefully to prevent app crashes
   Future<void> reloadUser() async {
-    await _auth.currentUser?.reload();
+    await _safeReloadUser(_auth.currentUser);
+  }
+
+  /// Change password for authenticated user
+  Future<AuthResult> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return AuthResult.failure(
+          errorMessage: 'No user is currently signed in',
+          errorCode: 'no-user',
+        );
+      }
+
+      // Validate new password strength
+      final passwordValidation = _validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        return AuthResult.failure(
+          errorMessage: passwordValidation.errorMessage,
+          errorCode: 'weak-password',
+        );
+      }
+
+      // Re-authenticate user with current password
+      final email = user.email;
+      if (email == null) {
+        return AuthResult.failure(
+          errorMessage: 'User email not found',
+          errorCode: 'no-email',
+        );
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Update password
+      await user.updatePassword(newPassword);
+
+      return AuthResult.success();
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.failure(
+        errorMessage: _getErrorMessage(e.code),
+        errorCode: e.code,
+      );
+    } catch (e) {
+      return AuthResult.failure(
+        errorMessage: 'Failed to change password. Please try again.',
+        errorCode: 'unknown-error',
+      );
+    }
   }
 
   // Private helper methods
@@ -510,29 +748,39 @@ class AuthService {
   String _getErrorMessage(String code) {
     switch (code) {
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'Password is too weak. Please use at least 8 characters with uppercase, lowercase, numbers, and special characters.';
       case 'email-already-in-use':
-        return 'An account already exists with this email address.';
+        return 'An account already exists with this email address. Please sign in instead.';
       case 'invalid-email':
-        return 'The email address is invalid.';
+        return 'Please enter a valid email address.';
       case 'user-disabled':
-        return 'This user account has been disabled.';
+        return 'This account has been disabled. Please contact support for assistance.';
       case 'user-not-found':
-        return 'No account found with this email address.';
+        // For security, don't reveal if email exists or not
+        return 'Invalid email or password. Please check your credentials and try again.';
       case 'wrong-password':
-        return 'Incorrect password. Please try again.';
+        // For security, don't reveal if email exists or not
+        return 'Invalid email or password. Please check your credentials and try again.';
       case 'invalid-credential':
-        return 'The credential is invalid or has expired.';
+        return 'Invalid email or password. Please check your credentials and try again.';
       case 'account-exists-with-different-credential':
-        return 'An account already exists with the same email but different sign-in credentials.';
+        return 'An account already exists with this email but uses a different sign-in method. Please use the original sign-in method.';
       case 'operation-not-allowed':
-        return 'This sign-in method is not enabled.';
+        return 'This sign-in method is not enabled. Please contact support.';
       case 'too-many-requests':
-        return 'Too many requests. Please try again later.';
+        return 'Too many failed attempts. Please wait a few minutes before trying again.';
       case 'network-request-failed':
-        return 'Network error. Please check your internet connection.';
+        return 'Network error. Please check your internet connection and try again.';
+      case 'requires-recent-login':
+        return 'For security, please sign out and sign in again to perform this action.';
+      case 'invalid-verification-code':
+        return 'Invalid verification code. Please check and try again.';
+      case 'invalid-verification-id':
+        return 'Verification session expired. Please try again.';
+      case 'session-expired':
+        return 'Your session has expired. Please sign in again.';
       default:
-        return 'An error occurred. Please try again.';
+        return 'An unexpected error occurred. Please try again.';
     }
   }
 

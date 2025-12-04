@@ -305,7 +305,7 @@ class _AddPlanViewState extends State<AddPlanView> {
                         ),
                       ],
                     ),
-                    SizedBox(height: metrics.sectionSpacing * 2),
+                    SizedBox(height: metrics.sectionSpacing * 4),
                   ],
                 ),
               ),

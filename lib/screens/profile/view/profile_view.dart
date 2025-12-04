@@ -6,8 +6,7 @@ import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/profile/view_model/profile_view_model.dart';
-import 'package:love_connect/screens/profile/view_model/settings_view_model.dart';
-import 'package:love_connect/core/utils/snackbar_helper.dart';
+import 'package:love_connect/screens/settings/view_model/settings_view_model.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -177,26 +176,10 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                           _buildDivider(),
                           _buildSettingTile(
-                            'Change Email',
-                            Icons.email_outlined,
-                            onTap: () {
-                              SnackbarHelper.showSafe(
-                                title: 'Change Email',
-                                message: 'Email change coming soon',
-                              );
-                            },
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
                             'Change Password',
                             Icons.lock_outline,
                             onTap: () {
-                              SnackbarHelper.showSafe(
-                                title: 'Change Password',
-                                message: 'Password change coming soon',
-                              );
+                              settingsViewModel.navigateToChangePassword();
                             },
                             metrics: metrics,
                             context: context,
@@ -227,83 +210,6 @@ class _ProfileViewState extends State<ProfileView> {
                             settingsViewModel,
                             metrics,
                             context,
-                          ),
-                          _buildDivider(),
-                          _buildToggleTile(
-                            'Email Notifications',
-                            'emailNotifications',
-                            Icons.email_outlined,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                        ],
-                        metrics,
-                      ),
-
-                      SizedBox(height: metrics.sectionSpacing),
-
-                      // Privacy & Security Section
-                      _buildSection(
-                        'Privacy & Security',
-                        [
-                          _buildToggleTile(
-                            'Private Journal',
-                            'privateJournal',
-                            Icons.lock_outline,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                          _buildDivider(),
-                          _buildToggleTile(
-                            'Hide Location',
-                            'hideLocation',
-                            Icons.location_off_outlined,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                          _buildDivider(),
-                          _buildToggleTile(
-                            'App Lock',
-                            'appLock',
-                            Icons.fingerprint_outlined,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                        ],
-                        metrics,
-                      ),
-
-                      SizedBox(height: metrics.sectionSpacing),
-
-                      // App Preferences Section
-                      _buildSection(
-                        'App Preferences',
-                        [
-                          _buildToggleTile(
-                            'Romantic Theme',
-                            'romanticTheme',
-                            Icons.favorite_outline,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Language',
-                            Icons.language_outlined,
-                            subtitle: 'English',
-                            onTap: () {
-                              SnackbarHelper.showSafe(
-                                title: 'Language',
-                                message: 'Language selection coming soon',
-                              );
-                            },
-                            metrics: metrics,
-                            context: context,
                           ),
                         ],
                         metrics,

@@ -6,7 +6,7 @@ import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
-import 'package:love_connect/screens/profile/view_model/settings_view_model.dart';
+import 'package:love_connect/screens/settings/view_model/settings_view_model.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -130,10 +130,7 @@ class _SettingsViewState extends State<SettingsView> {
                             'Change Password',
                             Icons.lock_outline,
                             onTap: () {
-                              SnackbarHelper.showSafe(
-                                title: 'Change Password',
-                                message: 'Password change coming soon',
-                              );
+                              viewModel.navigateToChangePassword();
                             },
                             metrics: metrics,
                             context: context,

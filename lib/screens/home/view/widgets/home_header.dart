@@ -78,27 +78,6 @@ class HomeHeader extends StatelessWidget {
             ),
           ),
           // Search Icon
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onSearchTap,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: metrics.iconSize + 10,
-                height: metrics.iconSize + 10,
-                alignment: Alignment.center,
-                child: SvgPicture.asset(
-                  'assets/svg/search.svg',
-                  width: metrics.iconSize,
-                  height: metrics.iconSize,
-                  colorFilter: ColorFilter.mode(
-                    AppColors.textDarkPink,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-            ),
-          ),
           SizedBox(width: 4),
           // Notification Icon
           Material(

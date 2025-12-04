@@ -1,0 +1,142 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'package:love_connect/core/models/plan_model.dart';
+
+/// Service for managing user plans in Firebase Realtime Database
+class PlansDatabaseService {
+  static final PlansDatabaseService _instance = PlansDatabaseService._internal();
+  factory PlansDatabaseService() => _instance;
+  PlansDatabaseService._internal();
+
+  final FirebaseDatabase _database = FirebaseDatabase.instance;
+  static const String _usersPath = 'users';
+  static const String _plansPath = 'plans';
+
+  /// Get reference to user plans node
+  DatabaseReference _getUserPlansRef(String userId) {
+    return _database.ref('$_usersPath/$userId/$_plansPath');
+  }
+
+  /// Get reference to specific plan
+  DatabaseReference _getPlanRef(String userId, String planId) {
+    return _getUserPlansRef(userId).child(planId);
+  }
+
+  /// Save a plan to Firebase Realtime Database
+  /// Returns true if successful, false otherwise
+  Future<bool> savePlan({
+    required String userId,
+    required PlanModel plan,
+  }) async {
+    try {
+      final planData = plan.toJson();
+      await _getPlanRef(userId, plan.id).set(planData);
+      return true;
+    } catch (e) {
+      print('PlansDatabaseService savePlan error: $e');
+      return false;
+    }
+  }
+
+  /// Get all plans for a user
+  /// Returns list of plans, empty list if none exist or on error
+  Future<List<PlanModel>> getPlans(String userId) async {
+    try {
+      final snapshot = await _getUserPlansRef(userId).get();
+
+      if (!snapshot.exists || snapshot.value == null) {
+        return [];
+      }
+
+      final value = snapshot.value;
+      if (value is! Map) {
+        return [];
+      }
+
+      final plansMap = value as Map<Object?, Object?>;
+      final plans = <PlanModel>[];
+
+      for (var entry in plansMap.entries) {
+        try {
+          final planData = entry.value;
+          if (planData is Map) {
+            final planJson = planData.map(
+              (key, value) => MapEntry(key.toString(), value),
+            );
+            final plan = PlanModel.fromJson(planJson);
+            plans.add(plan);
+          }
+        } catch (e) {
+          print('Error parsing plan ${entry.key}: $e');
+          // Continue with other plans
+        }
+      }
+
+      return plans;
+    } catch (e) {
+      print('PlansDatabaseService getPlans error: $e');
+      return [];
+    }
+  }
+
+  /// Delete a plan from Firebase Realtime Database
+  /// Returns true if successful, false otherwise
+  Future<bool> deletePlan({
+    required String userId,
+    required String planId,
+  }) async {
+    try {
+      await _getPlanRef(userId, planId).remove();
+      return true;
+    } catch (e) {
+      print('PlansDatabaseService deletePlan error: $e');
+      return false;
+    }
+  }
+
+  /// Stream of plans for real-time updates
+  Stream<List<PlanModel>> getPlansStream(String userId) {
+    return _getUserPlansRef(userId).onValue.map((event) {
+      if (!event.snapshot.exists || event.snapshot.value == null) {
+        return <PlanModel>[];
+      }
+
+      final value = event.snapshot.value;
+      if (value is! Map) {
+        return <PlanModel>[];
+      }
+
+      final plansMap = value as Map<Object?, Object?>;
+      final plans = <PlanModel>[];
+
+      for (var entry in plansMap.entries) {
+        try {
+          final planData = entry.value;
+          if (planData is Map) {
+            final planJson = planData.map(
+              (key, value) => MapEntry(key.toString(), value),
+            );
+            final plan = PlanModel.fromJson(planJson);
+            plans.add(plan);
+          }
+        } catch (e) {
+          print('Error parsing plan ${entry.key}: $e');
+          // Continue with other plans
+        }
+      }
+
+      return plans;
+    });
+  }
+
+  /// Delete all plans for a user (useful for account deletion)
+  Future<bool> deleteAllPlans(String userId) async {
+    try {
+      await _getUserPlansRef(userId).remove();
+      return true;
+    } catch (e) {
+      print('PlansDatabaseService deleteAllPlans error: $e');
+      return false;
+    }
+  }
+}
+

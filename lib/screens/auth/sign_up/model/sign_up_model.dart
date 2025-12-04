@@ -12,7 +12,7 @@ class SignUpModel {
     this.socialButtons = const [
       SocialButtonModel(
         assetPath: AuthStrings.googleIcon,
-        tooltip: 'Google signup',
+        tooltip: 'Sign up with Google',
         type: SocialButtonType.google,
       ),
     ],

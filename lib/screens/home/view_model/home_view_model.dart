@@ -5,6 +5,7 @@ import 'package:love_connect/core/strings/home_strings.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
+import 'package:love_connect/core/services/plans_database_service.dart';
 import 'package:love_connect/core/models/plan_model.dart';
 import 'package:love_connect/core/widgets/quote_modal.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
@@ -23,6 +24,7 @@ class HomeViewModel extends GetxController {
   final RxInt notificationCount = 1.obs;
   final AuthService _authService = AuthService();
   final LocalStorageService _storageService = LocalStorageService();
+  final PlansDatabaseService _plansDbService = PlansDatabaseService();
   final RxBool isLoggingOut = false.obs;
   final RxList<PlanModel> plans = <PlanModel>[].obs;
   
@@ -46,12 +48,69 @@ class HomeViewModel extends GetxController {
 
   Future<void> loadPlans() async {
     try {
-      final loadedPlans = await _storageService.getPlans();
+      final userId = _authService.currentUserId;
+      List<PlanModel> loadedPlans = [];
+
+      // Try to load from Firebase if user is authenticated
+      if (userId != null) {
+        try {
+          loadedPlans = await _plansDbService.getPlans(userId);
+          // If Firebase returned plans, use them
+          if (loadedPlans.isNotEmpty) {
+            // Sort by date, upcoming first
+            loadedPlans.sort((a, b) => a.date.compareTo(b.date));
+            plans.value = loadedPlans;
+            return;
+          }
+        } catch (e) {
+          print('Failed to load plans from Firebase: $e');
+          // Continue to try local storage as fallback
+        }
+
+        // If no plans from Firebase, check local storage and migrate if needed
+        final localPlans = await _storageService.getPlans();
+        if (localPlans.isNotEmpty) {
+          // Migrate local plans to Firebase
+          await _migrateLocalPlansToFirebase(userId, localPlans);
+          loadedPlans = localPlans;
+        }
+      } else {
+        // No user authenticated, load from local storage
+        loadedPlans = await _storageService.getPlans();
+      }
+
       // Sort by date, upcoming first
       loadedPlans.sort((a, b) => a.date.compareTo(b.date));
       plans.value = loadedPlans;
     } catch (e) {
+      print('Error loading plans: $e');
       // Handle error silently or show snackbar
+      try {
+        // Last resort: try local storage
+        final localPlans = await _storageService.getPlans();
+        localPlans.sort((a, b) => a.date.compareTo(b.date));
+        plans.value = localPlans;
+      } catch (localError) {
+        print('Failed to load plans from local storage: $localError');
+      }
+    }
+  }
+
+  /// Migrate local plans to Firebase when user logs in
+  Future<void> _migrateLocalPlansToFirebase(String userId, List<PlanModel> localPlans) async {
+    try {
+      // Check if Firebase already has plans
+      final firebasePlans = await _plansDbService.getPlans(userId);
+      if (firebasePlans.isEmpty) {
+        // No plans in Firebase, migrate all local plans
+        for (var plan in localPlans) {
+          await _plansDbService.savePlan(userId: userId, plan: plan);
+        }
+        print('Migrated ${localPlans.length} plans from local storage to Firebase');
+      }
+    } catch (e) {
+      print('Failed to migrate plans to Firebase: $e');
+      // Don't throw - migration failure shouldn't block app usage
     }
   }
 
@@ -227,8 +286,26 @@ class HomeViewModel extends GetxController {
   Future<void> deletePlan(String planId) async {
     HapticFeedback.lightImpact();
     try {
-      await _storageService.deletePlan(planId);
+      final userId = _authService.currentUserId;
+
+      // Delete from Firebase if user is authenticated
+      if (userId != null) {
+        await _plansDbService.deletePlan(
+          userId: userId,
+          planId: planId,
+        );
+      }
+
+      // Also delete from local storage
+      try {
+        await _storageService.deletePlan(planId);
+      } catch (e) {
+        print('Failed to delete plan from local storage: $e');
+      }
+
+      // Reload plans
       await loadPlans();
+      
       SnackbarHelper.showSafe(
         title: 'Plan Deleted',
         message: 'Plan has been deleted successfully',
@@ -384,7 +461,7 @@ class HomeViewModel extends GetxController {
           index: 2,
         ),
         const BottomNavItem(
-          label: HomeStrings.settingsNav,
+          label: HomeStrings.profileNav,
           iconPath: 'assets/svg/profile_set.svg',
           index: 3,
         ),

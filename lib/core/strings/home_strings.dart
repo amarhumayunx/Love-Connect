@@ -26,6 +26,7 @@ class HomeStrings {
   static const String addPlanNav = 'Add Plan';
   static const String journalNav = 'Journal';
   static const String settingsNav = 'Settings';
+  static const String profileNav = 'Profile';
 
   // Notifications
   static const String search = 'Search';

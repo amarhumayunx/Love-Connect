@@ -7,7 +7,9 @@ import 'package:love_connect/screens/auth/sign_up/view/widgets/sign_up_logo.dart
 import 'package:love_connect/screens/auth/sign_up/view_model/sign_up_view_model.dart';
 
 class SignUpView extends StatefulWidget {
-  const SignUpView({super.key});
+  final String? email;
+  
+  const SignUpView({super.key, this.email});
 
   @override
   State<SignUpView> createState() => _SignUpViewState();
@@ -19,12 +21,13 @@ class _SignUpViewState extends State<SignUpView> {
   @override
   void initState() {
     super.initState();
-    viewModel = Get.put(SignUpViewModel());
+    // Use permanent: false to ensure proper disposal
+    viewModel = Get.put(SignUpViewModel(email: widget.email), permanent: false);
   }
 
   @override
   void dispose() {
-    Get.delete<SignUpViewModel>();
+    Get.delete<SignUpViewModel>(force: true);
     super.dispose();
   }
 

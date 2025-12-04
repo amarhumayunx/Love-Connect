@@ -26,9 +26,6 @@ class PlanCard extends StatelessWidget {
     final timeFormat = DateFormat('hh:mm a');
     
     return Container(
-      margin: EdgeInsets.only(
-        bottom: metrics.sectionSpacing * 0.5,
-      ),
       padding: EdgeInsets.all(metrics.cardPadding),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -155,7 +152,7 @@ class PlanCard extends StatelessWidget {
             ],
           ),
           
-          SizedBox(height: metrics.sectionSpacing * 0.7),
+          SizedBox(height: metrics.sectionSpacing * 0.4),
           
           // Action Buttons
           Row(
@@ -171,7 +168,7 @@ class PlanCard extends StatelessWidget {
                   label: Text(
                     'Edit',
                     style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(14),
+                      fontSize: context.responsiveFont(12),
                       fontWeight: FontWeight.w600,
                       color: AppColors.white,
                     ),
@@ -179,15 +176,15 @@ class PlanCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryRed,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 7),
+                    padding: EdgeInsets.symmetric(vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ),
-              SizedBox(width: 8),
+              SizedBox(width: 2),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onDelete,
@@ -199,7 +196,7 @@ class PlanCard extends StatelessWidget {
                   label: Text(
                     'Delete',
                     style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(14),
+                      fontSize: context.responsiveFont(12),
                       fontWeight: FontWeight.w600,
                       color: AppColors.primaryRed,
                     ),
@@ -207,9 +204,9 @@ class PlanCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primaryRed),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 7),
+                    padding: EdgeInsets.symmetric(vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),

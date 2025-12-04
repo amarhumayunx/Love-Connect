@@ -16,7 +16,7 @@ class LoginModel {
     this.socialButtons = const [
       SocialButtonModel(
         assetPath: AuthStrings.googleIcon,
-        tooltip: 'Google login',
+        tooltip: 'Sign in with Google',
         type: SocialButtonType.google,
       ),
     ],

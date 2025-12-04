@@ -4,6 +4,7 @@ import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/app_preferences_service.dart';
 import '../../get_started/view/get_started_screen.dart';
 import '../../auth/login/view/login_view.dart';
+import '../../auth/verification/view/verification_view.dart';
 import '../../home/view/main_navigation_view.dart';
 
 class SplashViewModel extends GetxController {
@@ -38,12 +39,26 @@ class SplashViewModel extends GetxController {
     final hasSeenGetStarted = await _prefsService.hasSeenGetStarted();
 
     if (isAuthenticated) {
-      // User is logged in, go directly to home with navbar
-      SmoothNavigator.offAll(
-        () => const MainNavigationView(),
-        transition: Transition.fadeIn,
-        duration: SmoothNavigator.slowDuration,
-      );
+      // User is logged in, check if email is verified
+      await _authService.reloadUser();
+      final isVerified = _authService.isEmailVerified;
+      final userEmail = _authService.currentUser?.email;
+
+      if (!isVerified) {
+        // Account exists but not verified, navigate to verification screen
+        SmoothNavigator.offAll(
+          () => VerificationView(email: userEmail),
+          transition: Transition.fadeIn,
+          duration: SmoothNavigator.slowDuration,
+        );
+      } else {
+        // User is logged in and verified, go directly to home with navbar
+        SmoothNavigator.offAll(
+          () => const MainNavigationView(),
+          transition: Transition.fadeIn,
+          duration: SmoothNavigator.slowDuration,
+        );
+      }
     } else {
       // User is not logged in
       if (isFirstTime || !hasSeenGetStarted) {
