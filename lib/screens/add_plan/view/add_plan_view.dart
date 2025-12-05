@@ -108,25 +108,33 @@ class _AddPlanViewState extends State<AddPlanView> {
         ? TimeOfDay.fromDateTime(currentTime)
         : TimeOfDay.now();
 
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primaryRed,
-              onPrimary: AppColors.white,
-              surface: AppColors.white,
-              onSurface: AppColors.primaryDark,
+    try {
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: initialTime,
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: AppColors.primaryRed,
+                onPrimary: AppColors.white,
+                surface: AppColors.white,
+                onSurface: AppColors.primaryDark,
+              ),
             ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      viewModel.updateTime(picked);
+            child: child!,
+          );
+        },
+      );
+      if (picked != null) {
+        viewModel.updateTime(picked);
+      }
+    } catch (e) {
+      // Handle Navigator assertion error gracefully
+      // This can happen when the dialog is dismissed while Navigator is locked
+      if (mounted) {
+        // Just ignore the error - user canceled the picker
+      }
     }
   }
 
@@ -476,7 +484,7 @@ class _AddPlanViewState extends State<AddPlanView> {
   }
 
   Widget _buildCancelButton(AddPlanLayoutMetrics metrics) {
-    return OutlinedButton(
+    return TextButton(
       onPressed: () {
         if (widget.onClose != null) {
           widget.onClose!();
@@ -484,10 +492,10 @@ class _AddPlanViewState extends State<AddPlanView> {
           Get.back();
         }
       },
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: AppColors.primaryRed),
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(34),
         ),
         minimumSize: Size(double.infinity, metrics.buttonHeight),
       ),
@@ -496,7 +504,7 @@ class _AddPlanViewState extends State<AddPlanView> {
         style: GoogleFonts.inter(
           fontSize: metrics.buttonFontSize,
           fontWeight: FontWeight.w600,
-          color: AppColors.primaryRed,
+          color: AppColors.primaryDark, // Red text
         ),
       ),
     );
@@ -509,7 +517,7 @@ class _AddPlanViewState extends State<AddPlanView> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryRed,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(34),
           ),
           minimumSize: Size(double.infinity, metrics.buttonHeight),
         ),

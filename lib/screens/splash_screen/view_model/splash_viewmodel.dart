@@ -40,7 +40,14 @@ class SplashViewModel extends GetxController {
 
     if (isAuthenticated) {
       // User is logged in, check if email is verified
-      await _authService.reloadUser();
+      // Reload user data (handles network errors gracefully)
+      try {
+        await _authService.reloadUser();
+      } catch (e) {
+        // If reload fails, continue with cached user data
+        // The _safeReloadUser method already handles most errors gracefully
+      }
+      
       final isVerified = _authService.isEmailVerified;
       final userEmail = _authService.currentUser?.email;
 

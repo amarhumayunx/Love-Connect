@@ -39,7 +39,7 @@ class AuthPrimaryButton extends StatelessWidget {
         ),
         child: isLoading
             ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryDark),
               )
             : Text(
                 label,

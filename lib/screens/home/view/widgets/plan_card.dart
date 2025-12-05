@@ -27,6 +27,9 @@ class PlanCard extends StatelessWidget {
     
     return Container(
       padding: EdgeInsets.all(metrics.cardPadding),
+      constraints: const BoxConstraints(
+        minHeight: 180, // Match Add Plan card height for consistent layout
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),

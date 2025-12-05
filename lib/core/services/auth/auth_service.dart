@@ -23,6 +23,10 @@ class AuthService {
   
   // Initialize GoogleSignIn with platform-specific settings
   Future<void> _initializeGoogleSignIn() async {
+    // Web client ID from `android/app/google-services.json` (client_type: 3)
+    const String androidWebClientId =
+        '960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com';
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       // iOS configuration: clientId for native sign-in, serverClientId for Firebase Auth
       await _googleSignIn.initialize(
@@ -30,11 +34,9 @@ class AuthService {
         serverClientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com', // Use iOS client ID as serverClientId (ideally should be Web Client ID)
       );
     } else {
-      // Android configuration: serverClientId optional if SHA-1 is configured, but recommended
+      // Android configuration: use Web client ID as serverClientId for Firebase Auth
       await _googleSignIn.initialize(
-        // serverClientId is optional for Android if SHA-1 is configured in Firebase Console
-        // Uncomment below and add your Web Client ID if you have one
-        // serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+        serverClientId: androidWebClientId,
       );
     }
   }
@@ -575,8 +577,8 @@ class AuthService {
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
   /// Safely reload user data, handling iOS network errors gracefully
-  /// On iOS, network errors during reload are common and can be safely ignored
-  /// The cached user data is still available and valid
+  /// Safely reload user data, handling network errors gracefully
+  /// Network errors are common and can be safely ignored - cached user data is still valid
   /// If user-not-found error occurs, the user is signed out automatically
   Future<void> _safeReloadUser(User? user) async {
     if (user == null) return;
@@ -596,44 +598,49 @@ class AuthService {
         return;
       }
       
-      // On iOS, network errors during reload are common and can be safely ignored
-      if (e.code == 'network-request-failed') {
-        if (defaultTargetPlatform == TargetPlatform.iOS) {
-          // Silently handle network errors on iOS - cached user data is still valid
-          return;
-        }
-        // Re-throw for other platforms to maintain existing behavior
-        rethrow;
-      }
-      
-      // Handle other common errors that can occur on iOS
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        // On iOS, handle user-disabled and invalid-user-token errors gracefully
-        if (e.code == 'user-disabled' || e.code == 'invalid-user-token') {
-          try {
-            await signOut();
-          } catch (_) {
-            // Ignore errors during sign out
-          }
+      // Handle network-related errors - can be safely ignored
+      // Cached user data is still valid and can be used
+      if (e.code == 'network-request-failed' || 
+          e.code == 'unknown' ||
+          e.code == 'internal-error') {
+        // Check if it's a network/connection error
+        final errorMessage = e.message?.toLowerCase() ?? '';
+        if (errorMessage.contains('connection') ||
+            errorMessage.contains('reset') ||
+            errorMessage.contains('network') ||
+            errorMessage.contains('timeout') ||
+            errorMessage.contains('unreachable')) {
+          // Silently handle network errors - cached user data is still valid
           return;
         }
       }
       
-      // Re-throw other FirebaseAuthExceptions
+      // Handle other common errors that can occur
+      if (e.code == 'user-disabled' || e.code == 'invalid-user-token') {
+        try {
+          await signOut();
+        } catch (_) {
+          // Ignore errors during sign out
+        }
+        return;
+      }
+      
+      // Re-throw other FirebaseAuthExceptions that we don't handle
       rethrow;
     } catch (e) {
-      // Handle any other exceptions, especially network-related ones on iOS
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        final errorString = e.toString().toLowerCase();
-        if (errorString.contains('network') || 
-            errorString.contains('timeout') || 
-            errorString.contains('unreachable') ||
-            errorString.contains('interrupted')) {
-          // Silently handle network errors on iOS - cached user data is still valid
-          return;
-        }
+      // Handle any other exceptions, especially network-related ones
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('connection') ||
+          errorString.contains('reset') ||
+          errorString.contains('network') || 
+          errorString.contains('timeout') || 
+          errorString.contains('unreachable') ||
+          errorString.contains('interrupted') ||
+          errorString.contains('internal error')) {
+        // Silently handle network/connection errors - cached user data is still valid
+        return;
       }
-      // Re-throw for other platforms or non-network errors
+      // Re-throw for non-network errors
       rethrow;
     }
   }

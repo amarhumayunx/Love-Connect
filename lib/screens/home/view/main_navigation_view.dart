@@ -41,36 +41,37 @@ class MainNavigationView extends StatelessWidget {
 
               // Add Plan overlay above everything
               Obx(
-                    () => viewModel.isAddPlanOpenFromNavbar.value
+                () => viewModel.isAddPlanOpenFromNavbar.value
                     ? Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: metrics.bottomNavHeight +
-                      MediaQuery.of(context).padding.bottom,
-                  child: PopScope(
-                    canPop: false,
-                    onPopInvokedWithResult: (didPop, result) {
-                      if (!didPop) {
-                        viewModel.isAddPlanOpenFromNavbar.value = false;
-                      }
-                    },
-                    child: Container(
-                      color: AppColors.backgroundPink,
-                      child: SafeArea(
-                        bottom: false,
-                        child: AddPlanView(
-                          key: const ValueKey('addPlanOverlay'),
-                          onClose: () {
-                            viewModel.isAddPlanOpenFromNavbar.value = false;
-                            viewModel.selectedBottomNavIndex.value = 0; // Return to home selection
-                            viewModel.loadPlans();
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: PopScope(
+                          canPop: false,
+                          onPopInvokedWithResult: (didPop, result) {
+                            if (!didPop) {
+                              viewModel.isAddPlanOpenFromNavbar.value = false;
+                            }
                           },
+                          child: Container(
+                            color: AppColors.backgroundPink,
+                            child: SafeArea(
+                              bottom: true,
+                              child: AddPlanView(
+                                key: const ValueKey('addPlanOverlay'),
+                                onClose: () {
+                                  viewModel.isAddPlanOpenFromNavbar.value =
+                                      false;
+                                  viewModel.selectedBottomNavIndex.value =
+                                      0; // Return to home selection
+                                  viewModel.loadPlans();
+                                },
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                )
+                      )
                     : const SizedBox.shrink(),
               ),
             ],

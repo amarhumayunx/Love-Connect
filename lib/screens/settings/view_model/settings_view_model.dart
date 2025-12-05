@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
+import 'package:love_connect/core/services/notification_service.dart';
+import 'package:love_connect/core/services/plans_database_service.dart';
+import 'package:love_connect/core/models/plan_model.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
@@ -13,10 +16,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class SettingsViewModel extends GetxController {
   final LocalStorageService _storageService = LocalStorageService();
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
+  final PlansDatabaseService _plansDbService = PlansDatabaseService();
   final SettingsModel model = const SettingsModel();
   final RxMap<String, bool> settings = <String, bool>{}.obs;
   final RxString appVersion = '1.0.0'.obs;
@@ -61,13 +67,155 @@ class SettingsViewModel extends GetxController {
 
   Future<void> updateSetting(String key, bool value) async {
     try {
+      // Handle notification-related settings
+      if (key == 'notifications') {
+        await _handlePushNotificationsSetting(value);
+      } else if (key == 'planReminder') {
+        await _handlePlanReminderSetting(value);
+      }
+
+      // Save the setting
       await _storageService.saveSetting(key, value);
       settings[key] = value;
+
+      // Show success message
+      if (key == 'notifications') {
+        SnackbarHelper.showSafe(
+          title: value ? 'Push Notifications Enabled' : 'Push Notifications Disabled',
+          message: value 
+              ? 'You will receive notifications for your plans'
+              : 'All notifications have been cancelled',
+          duration: const Duration(seconds: 2),
+        );
+      } else if (key == 'planReminder') {
+        SnackbarHelper.showSafe(
+          title: value ? 'Plan Reminders Enabled' : 'Plan Reminders Disabled',
+          message: value 
+              ? 'You will receive reminders 10 minutes before your plans'
+              : 'Plan reminder notifications have been cancelled',
+          duration: const Duration(seconds: 2),
+        );
+      }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error updating setting $key: $e');
+      }
       SnackbarHelper.showSafe(
         title: 'Error',
         message: 'Failed to update setting',
       );
+    }
+  }
+
+  /// Handle Push Notifications setting changes
+  Future<void> _handlePushNotificationsSetting(bool enabled) async {
+    if (enabled) {
+      // Request system permissions when enabling
+      await _notificationService.init();
+      final hasPermission = await _notificationService.areNotificationsEnabled();
+      
+      if (!hasPermission) {
+        // Permission was denied, show message
+        SnackbarHelper.showSafe(
+          title: 'Permission Required',
+          message: 'Please enable notifications in your device settings',
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        // If notifications enabled and plan reminders was on, reschedule them
+        if (settings['planReminder'] == true) {
+          await _rescheduleAllPlanNotifications();
+        }
+      }
+    } else {
+      // Cancel all notifications when disabling
+      await _notificationService.cancelAllNotifications();
+      
+      // Also disable Plan Reminders if Push Notifications is disabled
+      if (settings['planReminder'] == true) {
+        await _storageService.saveSetting('planReminder', false);
+        settings['planReminder'] = false;
+      }
+    }
+  }
+
+  /// Handle Plan Reminder setting changes
+  Future<void> _handlePlanReminderSetting(bool enabled) async {
+    if (enabled) {
+      // Reschedule notifications for all future plans
+      await _rescheduleAllPlanNotifications();
+    } else {
+      // Cancel all plan notifications (keep test notifications)
+      await _notificationService.cancelAllPlanNotifications();
+    }
+  }
+
+  /// Reschedule notifications for all future plans
+  Future<void> _rescheduleAllPlanNotifications() async {
+    try {
+      // Check if notifications are enabled
+      final notificationsEnabled = settings['notifications'] ?? true;
+      if (!notificationsEnabled) {
+        return; // Don't schedule if notifications are disabled
+      }
+
+      // Get all plans
+      final userId = _authService.currentUserId;
+      List<PlanModel> allPlans = [];
+
+      if (userId != null) {
+        // Try Firebase first
+        try {
+          allPlans = await _plansDbService.getPlans(userId);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Failed to load plans from Firebase: $e');
+          }
+        }
+      }
+
+      // Fallback to local storage
+      if (allPlans.isEmpty) {
+        allPlans = await _storageService.getPlans();
+      }
+
+      // Filter future plans with times
+      final now = DateTime.now();
+      final futurePlans = allPlans.where((plan) {
+        if (plan.time == null) return false;
+        // Check if notification time (10 min before) is in the future
+        final notificationTime = plan.time!.subtract(const Duration(minutes: 10));
+        return notificationTime.isAfter(now);
+      }).toList();
+
+      // Reschedule notifications for each plan
+      int scheduledCount = 0;
+      for (final plan in futurePlans) {
+        try {
+          final notificationTime = plan.time!.subtract(const Duration(minutes: 10));
+          final notificationId = plan.id.hashCode & 0x7fffffff;
+
+          await _notificationService.schedulePlanNotification(
+            id: notificationId,
+            title: 'Upcoming Plan',
+            body: '${plan.title} at ${plan.place} in 10 minutes',
+            scheduledTime: notificationTime,
+          );
+          scheduledCount++;
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Failed to schedule notification for plan ${plan.id}: $e');
+          }
+        }
+      }
+
+      if (kDebugMode && scheduledCount > 0) {
+        debugPrint('Rescheduled $scheduledCount plan notifications');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error rescheduling plan notifications: $e');
+      }
     }
   }
 

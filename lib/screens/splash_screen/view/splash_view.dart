@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
-import 'package:love_connect/screens/splash_screen/view/widgets/splash_loading_indicator.dart';
 import 'package:love_connect/screens/splash_screen/view/widgets/splash_logo.dart';
 import '../view_model/splash_viewmodel.dart';
 
@@ -23,16 +23,15 @@ class _SplashViewState extends State<SplashView>
   @override
   void initState() {
     super.initState();
-    // Initialize the controller
+
     Get.put(SplashViewModel());
 
-    // Setup animation controller
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
 
-    // Scale animation: starts from 0.5, goes to 1.0, then bounces
+
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(
@@ -50,7 +49,7 @@ class _SplashViewState extends State<SplashView>
       ),
     ]).animate(_animationController);
 
-    // Fade animation
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -58,12 +57,12 @@ class _SplashViewState extends State<SplashView>
       ),
     );
 
-    // Bounce animation for continuous subtle pulse
+
     _bounceAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    // Start animation
+
     _animationController.forward();
   }
 
@@ -86,8 +85,9 @@ class _SplashViewState extends State<SplashView>
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOut,
             child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Use responsive sizing
+              builder: (context, constraints)
+              {
+
                 final logoSize = context.responsiveImage(220);
                 final spacing = context.responsiveSpacing(150);
                 final loadingSize = context.responsiveImage(50);
@@ -132,9 +132,10 @@ class _SplashViewState extends State<SplashView>
                               maintainState: true,
                               child: FadeTransition(
                                 opacity: _fadeAnimation,
-                                child: SplashLoadingIndicator(
-                                  size: loadingSize,
-                                ),
+                                child: LoadingAnimationWidget.staggeredDotsWave(
+                                    color: AppColors.primaryDark,
+                                    size: 50
+                                )
                               ),
                             ),
                           ),

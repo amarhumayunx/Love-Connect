@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/MyApp.dart';
+import 'core/services/notification_service.dart';
 
 void main() async {
   // Configure error handling for font loading failures on iOS
@@ -30,6 +31,8 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    // Initialize local notifications for plan reminders
+    await NotificationService().init();
     runApp(const MyApp());
   }, (error, stack) {
     // Catch unhandled exceptions, especially font loading errors

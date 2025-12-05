@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
+import 'package:love_connect/core/services/notification_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_header.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
@@ -94,13 +96,38 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didPop) {
+      onPopInvoked: (bool didPop) async {
         if (didPop) return;
-        _onWillPop().then((shouldPop) {
-          if (shouldPop && mounted) {
+
+        final shouldShowExitDialog = await _onWillPop();
+
+        if (shouldShowExitDialog && mounted) {
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) {
+              return AlertDialog(
+                title: const Text('Exit app?'),
+                content: const Text(
+                  'Do you really want to exit Love Connect?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: const Text('Exit'),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (shouldExit == true) {
             SystemNavigator.pop();
           }
-        });
+        }
       },
       child: Scaffold(
         backgroundColor: AppColors.backgroundPink,
@@ -181,6 +208,49 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                             metrics: metrics,
                           ),
                         ),
+
+                        // Debug-only button to trigger a test notification
+                        if (kDebugMode) ...[
+                          SizedBox(height: metrics.sectionSpacing),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                try {
+                                  await NotificationService().showTestNotification();
+                                  SnackbarHelper.showSafe(
+                                    title: 'Test Notification Sent',
+                                    message: 'Check your notification tray!',
+                                    duration: const Duration(seconds: 2),
+                                  );
+                                } catch (e) {
+                                  SnackbarHelper.showSafe(
+                                    title: 'Error',
+                                    message: 'Failed to show notification: $e',
+                                    duration: const Duration(seconds: 3),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryRed,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 10,
+                                ),
+                              ),
+                              child: Text(
+                                'Test Notification',
+                                style: GoogleFonts.inter(
+                                  fontSize: metrics.addButtonFontSize * 0.85,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
 
                         // Quick Actions Section
                         Padding(

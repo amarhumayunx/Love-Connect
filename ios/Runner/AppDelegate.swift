@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import GoogleSignIn
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -9,6 +10,12 @@ import GoogleSignIn
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+    
+    // Set up notification delegate for iOS
+    if #available(iOS 10.0, *) {
+      UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+    }
+    
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
   

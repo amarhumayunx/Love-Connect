@@ -435,33 +435,53 @@ class _SettingsViewState extends State<SettingsView> {
     IconData icon,
     SettingsViewModel viewModel,
     HomeLayoutMetrics metrics,
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    bool? isEnabled,
+  }) {
     return Obx(
-      () => ListTile(
-        leading: Icon(
-          icon,
-          color: AppColors.primaryDark,
-          size: 24,
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.inter(
-            fontSize: context.responsiveFont(16),
-            fontWeight: FontWeight.w500,
-            color: AppColors.primaryDark,
+      () {
+        // Disable Plan Reminders if Push Notifications is disabled
+        final bool isPlanReminder = key == 'planReminder';
+        final bool notificationsEnabled = viewModel.settings['notifications'] ?? true;
+        final bool shouldEnable = isEnabled ?? (isPlanReminder ? notificationsEnabled : true);
+        final bool currentValue = viewModel.settings[key] ?? false;
+        
+        return ListTile(
+          leading: Icon(
+            icon,
+            color: shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
+            size: 24,
           ),
-        ),
-        trailing: Switch(
-          value: viewModel.settings[key] ?? false,
-          onChanged: (value) => viewModel.updateSetting(key, value),
-          activeThumbColor: AppColors.primaryRed,
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: metrics.cardPadding,
-          vertical: 4,
-        ),
-      ),
+          title: Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: context.responsiveFont(16),
+              fontWeight: FontWeight.w500,
+              color: shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
+            ),
+          ),
+          subtitle: isPlanReminder && !notificationsEnabled
+              ? Text(
+                  'Enable Push Notifications first',
+                  style: GoogleFonts.inter(
+                    fontSize: context.responsiveFont(12),
+                    color: AppColors.textLightPink,
+                  ),
+                )
+              : null,
+          trailing: Switch(
+            value: currentValue,
+            onChanged: shouldEnable
+                ? (value) => viewModel.updateSetting(key, value)
+                : null,
+            activeThumbColor: AppColors.primaryRed,
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: metrics.cardPadding,
+            vertical: 4,
+          ),
+        );
+      },
     );
   }
 

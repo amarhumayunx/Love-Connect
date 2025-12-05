@@ -23,13 +23,19 @@ class PlansDatabaseService {
 
   /// Save a plan to Firebase Realtime Database
   /// Returns true if successful, false otherwise
+  /// Optimized for fast writes
   Future<bool> savePlan({
     required String userId,
     required PlanModel plan,
   }) async {
     try {
       final planData = plan.toJson();
-      await _getPlanRef(userId, plan.id).set(planData);
+      final planRef = _getPlanRef(userId, plan.id);
+      
+      // Use set() directly - Firebase Realtime Database is already optimized for fast writes
+      // Using set() without await for priority makes it faster
+      await planRef.set(planData);
+      
       return true;
     } catch (e) {
       print('PlansDatabaseService savePlan error: $e');

@@ -31,59 +31,9 @@ class UpcomingPlansCard extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = (screenWidth - (metrics.cardPadding * 3)) / 2;
 
-    // If there are plans, show them horizontally
-    if (plans.isNotEmpty) {
-      return Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: metrics.cardPadding,
-          vertical: metrics.sectionSpacing * 0.5,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Row of plan cards
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Show first plan card
-                SizedBox(
-                  width: cardWidth,
-                  child: PlanCard(
-                    plan: plans[0],
-                    onEdit: () => onEditPlan?.call(plans[0]),
-                    onDelete: () => onDeletePlan?.call(plans[0].id),
-                    metrics: metrics,
-                  ),
-                ),
-                SizedBox(width: metrics.cardPadding),
-                // Show second plan card or "Add New Plan" card
-                SizedBox(
-                  width: cardWidth,
-                  child: plans.length >= 2
-                      ? PlanCard(
-                          plan: plans[1],
-                          onEdit: () => onEditPlan?.call(plans[1]),
-                          onDelete: () => onDeletePlan?.call(plans[1].id),
-                          metrics: metrics,
-                        )
-                      : _buildAddNewPlanCard(context, cardWidth),
-                ),
-              ],
-            ),
-            // Show "Add New Plan" card below when there are 2+ plans
-            if (plans.length >= 2) ...[
-              SizedBox(height: metrics.sectionSpacing * 0.5),
-              Center(
-                child: _buildAddNewPlanCardBelow(context, screenWidth),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    // If no plans, show the empty state
-    return Center(
+    // If no plans, show the empty state (full-width card with Add button)
+    if (plans.isEmpty) {
+      return Center(
       child: Container(
         margin: EdgeInsets.symmetric(
           horizontal: metrics.cardPadding,
@@ -155,6 +105,119 @@ class UpcomingPlansCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+    }
+
+    // If there are plans, show them in a 2-column grid like the designs
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: metrics.cardPadding,
+        vertical: metrics.sectionSpacing * 0.5,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // First row (index 0 and 1 / Add card)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: cardWidth,
+                child: PlanCard(
+                  plan: plans[0],
+                  onEdit: () => onEditPlan?.call(plans[0]),
+                  onDelete: () => onDeletePlan?.call(plans[0].id),
+                  metrics: metrics,
+                ),
+              ),
+              SizedBox(width: metrics.cardPadding),
+              SizedBox(
+                width: cardWidth,
+                child: plans.length >= 2
+                    ? PlanCard(
+                        plan: plans[1],
+                        onEdit: () => onEditPlan?.call(plans[1]),
+                        onDelete: () => onDeletePlan?.call(plans[1].id),
+                        metrics: metrics,
+                      )
+                    : _buildAddNewPlanCard(context, cardWidth),
+              ),
+            ],
+          ),
+
+          // Optional second row (index 2 and 3 / Add card)
+          if (plans.length > 2) ...[
+            SizedBox(height: metrics.sectionSpacing * 0.5),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: cardWidth,
+                  child: PlanCard(
+                    plan: plans[2],
+                    onEdit: () => onEditPlan?.call(plans[2]),
+                    onDelete: () => onDeletePlan?.call(plans[2].id),
+                    metrics: metrics,
+                  ),
+                ),
+                SizedBox(width: metrics.cardPadding),
+                SizedBox(
+                  width: cardWidth,
+                  child: plans.length >= 4
+                      ? PlanCard(
+                          plan: plans[3],
+                          onEdit: () => onEditPlan?.call(plans[3]),
+                          onDelete: () => onDeletePlan?.call(plans[3].id),
+                          metrics: metrics,
+                        )
+                      : _buildAddNewPlanCard(context, cardWidth),
+                ),
+              ],
+            ),
+          ],
+
+          // Any additional rows beyond the first 4 plans (no Add card in these)
+          if (plans.length > 4) ...[
+            for (int i = 4; i < plans.length; i += 2) ...[
+              SizedBox(height: metrics.sectionSpacing * 0.5),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: cardWidth,
+                    child: PlanCard(
+                      plan: plans[i],
+                      onEdit: () => onEditPlan?.call(plans[i]),
+                      onDelete: () => onDeletePlan?.call(plans[i].id),
+                      metrics: metrics,
+                    ),
+                  ),
+                  SizedBox(width: metrics.cardPadding),
+                  SizedBox(
+                    width: cardWidth,
+                    child: i + 1 < plans.length
+                        ? PlanCard(
+                            plan: plans[i + 1],
+                            onEdit: () => onEditPlan?.call(plans[i + 1]),
+                            onDelete: () => onDeletePlan?.call(plans[i + 1].id),
+                            metrics: metrics,
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ],
+          ],
+
+          // Full-width "Add" card only when there are 1–3 plans
+          if (plans.isNotEmpty && plans.length < 4) ...[
+            SizedBox(height: metrics.sectionSpacing * 0.5),
+            Center(
+              child: _buildAddNewPlanCardBelow(context, screenWidth),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -17,13 +17,20 @@ class GoogleSignUpService {
 
   /// Initialize GoogleSignIn with platform-specific settings
   Future<void> _initializeGoogleSignIn() async {
+    // Web client ID from `android/app/google-services.json` (client_type: 3)
+    const String androidWebClientId =
+        '960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com';
+
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _googleSignIn.initialize(
         clientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com',
         serverClientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com',
       );
     } else {
-      await _googleSignIn.initialize();
+      // Android configuration: use Web client ID as serverClientId for Firebase Auth
+      await _googleSignIn.initialize(
+        serverClientId: androidWebClientId,
+      );
     }
   }
 

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:love_connect/core/models/plan_model.dart';
+import 'package:love_connect/core/models/notification_model.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
 import 'package:love_connect/core/services/plans_database_service.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
+import 'package:love_connect/core/services/notification_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/add_plan/model/add_plan_model.dart';
 import 'package:uuid/uuid.dart';
@@ -12,6 +15,7 @@ class AddPlanViewModel extends GetxController {
   final LocalStorageService _storageService = LocalStorageService();
   final PlansDatabaseService _plansDbService = PlansDatabaseService();
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
   final Rx<AddPlanModel> model = AddPlanModel().obs;
   final RxBool isSaving = false.obs;
   final String? planId; // If editing
@@ -135,54 +139,151 @@ class AddPlanViewModel extends GetxController {
       );
 
       final userId = _authService.currentUserId;
-      bool savedToFirebase = false;
 
-      // Save to Firebase if user is authenticated
-      if (userId != null) {
-        savedToFirebase = await _plansDbService.savePlan(
-          userId: userId,
-          plan: plan,
-        );
-      }
-
-      // Also save to local storage as backup/fallback
+      // Save to local storage first (faster, immediate feedback)
+      bool savedLocally = false;
       try {
         await _storageService.savePlan(plan);
+        savedLocally = true;
       } catch (e) {
         print('Failed to save plan to local storage: $e');
       }
 
-      // Show success message
-      if (savedToFirebase || userId == null) {
+      // Save to Firebase in parallel (non-blocking)
+      Future<bool>? firebaseFuture;
+      if (userId != null) {
+        firebaseFuture = _plansDbService.savePlan(
+          userId: userId,
+          plan: plan,
+        );
+        // Don't await - let it run in background
+        firebaseFuture.then((success) {
+          if (success && kDebugMode) {
+            debugPrint('Plan saved to Firebase successfully');
+          }
+        }).catchError((e) {
+          if (kDebugMode) {
+            debugPrint('Firebase save error (non-blocking): $e');
+          }
+        });
+      }
+
+      // Schedule notification (non-blocking)
+      _schedulePlanNotification(plan).catchError((e) {
+        if (kDebugMode) {
+          debugPrint('Notification scheduling error: $e');
+        }
+      });
+
+      // Close immediately after local save (fast user feedback)
+      if (savedLocally) {
         if (onCloseCallback != null) {
           onCloseCallback!();
         } else {
           Get.back(result: true);
         }
+
+        // Show success message
+        final String titleText =
+            planId != null ? 'Plan Updated' : 'Plan Saved';
         SnackbarHelper.showSafe(
-          title: planId != null ? 'Plan Updated' : 'Plan Saved',
-          message: 'Your plan has been saved successfully',
+          title: titleText,
+          message: userId != null
+              ? 'Your plan has been saved. Syncing to cloud...'
+              : 'Your plan has been saved successfully',
+          duration: const Duration(seconds: 2),
         );
       } else {
-        // Saved locally but Firebase failed - still show success but log warning
-        print('Warning: Plan saved locally but Firebase save failed');
-        if (onCloseCallback != null) {
-          onCloseCallback!();
+        // Local save failed - try Firebase as fallback
+        if (userId != null && firebaseFuture != null) {
+          final savedToFirebase = await firebaseFuture;
+          if (savedToFirebase) {
+            if (onCloseCallback != null) {
+              onCloseCallback!();
+            } else {
+              Get.back(result: true);
+            }
+            SnackbarHelper.showSafe(
+              title: planId != null ? 'Plan Updated' : 'Plan Saved',
+              message: 'Your plan has been saved successfully',
+            );
+          } else {
+            SnackbarHelper.showSafe(
+              title: 'Error',
+              message: 'Failed to save plan. Please check your connection and try again.',
+            );
+          }
         } else {
-          Get.back(result: true);
+          SnackbarHelper.showSafe(
+            title: 'Error',
+            message: 'Failed to save plan. Please try again.',
+          );
         }
-        SnackbarHelper.showSafe(
-          title: planId != null ? 'Plan Updated' : 'Plan Saved',
-          message: 'Your plan has been saved locally',
-        );
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error saving plan: $e');
+      }
       SnackbarHelper.showSafe(
         title: 'Error',
         message: 'Failed to save plan. Please try again.',
       );
     } finally {
       isSaving.value = false;
+    }
+  }
+
+  Future<void> _schedulePlanNotification(PlanModel plan) async {
+    // Only schedule if we have a specific time
+    final DateTime? planTime = plan.time;
+    if (planTime == null) {
+      return;
+    }
+
+    // Check user settings for notifications and plan reminders
+    try {
+      final settings = await _storageService.getSettings();
+      final bool notificationsEnabled = settings['notifications'] ?? true;
+      final bool planReminderEnabled = settings['planReminder'] ?? true;
+
+      if (!notificationsEnabled || !planReminderEnabled) {
+        return;
+      }
+    } catch (_) {
+      // If settings can't be loaded, default to allowing notifications
+    }
+
+    // Schedule notification 10 minutes before the plan time
+    final DateTime notificationTime = planTime.subtract(const Duration(minutes: 10));
+
+    // Only schedule if notification time is in the future
+    if (notificationTime.isBefore(DateTime.now())) {
+      return;
+    }
+
+    // Use a stable int ID derived from the plan id hashCode
+    final int notificationId = plan.id.hashCode & 0x7fffffff;
+
+    await _notificationService.schedulePlanNotification(
+      id: notificationId,
+      title: 'Upcoming Plan',
+      body: '${plan.title} at ${plan.place} in 10 minutes',
+      scheduledTime: notificationTime,
+    );
+
+    // Also store a local notification entry for the in-app notifications screen
+    try {
+      final notification = NotificationModel(
+        id: const Uuid().v4(),
+        title: 'Upcoming Plan',
+        message: '${plan.title} at ${plan.place}',
+        date: planTime,
+        type: NotificationType.reminder,
+      );
+      await _storageService.saveNotification(notification);
+    } catch (e) {
+      // Ignore errors when saving notification locally
+      print('Failed to save notification locally: $e');
     }
   }
 
