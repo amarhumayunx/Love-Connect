@@ -11,23 +11,18 @@ import 'package:love_connect/screens/add_plan/view/add_plan_view.dart';
 class QuoteModal extends StatefulWidget {
   final String? initialQuote;
 
-  const QuoteModal({
-    super.key,
-    this.initialQuote,
-  });
+  const QuoteModal({super.key, this.initialQuote});
 
   static void show({String? quote}) {
-    Get.dialog(
-      QuoteModal(initialQuote: quote),
-      barrierDismissible: true,
-    );
+    Get.dialog(QuoteModal(initialQuote: quote), barrierDismissible: true);
   }
 
   @override
   State<QuoteModal> createState() => _QuoteModalState();
 }
 
-class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateMixin {
+class _QuoteModalState extends State<QuoteModal>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final QuotesService _quotesService = QuotesService();
   late String _currentQuote;
@@ -115,7 +110,9 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _currentTabIndex == 0 ? 'Romantic Quotes' : 'Romantic Ideas',
+                    _currentTabIndex == 0
+                        ? 'Romantic Quotes'
+                        : 'Romantic Ideas',
                     style: GoogleFonts.inter(
                       fontSize: context.responsiveFont(18),
                       fontWeight: FontWeight.w600,
@@ -123,10 +120,7 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: AppColors.primaryDark,
-                    ),
+                    icon: Icon(Icons.close, color: AppColors.primaryDark),
                     onPressed: () => Get.back(),
                   ),
                 ],
@@ -201,11 +195,7 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
               ),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.favorite,
-                    color: AppColors.primaryRed,
-                    size: 32,
-                  ),
+                  Icon(Icons.favorite, color: AppColors.primaryRed, size: 32),
                   SizedBox(height: 12),
                   Text(
                     _currentQuote,
@@ -239,30 +229,6 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Get.back(),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.primaryRed),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: Size(
-                      double.infinity,
-                      context.responsiveButtonHeight(),
-                    ),
-                  ),
-                  child: Text(
-                    'Close',
-                    style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(16),
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryRed,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
                 child: ElevatedButton(
                   onPressed: _copyQuote,
                   style: ElevatedButton.styleFrom(
@@ -281,6 +247,30 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
                       fontSize: context.responsiveFont(16),
                       fontWeight: FontWeight.w600,
                       color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Get.back(),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.primaryRed),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: Size(
+                      double.infinity,
+                      context.responsiveButtonHeight(),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(
+                      fontSize: context.responsiveFont(16),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryRed,
                     ),
                   ),
                 ),
@@ -345,7 +335,10 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    minimumSize: Size(80, context.responsiveButtonHeight() * 0.8),
+                    minimumSize: Size(
+                      80,
+                      context.responsiveButtonHeight() * 0.8,
+                    ),
                   ),
                   child: Text(
                     'Use',
@@ -364,4 +357,3 @@ class _QuoteModalState extends State<QuoteModal> with SingleTickerProviderStateM
     );
   }
 }
-

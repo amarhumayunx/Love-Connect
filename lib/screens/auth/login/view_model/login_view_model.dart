@@ -29,19 +29,29 @@ class LoginViewModel extends GetxController {
   final RxBool obscurePassword = true.obs;
   final RxBool isLoading = false.obs;
 
+  LoginViewModel() {
+    // Create a unique key for this form instance to avoid conflicts
+    formKey = GlobalKey<FormState>();
+  }
+
   @override
   void onInit() {
     super.onInit();
-    // Create a unique key for this form instance to avoid conflicts
-    formKey = GlobalKey<FormState>();
     _loadRememberedEmail();
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
   }
 
   /// Load remembered email if "Remember Me" was previously checked
   Future<void> _loadRememberedEmail() async {
     final rememberedEmail = await _prefsService.getRememberedEmail();
     final isRememberMeEnabled = await _prefsService.isRememberMeEnabled();
-    
+
     if (rememberedEmail != null && rememberedEmail.isNotEmpty) {
       emailController.text = rememberedEmail;
       rememberMe.value = isRememberMeEnabled;
@@ -50,7 +60,7 @@ class LoginViewModel extends GetxController {
 
   void toggleRememberMe(bool? value) {
     rememberMe.value = value ?? false;
-    
+
     // If user unchecks "Remember Me", clear saved email
     if (!rememberMe.value) {
       _prefsService.clearRememberedEmail();
@@ -69,8 +79,9 @@ class LoginViewModel extends GetxController {
 
     try {
       final email = emailController.text.trim();
-      final password = passwordController.text; // Don't trim password - preserve exact input
-      
+      final password =
+          passwordController.text; // Don't trim password - preserve exact input
+
       // Validate password is not empty
       if (password.isEmpty) {
         SnackbarHelper.showSafe(
@@ -79,18 +90,20 @@ class LoginViewModel extends GetxController {
         );
         return;
       }
-      
+
       // Check if user is already signed in - if so, sign out first to allow fresh login
       if (_authService.isAuthenticated) {
-        final currentUserEmail = _authService.currentUser?.email?.trim().toLowerCase();
+        final currentUserEmail = _authService.currentUser?.email
+            ?.trim()
+            .toLowerCase();
         final inputEmail = email.toLowerCase();
-        
+
         // If same user, allow them to continue (they're already logged in)
         if (currentUserEmail == inputEmail) {
           // User is already logged in with this email - proceed to check verification
           await _authService.reloadUser();
           final isVerified = _authService.isEmailVerified;
-          
+
           // Update verification status in database
           final userId = _authService.currentUserId;
           if (userId != null) {
@@ -99,11 +112,11 @@ class LoginViewModel extends GetxController {
               isVerified: isVerified,
             );
           }
-          
+
           if (!isVerified) {
             // Send verification email
             await _authService.resendEmailVerification();
-            
+
             // Navigate to verification screen
             SmoothNavigator.offAll(
               () => VerificationView(email: email),
@@ -124,7 +137,7 @@ class LoginViewModel extends GetxController {
           await _authService.signOut();
         }
       }
-      
+
       // Attempt to sign in - Firebase will handle authentication
       // If user doesn't exist, we'll get 'user-not-found' error
       final result = await _authService.signInWithEmailPassword(
@@ -141,11 +154,11 @@ class LoginViewModel extends GetxController {
           // Clear saved email if "Remember Me" is unchecked
           await _prefsService.clearRememberedEmail();
         }
-        
+
         // Check if email is verified
         await _authService.reloadUser();
         final isVerified = _authService.isEmailVerified;
-        
+
         // Update verification status in database
         final userId = _authService.currentUserId;
         if (userId != null) {
@@ -154,11 +167,11 @@ class LoginViewModel extends GetxController {
             isVerified: isVerified,
           );
         }
-        
+
         if (!isVerified) {
           // Send verification email
           await _authService.resendEmailVerification();
-          
+
           // Navigate to verification screen
           SmoothNavigator.offAll(
             () => VerificationView(email: email),
@@ -175,19 +188,22 @@ class LoginViewModel extends GetxController {
         }
       } else {
         // Handle authentication failures
-        String errorMessage = result.errorMessage ?? 'Invalid email or password. Please check your credentials and try again.';
-        
+        String errorMessage =
+            result.errorMessage ??
+            'Invalid email or password. Please check your credentials and try again.';
+
         // Handle specific cases
         if (result.errorCode == 'user-not-found') {
           // User doesn't exist - redirect to sign up
           SnackbarHelper.showSafe(
             title: 'Account Not Found',
-            message: 'No account found with this email. Please create an account first.',
+            message:
+                'No account found with this email. Please create an account first.',
             duration: const Duration(seconds: 4),
           );
-          
+
           // Navigate to sign up screen with email pre-filled
-          SmoothNavigator.to(
+          SmoothNavigator.off(
             () => SignUpView(email: email),
             transition: Transition.cupertino,
             duration: SmoothNavigator.extraSlowDuration,
@@ -195,20 +211,21 @@ class LoginViewModel extends GetxController {
           );
           return;
         } else if (result.errorCode == 'user-disabled') {
-          errorMessage = 'This account has been disabled. Please contact support.';
+          errorMessage =
+              'This account has been disabled. Please contact support.';
         } else if (result.errorCode == 'too-many-requests') {
           errorMessage = 'Too many failed attempts. Please try again later.';
         } else if (result.errorCode == 'network-request-failed') {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
-        } else if (result.errorCode == 'wrong-password' || result.errorCode == 'invalid-credential') {
+          errorMessage =
+              'Network error. Please check your internet connection and try again.';
+        } else if (result.errorCode == 'wrong-password' ||
+            result.errorCode == 'invalid-credential') {
           // For security, use generic message
-          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          errorMessage =
+              'Invalid email or password. Please check your credentials and try again.';
         }
-        
-        SnackbarHelper.showSafe(
-          title: 'Login Failed',
-          message: errorMessage,
-        );
+
+        SnackbarHelper.showSafe(title: 'Login Failed', message: errorMessage);
       }
     } finally {
       isLoading.value = false;
@@ -265,21 +282,31 @@ class LoginViewModel extends GetxController {
         // Check if user exists in database
         // If user doesn't exist in database, it means this is a new account
         // and they should complete sign-up first
-        final userExistsInDb = await _userDbService.checkUserExistsById(userId ?? '');
+        final userExistsInDb = await _userDbService.checkUserExistsById(
+          userId ?? '',
+        );
 
         if (!userExistsInDb) {
           // New account - user signed in with Google but hasn't completed sign-up
-          // Sign out and redirect to sign-up to complete registration
-          await _authService.signOut();
-          
+          // IMPORTANT: Delete Firebase Auth account to allow email/password signup
+          try {
+            final currentUser = _authService.currentUser;
+            if (currentUser != null) {
+              await currentUser.delete();
+            }
+          } catch (e) {
+            // If delete fails, try signing out
+            await _authService.signOut();
+          }
+
           SnackbarHelper.showSafe(
             title: 'Account Not Found',
             message: 'Please complete your account registration first.',
             duration: const Duration(seconds: 4),
           );
-          
+
           // Navigate to sign-up screen with email pre-filled
-          SmoothNavigator.to(
+          SmoothNavigator.off(
             () => SignUpView(email: userEmail),
             transition: Transition.cupertino,
             duration: SmoothNavigator.extraSlowDuration,
@@ -315,7 +342,7 @@ class LoginViewModel extends GetxController {
         if (!isVerified) {
           // Account exists but not verified, send verification email and navigate to verification screen
           await _authService.resendEmailVerification();
-          
+
           SmoothNavigator.offAll(
             () => VerificationView(email: userEmail),
             transition: Transition.fadeIn,
@@ -334,7 +361,8 @@ class LoginViewModel extends GetxController {
         if (result.errorCode != 'sign-in-canceled') {
           SnackbarHelper.showSafe(
             title: '${provider.tooltip} Failed',
-            message: result.errorMessage ?? 'An error occurred. Please try again.',
+            message:
+                result.errorMessage ?? 'An error occurred. Please try again.',
           );
         }
       }
@@ -351,5 +379,4 @@ class LoginViewModel extends GetxController {
       curve: SmoothNavigator.smoothCurve,
     );
   }
-
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/services.dart';
 
 /// Handles initialization and scheduling of local notifications
 class NotificationService {
@@ -29,16 +32,7 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
       // Fallback to UTC if timezone is invalid
-      if (kDebugMode) {
-        debugPrint('Failed to set local timezone: $e');
-      }
       tz.setLocalLocation(tz.getLocation('UTC'));
-    }
-
-    if (kDebugMode) {
-      debugPrint(
-        'NotificationService initialized with timezone: $timeZoneName',
-      );
     }
 
     const AndroidInitializationSettings androidSettings =
@@ -71,11 +65,21 @@ class NotificationService {
     _initialized = true;
   }
 
+  /// Open battery optimization settings to request exemption
+  Future<void> openBatteryOptimizationSettings() async {
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        // Request to disable battery optimization
+        const platform = MethodChannel('battery_optimization');
+        await platform.invokeMethod('openSettings');
+      } catch (e) {
+        // Silently handle error
+      }
+    }
+  }
+
   /// Handle notification tap events
   void _onNotificationTapped(NotificationResponse response) {
-    if (kDebugMode) {
-      debugPrint('Notification tapped: ${response.payload}');
-    }
     // You can add navigation logic here if needed
   }
 
@@ -89,6 +93,10 @@ class NotificationService {
       enableVibration: true,
       playSound: true,
       showBadge: true,
+      // CRITICAL: Allow notifications to bypass Do Not Disturb
+      // This is especially important for Samsung devices
+      enableLights: true,
+      ledColor: Colors.red,
     );
 
     final androidPlugin = _flutterLocalNotificationsPlugin
@@ -100,29 +108,63 @@ class NotificationService {
   }
 
   Future<void> _requestPermissions() async {
-    // Android 13+ runtime permission
+    final androidPlugin = _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin != null) {
+      await androidPlugin.requestNotificationsPermission();
+
+      final canScheduleExactAlarms =
+      await androidPlugin.canScheduleExactNotifications();
+
+      if (canScheduleExactAlarms == null || !canScheduleExactAlarms) {
+        await androidPlugin.requestExactAlarmsPermission();
+      }
+    }
+
+    final iosPlugin = _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+
+    if (iosPlugin != null) {
+      await iosPlugin.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+        critical: true,
+      );
+    }
+  }  /// Ensure notification service is initialized and permissions are granted
+  /// Call this before scheduling any notifications
+  Future<bool> ensureInitializedWithPermissions() async {
+    if (!_initialized) {
+      await init();
+    }
+
+    // Check if we have exact alarm permission (critical for scheduled notifications)
     final androidPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    await androidPlugin?.requestNotificationsPermission();
 
-    // Request exact alarm permission for Android 12+ (API 31+)
-    final canScheduleExactAlarms = await androidPlugin
-        ?.canScheduleExactNotifications();
-    if (canScheduleExactAlarms != null && !canScheduleExactAlarms) {
-      await androidPlugin?.requestExactAlarmsPermission();
-      if (kDebugMode) {
-        debugPrint('Requested exact alarm permission');
+    if (androidPlugin != null) {
+      final canScheduleExactAlarms = await androidPlugin
+          .canScheduleExactNotifications();
+
+      if (canScheduleExactAlarms == null || !canScheduleExactAlarms) {
+        await androidPlugin.requestExactAlarmsPermission();
+
+        // Check again after requesting
+        final canScheduleAfterRequest = await androidPlugin
+            .canScheduleExactNotifications();
+        return canScheduleAfterRequest ?? false;
       }
+      return canScheduleExactAlarms;
     }
 
-    // iOS permission (alert/sound/badge)
-    final iosPlugin = _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >();
-    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
+    // For iOS, assume permissions are granted if initialized
+    return true;
   }
 
   /// Check if notifications are enabled/permitted
@@ -152,9 +194,12 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledTime,
+    int autoDismissedSeconds = 15,
   }) async {
-    if (!_initialized) {
-      await init();
+    // Ensure initialized and permissions are granted
+    final hasPermission = await ensureInitializedWithPermissions();
+    if (!hasPermission) {
+      return;
     }
 
     // Don't schedule notifications in the past
@@ -162,7 +207,7 @@ class NotificationService {
       return;
     }
 
-    const AndroidNotificationDetails androidDetails =
+    final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           _channelId,
           _channelName,
@@ -172,42 +217,44 @@ class NotificationService {
           enableVibration: true,
           playSound: true,
           showWhen: true,
+          category: AndroidNotificationCategory.alarm,
+          visibility: NotificationVisibility.public,
+          fullScreenIntent: true,
+          autoCancel: true,
+          ongoing: false,
+          when: null,
+          usesChronometer: false,
+          channelShowBadge: true,
+          timeoutAfter: Duration(seconds: autoDismissedSeconds).inMilliseconds,
         );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
     final tz.TZDateTime tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
-    if (kDebugMode) {
-      debugPrint('📱 NotificationService: Calling zonedSchedule...');
-      debugPrint('   ID: $id');
-      debugPrint('   Scheduled for: ${tzTime.toString()}');
-      debugPrint('   Android mode: exactAllowWhileIdle');
-    }
-
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tzTime,
-      notificationDetails,
-      // Use exact alarm for precise timing (10 minutes before plan)
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: null,
-    );
-
-    if (kDebugMode) {
-      debugPrint('✅ NotificationService: zonedSchedule completed successfully');
-      debugPrint('   Notification ID $id scheduled for ${tzTime.toString()}');
+    try {
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzTime,
+        notificationDetails,
+        // Use exact alarm for precise timing (10 minutes before plan)
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: null,
+      );
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -220,10 +267,8 @@ class NotificationService {
 
     // Check if permissions are granted
     final hasPermission = await areNotificationsEnabled();
-    if (!hasPermission && kDebugMode) {
-      debugPrint(
-        'Notification permission not granted. Please grant permission in settings.',
-      );
+    if (!hasPermission) {
+      return;
     }
 
     const AndroidNotificationDetails androidDetails =
@@ -291,41 +336,6 @@ class NotificationService {
     return pendingNotifications.map((n) => n.id).toList();
   }
 
-  /// Get detailed information about all pending notifications (for debugging)
-  Future<void> debugPendingNotifications() async {
-    final pendingNotifications = await _flutterLocalNotificationsPlugin
-        .pendingNotificationRequests();
-
-    if (kDebugMode) {
-      debugPrint('');
-      debugPrint(
-        '╔════════════════════════════════════════════════════════════╗',
-      );
-      debugPrint(
-        '║         PENDING NOTIFICATIONS                              ║',
-      );
-      debugPrint(
-        '╚════════════════════════════════════════════════════════════╝',
-      );
-
-      if (pendingNotifications.isEmpty) {
-        debugPrint('❌ No pending notifications found');
-      } else {
-        debugPrint(
-          '✅ Found ${pendingNotifications.length} pending notification(s):',
-        );
-        debugPrint('');
-        for (var notification in pendingNotifications) {
-          debugPrint('🔔 Notification ID: ${notification.id}');
-          debugPrint('   Title: ${notification.title}');
-          debugPrint('   Body: ${notification.body}');
-          debugPrint('   Payload: ${notification.payload}');
-          debugPrint('');
-        }
-      }
-      debugPrint('═══════════════════════════════════════════════════════════');
-    }
-  }
 
   /// Legacy method name for backward compatibility
   /// Now shows immediate notification instead of scheduling

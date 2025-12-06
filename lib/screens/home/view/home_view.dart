@@ -2,10 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
-import 'package:love_connect/core/services/notification_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_header.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
@@ -45,22 +43,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _fadeController,
-        curve: Curves.easeOut,
-      ),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     // Start animations
     _fadeController.forward();
@@ -107,9 +98,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
             builder: (dialogContext) {
               return AlertDialog(
                 title: const Text('Exit app?'),
-                content: const Text(
-                  'Do you really want to exit Love Connect?',
-                ),
+                content: const Text('Do you really want to exit Love Connect?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -137,7 +126,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
             children: [
               // Header
               Obx(
-                    () => HomeHeader(
+                () => HomeHeader(
                   userName: viewModel.userName.value,
                   userTagline: viewModel.userTagline.value,
                   onSearchTap: viewModel.onSearchTap,
@@ -146,12 +135,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                   metrics: metrics,
                 ),
               ),
-              SizedBox(height: 4,),
+              SizedBox(height: 4),
 
               Center(
                 child: Container(
-                  width: 290,         // Divider width
-                  height: 1,          // Thickness
+                  width: 290, // Divider width
+                  height: 1, // Thickness
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
                     gradient: LinearGradient(
@@ -168,7 +157,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                 ),
               ),
 
-              SizedBox(height: 4,),
+              SizedBox(height: 4),
 
               // Content
               Expanded(
@@ -202,55 +191,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                             message: viewModel.model.noPlansMessage,
                             buttonText: viewModel.model.addPlanButtonText,
                             onAddTap: () => viewModel.onAddPlanTap(),
+                            onViewAllTap: () => viewModel.onViewAllPlansTap(),
                             onEditPlan: (plan) => viewModel.editPlan(plan),
-                            onDeletePlan: (planId) => viewModel.deletePlan(planId),
+                            onDeletePlan: (planId) =>
+                                viewModel.deletePlan(planId),
                             plans: viewModel.plans.toList(),
                             metrics: metrics,
                           ),
                         ),
-
-                        // Debug-only button to trigger a test notification
-                        if (kDebugMode) ...[
-                          SizedBox(height: metrics.sectionSpacing),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                try {
-                                  await NotificationService().showTestNotification();
-                                  SnackbarHelper.showSafe(
-                                    title: 'Test Notification Sent',
-                                    message: 'Check your notification tray!',
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                } catch (e) {
-                                  SnackbarHelper.showSafe(
-                                    title: 'Error',
-                                    message: 'Failed to show notification: $e',
-                                    duration: const Duration(seconds: 3),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryRed,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 10,
-                                ),
-                              ),
-                              child: Text(
-                                'Test Notification',
-                                style: GoogleFonts.inter(
-                                  fontSize: metrics.addButtonFontSize * 0.85,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
 
                         // Quick Actions Section
                         Padding(
@@ -280,12 +228,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: metrics.quickActionGridSpacing,
-                              mainAxisSpacing: metrics.quickActionGridSpacing,
-                              childAspectRatio: 100 / 92,
-                            ),
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing:
+                                      metrics.quickActionGridSpacing,
+                                  mainAxisSpacing:
+                                      metrics.quickActionGridSpacing,
+                                  childAspectRatio: 100 / 92,
+                                ),
                             itemCount: viewModel.quickActions.length,
                             itemBuilder: (context, index) {
                               final action = viewModel.quickActions[index];

@@ -68,7 +68,7 @@ class PlanCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.textLightPink,
+                  color: AppColors.backgroundPink,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -76,7 +76,7 @@ class PlanCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: context.responsiveFont(10),
                     fontWeight: FontWeight.w600,
-                    color: AppColors.white,
+                    color: AppColors.primaryDark,
                   ),
                 ),
               ),
@@ -87,18 +87,12 @@ class PlanCard extends StatelessWidget {
           // Date
           Row(
             children: [
-              Icon(
-                Icons.calendar_today,
-                size: 14,
-                color: AppColors.textLightPink,
-              ),
-              SizedBox(width: 4),
               Flexible(
                 child: Text(
                   dateFormat.format(plan.date),
                   style: GoogleFonts.inter(
                     fontSize: context.responsiveFont(12),
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.primaryDark,
                   ),
                 ),
@@ -111,18 +105,12 @@ class PlanCard extends StatelessWidget {
           if (plan.time != null)
             Row(
               children: [
-                Icon(
-                  Icons.access_time,
-                  size: 14,
-                  color: AppColors.textLightPink,
-                ),
-                SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     timeFormat.format(plan.time!),
                     style: GoogleFonts.inter(
                       fontSize: context.responsiveFont(12),
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.primaryDark,
                     ),
                   ),
@@ -134,18 +122,12 @@ class PlanCard extends StatelessWidget {
           // Place
           Row(
             children: [
-              Icon(
-                Icons.location_on,
-                size: 14,
-                color: AppColors.textLightPink,
-              ),
-              SizedBox(width: 4),
               Expanded(
                 child: Text(
                   plan.place,
                   style: GoogleFonts.inter(
                     fontSize: context.responsiveFont(12),
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.primaryDark,
                   ),
                   maxLines: 1,

@@ -11,17 +11,72 @@ class LocalStorageService {
   factory LocalStorageService() => _instance;
   LocalStorageService._internal();
 
-  static const String _plansKey = 'plans';
+  // CRITICAL: Store current logged-in user ID to track user-specific data
+  static const String _currentUserIdKey = 'current_logged_in_user_id';
+  
+  static const String _plansKeyPrefix = 'plans_user_';
   static const String _journalEntriesKey = 'journal_entries';
   static const String _userProfileKey = 'user_profile';
   static const String _settingsKey = 'settings';
-  static const String _notificationsKey = 'notifications';
+  static const String _notificationsKeyPrefix = 'notifications_user_';
 
-  // Plans
-  Future<List<PlanModel>> getPlans() async {
+  // Get storage key for user-specific plans
+  String _getPlansKey(String? userId) {
+    if (userId == null || userId.isEmpty) {
+      // For unauthenticated users, use a default key (will be cleared on login)
+      return '${_plansKeyPrefix}anonymous';
+    }
+    return '$_plansKeyPrefix$userId';
+  }
+
+  // Get storage key for user-specific notifications
+  String _getNotificationsKey(String? userId) {
+    if (userId == null || userId.isEmpty) {
+      return '${_notificationsKeyPrefix}anonymous';
+    }
+    return '$_notificationsKeyPrefix$userId';
+  }
+
+  // Store current user ID (called on login)
+  Future<void> setCurrentUserId(String? userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (userId != null && userId.isNotEmpty) {
+      await prefs.setString(_currentUserIdKey, userId);
+    } else {
+      await prefs.remove(_currentUserIdKey);
+    }
+  }
+
+  // Get current user ID from storage
+  Future<String?> getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_currentUserIdKey);
+  }
+
+  // Clear all data for a specific user (called on logout)
+  Future<void> clearUserData(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_getPlansKey(userId));
+    await prefs.remove(_getNotificationsKey(userId));
+  }
+
+  // Clear all anonymous/unauthenticated data
+  Future<void> clearAnonymousData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_getPlansKey(null));
+    await prefs.remove(_getNotificationsKey(null));
+  }
+
+  // Plans - NOW USER-SPECIFIC
+  Future<List<PlanModel>> getPlans({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? plansJson = prefs.getString(_plansKey);
+      
+      // Use provided userId or get from storage
+      final effectiveUserId = userId ?? await getCurrentUserId();
+      final plansKey = _getPlansKey(effectiveUserId);
+      
+      final String? plansJson = prefs.getString(plansKey);
       if (plansJson == null) return [];
       
       final List<dynamic> plansList = json.decode(plansJson);
@@ -31,8 +86,13 @@ class LocalStorageService {
     }
   }
 
-  Future<void> savePlan(PlanModel plan) async {
-    final plans = await getPlans();
+  Future<void> savePlan(PlanModel plan, {String? userId}) async {
+    // Use provided userId or get from storage
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final plansKey = _getPlansKey(effectiveUserId);
+    
+    final plans = await getPlans(userId: effectiveUserId);
     final existingIndex = plans.indexWhere((p) => p.id == plan.id);
     
     if (existingIndex >= 0) {
@@ -41,19 +101,23 @@ class LocalStorageService {
       plans.add(plan);
     }
     
-    await _savePlans(plans);
+    await _savePlans(plans, plansKey);
   }
 
-  Future<void> deletePlan(String planId) async {
-    final plans = await getPlans();
+  Future<void> deletePlan(String planId, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final plansKey = _getPlansKey(effectiveUserId);
+    
+    final plans = await getPlans(userId: effectiveUserId);
     plans.removeWhere((p) => p.id == planId);
-    await _savePlans(plans);
+    await _savePlans(plans, plansKey);
   }
 
-  Future<void> _savePlans(List<PlanModel> plans) async {
+  Future<void> _savePlans(List<PlanModel> plans, String plansKey) async {
     final prefs = await SharedPreferences.getInstance();
     final plansJson = json.encode(plans.map((p) => p.toJson()).toList());
-    await prefs.setString(_plansKey, plansJson);
+    await prefs.setString(plansKey, plansJson);
   }
 
   // Journal Entries
@@ -154,11 +218,16 @@ class LocalStorageService {
     await prefs.setBool(key, value);
   }
 
-  // Notifications
-  Future<List<NotificationModel>> getNotifications() async {
+  // Notifications - NOW USER-SPECIFIC
+  Future<List<NotificationModel>> getNotifications({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? notificationsJson = prefs.getString(_notificationsKey);
+      
+      // Use provided userId or get from storage
+      final effectiveUserId = userId ?? await getCurrentUserId();
+      final notificationsKey = _getNotificationsKey(effectiveUserId);
+      
+      final String? notificationsJson = prefs.getString(notificationsKey);
       if (notificationsJson == null) return [];
       
       final List<dynamic> notificationsList = json.decode(notificationsJson);
@@ -168,8 +237,12 @@ class LocalStorageService {
     }
   }
 
-  Future<void> saveNotification(NotificationModel notification) async {
-    final notifications = await getNotifications();
+  Future<void> saveNotification(NotificationModel notification, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final notificationsKey = _getNotificationsKey(effectiveUserId);
+    
+    final notifications = await getNotifications(userId: effectiveUserId);
     final existingIndex = notifications.indexWhere((n) => n.id == notification.id);
     
     if (existingIndex >= 0) {
@@ -178,44 +251,65 @@ class LocalStorageService {
       notifications.add(notification);
     }
     
-    await _saveNotifications(notifications);
+    await _saveNotifications(notifications, notificationsKey);
   }
 
-  Future<void> markNotificationAsRead(String notificationId) async {
-    final notifications = await getNotifications();
+  Future<void> markNotificationAsRead(String notificationId, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final notificationsKey = _getNotificationsKey(effectiveUserId);
+    
+    final notifications = await getNotifications(userId: effectiveUserId);
     final index = notifications.indexWhere((n) => n.id == notificationId);
     if (index >= 0) {
       notifications[index] = notifications[index].copyWith(isRead: true);
-      await _saveNotifications(notifications);
+      await _saveNotifications(notifications, notificationsKey);
     }
   }
 
-  Future<void> deleteNotification(String notificationId) async {
-    final notifications = await getNotifications();
+  Future<void> deleteNotification(String notificationId, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final notificationsKey = _getNotificationsKey(effectiveUserId);
+    
+    final notifications = await getNotifications(userId: effectiveUserId);
     notifications.removeWhere((n) => n.id == notificationId);
-    await _saveNotifications(notifications);
+    await _saveNotifications(notifications, notificationsKey);
   }
 
-  Future<void> markAllNotificationsAsRead() async {
-    final notifications = await getNotifications();
+  Future<void> markAllNotificationsAsRead({String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final notificationsKey = _getNotificationsKey(effectiveUserId);
+    
+    final notifications = await getNotifications(userId: effectiveUserId);
     final updatedNotifications = notifications.map((n) => n.copyWith(isRead: true)).toList();
-    await _saveNotifications(updatedNotifications);
+    await _saveNotifications(updatedNotifications, notificationsKey);
   }
 
-  Future<void> _saveNotifications(List<NotificationModel> notifications) async {
+  Future<void> _saveNotifications(List<NotificationModel> notifications, String notificationsKey) async {
     final prefs = await SharedPreferences.getInstance();
     final notificationsJson = json.encode(notifications.map((n) => n.toJson()).toList());
-    await prefs.setString(_notificationsKey, notificationsJson);
+    await prefs.setString(notificationsKey, notificationsJson);
   }
 
-  // Clear all data
-  Future<void> clearAllData() async {
+  // Clear all data for current user
+  Future<void> clearAllData({String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_plansKey);
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    
+    // Clear user-specific data
+    if (effectiveUserId != null) {
+      await clearUserData(effectiveUserId);
+    }
+    
+    // Clear anonymous data
+    await clearAnonymousData();
+    
+    // Clear general data
     await prefs.remove(_journalEntriesKey);
     await prefs.remove(_userProfileKey);
     await prefs.remove(_settingsKey);
-    await prefs.remove(_notificationsKey);
     await prefs.remove('notifications');
     await prefs.remove('planReminder');
     await prefs.remove('emailNotifications');
@@ -223,6 +317,33 @@ class LocalStorageService {
     await prefs.remove('hideLocation');
     await prefs.remove('romanticTheme');
     await prefs.remove('appLock');
+    await prefs.remove(_currentUserIdKey);
+  }
+
+  // Clear all data from all users (for complete reset)
+  Future<void> clearAllUsersData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+    
+    // Remove all user-specific plans
+    for (final key in keys) {
+      if (key.startsWith(_plansKeyPrefix) || key.startsWith(_notificationsKeyPrefix)) {
+        await prefs.remove(key);
+      }
+    }
+    
+    // Clear general data
+    await prefs.remove(_journalEntriesKey);
+    await prefs.remove(_userProfileKey);
+    await prefs.remove(_settingsKey);
+    await prefs.remove('notifications');
+    await prefs.remove('planReminder');
+    await prefs.remove('emailNotifications');
+    await prefs.remove('privateJournal');
+    await prefs.remove('hideLocation');
+    await prefs.remove('romanticTheme');
+    await prefs.remove('appLock');
+    await prefs.remove(_currentUserIdKey);
   }
 
   // Get default ideas

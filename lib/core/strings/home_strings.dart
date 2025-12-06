@@ -10,7 +10,8 @@ class HomeStrings {
   static const String quickActions = 'Quick Actions';
 
   // Upcoming Plans
-  static const String noPlansMessage = 'No plans, add your first romantic plan.';
+  static const String noPlansMessage =
+      'No plans, add your first romantic plan.';
   static const String addPlan = 'Add +';
 
   // Quick Actions
@@ -20,6 +21,7 @@ class HomeStrings {
   static const String surprise = 'Surprise';
   static const String quote = 'Quote';
   static const String settings = 'Settings';
+  static const String viewAllPlans = 'View Plans';
 
   // Bottom Navigation
   static const String home = 'Home';
@@ -32,4 +34,3 @@ class HomeStrings {
   static const String search = 'Search';
   static const String notifications = 'Notifications';
 }
-

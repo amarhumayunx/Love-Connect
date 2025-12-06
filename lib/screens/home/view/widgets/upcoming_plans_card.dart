@@ -10,6 +10,7 @@ class UpcomingPlansCard extends StatelessWidget {
   final String message;
   final String buttonText;
   final VoidCallback onAddTap;
+  final VoidCallback? onViewAllTap;
   final Function(PlanModel)? onEditPlan;
   final Function(String)? onDeletePlan;
   final HomeLayoutMetrics metrics;
@@ -20,6 +21,7 @@ class UpcomingPlansCard extends StatelessWidget {
     required this.message,
     required this.buttonText,
     required this.onAddTap,
+    this.onViewAllTap,
     this.onEditPlan,
     this.onDeletePlan,
     required this.metrics,
@@ -34,82 +36,82 @@ class UpcomingPlansCard extends StatelessWidget {
     // If no plans, show the empty state (full-width card with Add button)
     if (plans.isEmpty) {
       return Center(
-      child: Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: metrics.cardPadding,
-          vertical: metrics.sectionSpacing * 0.5,
-        ),
-        width: 392,
-        height: 143,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.textLightPink.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: metrics.addButtonFontSize * 0.9,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textLightPink,
+        child: Container(
+          margin: EdgeInsets.symmetric(
+            horizontal: metrics.cardPadding,
+            vertical: metrics.sectionSpacing * 0.5,
+          ),
+          width: 392,
+          height: 143,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.textLightPink.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: 97,
-              height: 40,
-              child: ElevatedButton(
-                onPressed: onAddTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryRed,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(34),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: metrics.addButtonFontSize * 0.9,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textLightPink,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 97,
+                height: 40,
+                child: ElevatedButton(
+                  onPressed: onAddTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(34),
+                    ),
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(97, 40),
+                    elevation: 0,
                   ),
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(97, 40),
-                  elevation: 0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.add,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      buttonText.replaceAll('+', '').trim(),
-                      style: GoogleFonts.inter(
-                        fontSize: metrics.addButtonFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 18, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        buttonText.replaceAll('+', '').trim(),
+                        style: GoogleFonts.inter(
+                          fontSize: metrics.addButtonFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
     }
 
-    // If there are plans, show them in a 2-column grid like the designs
+    // Determine how many plans to show (max 4)
+    final plansToShow = plans.length > 4 ? plans.sublist(0, 4) : plans;
+    final hasMorePlans = plans.length > 4;
+
+    // If there are plans, show them in a 2-column grid
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: metrics.cardPadding,
@@ -125,20 +127,20 @@ class UpcomingPlansCard extends StatelessWidget {
               SizedBox(
                 width: cardWidth,
                 child: PlanCard(
-                  plan: plans[0],
-                  onEdit: () => onEditPlan?.call(plans[0]),
-                  onDelete: () => onDeletePlan?.call(plans[0].id),
+                  plan: plansToShow[0],
+                  onEdit: () => onEditPlan?.call(plansToShow[0]),
+                  onDelete: () => onDeletePlan?.call(plansToShow[0].id),
                   metrics: metrics,
                 ),
               ),
               SizedBox(width: metrics.cardPadding),
               SizedBox(
                 width: cardWidth,
-                child: plans.length >= 2
+                child: plansToShow.length >= 2
                     ? PlanCard(
-                        plan: plans[1],
-                        onEdit: () => onEditPlan?.call(plans[1]),
-                        onDelete: () => onDeletePlan?.call(plans[1].id),
+                        plan: plansToShow[1],
+                        onEdit: () => onEditPlan?.call(plansToShow[1]),
+                        onDelete: () => onDeletePlan?.call(plansToShow[1].id),
                         metrics: metrics,
                       )
                     : _buildAddNewPlanCard(context, cardWidth),
@@ -146,8 +148,12 @@ class UpcomingPlansCard extends StatelessWidget {
             ],
           ),
 
-          // Optional second row (index 2 and 3 / Add card)
-          if (plans.length > 2) ...[
+          // Second row - show Add card if exactly 2 plans, or show plans 2 and 3
+          if (plansToShow.length == 2) ...[
+            // Show full-width Add card below when there are exactly 2 plans
+            SizedBox(height: metrics.sectionSpacing * 0.5),
+            Center(child: _buildFullWidthAddCard(context, screenWidth)),
+          ] else if (plansToShow.length > 2) ...[
             SizedBox(height: metrics.sectionSpacing * 0.5),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,20 +161,20 @@ class UpcomingPlansCard extends StatelessWidget {
                 SizedBox(
                   width: cardWidth,
                   child: PlanCard(
-                    plan: plans[2],
-                    onEdit: () => onEditPlan?.call(plans[2]),
-                    onDelete: () => onDeletePlan?.call(plans[2].id),
+                    plan: plansToShow[2],
+                    onEdit: () => onEditPlan?.call(plansToShow[2]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[2].id),
                     metrics: metrics,
                   ),
                 ),
                 SizedBox(width: metrics.cardPadding),
                 SizedBox(
                   width: cardWidth,
-                  child: plans.length >= 4
+                  child: plansToShow.length >= 4
                       ? PlanCard(
-                          plan: plans[3],
-                          onEdit: () => onEditPlan?.call(plans[3]),
-                          onDelete: () => onDeletePlan?.call(plans[3].id),
+                          plan: plansToShow[3],
+                          onEdit: () => onEditPlan?.call(plansToShow[3]),
+                          onDelete: () => onDeletePlan?.call(plansToShow[3].id),
                           metrics: metrics,
                         )
                       : _buildAddNewPlanCard(context, cardWidth),
@@ -177,44 +183,39 @@ class UpcomingPlansCard extends StatelessWidget {
             ),
           ],
 
-          // Any additional rows beyond the first 4 plans (no Add card in these)
-          if (plans.length > 4) ...[
-            for (int i = 4; i < plans.length; i += 2) ...[
-              SizedBox(height: metrics.sectionSpacing * 0.5),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: cardWidth,
-                    child: PlanCard(
-                      plan: plans[i],
-                      onEdit: () => onEditPlan?.call(plans[i]),
-                      onDelete: () => onDeletePlan?.call(plans[i].id),
-                      metrics: metrics,
-                    ),
-                  ),
-                  SizedBox(width: metrics.cardPadding),
-                  SizedBox(
-                    width: cardWidth,
-                    child: i + 1 < plans.length
-                        ? PlanCard(
-                            plan: plans[i + 1],
-                            onEdit: () => onEditPlan?.call(plans[i + 1]),
-                            onDelete: () => onDeletePlan?.call(plans[i + 1].id),
-                            metrics: metrics,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-            ],
-          ],
-
-          // Full-width "Add" card only when there are 1–3 plans
-          if (plans.isNotEmpty && plans.length < 4) ...[
-            SizedBox(height: metrics.sectionSpacing * 0.5),
+          // View All Plans button - only show if more than 4 plans
+          if (hasMorePlans) ...[
+            SizedBox(height: metrics.sectionSpacing * 0.7),
             Center(
-              child: _buildAddNewPlanCardBelow(context, screenWidth),
+              child: SizedBox(
+                width: screenWidth - (metrics.cardPadding * 2),
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: onViewAllTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'View All Plans',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ],
@@ -222,11 +223,84 @@ class UpcomingPlansCard extends StatelessWidget {
     );
   }
 
+  Widget _buildFullWidthAddCard(BuildContext context, double screenWidth) {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: plans.isEmpty
+            ? metrics.cardPadding
+            : 0, // Only apply horizontal margin if it's the initial empty state
+        vertical: metrics.sectionSpacing * 0.5,
+      ),
+      width:
+          screenWidth -
+          (metrics.cardPadding * 2), // Adjust width for full-width card
+      height: 143,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLightPink.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: metrics.addButtonFontSize * 0.9,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textLightPink,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: 97,
+            height: 40,
+            child: ElevatedButton(
+              onPressed: onAddTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryRed,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(34),
+                ),
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(97, 40),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 18, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text(
+                    buttonText.replaceAll('+', '').trim(),
+                    style: GoogleFonts.inter(
+                      fontSize: metrics.addButtonFontSize,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAddNewPlanCard(BuildContext context, double cardWidth) {
     return Container(
-      constraints: BoxConstraints(
-        minHeight: 180,
-      ),
+      constraints: BoxConstraints(minHeight: 180),
       padding: EdgeInsets.all(metrics.cardPadding),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -278,11 +352,7 @@ class UpcomingPlansCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.add,
-                    size: 18,
-                    color: Colors.white,
-                  ),
+                  Icon(Icons.add, size: 18, color: Colors.white),
                   SizedBox(width: 4),
                   Text(
                     buttonText.replaceAll('+', '').trim(),
@@ -300,81 +370,4 @@ class UpcomingPlansCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildAddNewPlanCardBelow(BuildContext context, double screenWidth) {
-    return Container(
-      width: screenWidth - (metrics.cardPadding * 2),
-      padding: EdgeInsets.symmetric(
-        horizontal: metrics.cardPadding * 1.5,
-        vertical: metrics.cardPadding * 1.5,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textLightPink.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: context.responsiveFont(14),
-              fontWeight: FontWeight.w500,
-              color: AppColors.textLightPink,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: 16),
-          SizedBox(
-            width: 97,
-            height: 40,
-            child: ElevatedButton(
-              onPressed: onAddTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(34),
-                ),
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(97, 40),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.add,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    buttonText.replaceAll('+', '').trim(),
-                    style: GoogleFonts.inter(
-                      fontSize: metrics.addButtonFontSize,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

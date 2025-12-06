@@ -22,9 +22,7 @@ class UserDatabaseService {
   Future<bool> checkUserExistsByEmail(String email) async {
     try {
       final normalizedEmail = email.trim().toLowerCase();
-      final snapshot = await _usersByEmailRef
-          .child(normalizedEmail)
-          .get();
+      final snapshot = await _usersByEmailRef.child(normalizedEmail).get();
 
       return snapshot.exists;
     } catch (e) {
@@ -40,9 +38,7 @@ class UserDatabaseService {
   /// Returns true if user exists, false otherwise
   Future<bool> checkUserExistsById(String userId) async {
     try {
-      final snapshot = await _usersRef
-          .child(userId)
-          .get();
+      final snapshot = await _usersRef.child(userId).get();
 
       return snapshot.exists;
     } catch (e) {
@@ -75,7 +71,9 @@ class UserDatabaseService {
       };
 
       // Save user data by userId
-      await _usersRef.child(userId).set(userData);
+      // CRITICAL FIX: Use update() instead of set() to avoid overwriting the entire node
+      // causing child nodes like 'plans' to be deleted
+      await _usersRef.child(userId).update(userData);
 
       // Also save email mapping for quick lookup - store userId as String
       // Firebase Realtime Database accepts String values directly
@@ -87,9 +85,11 @@ class UserDatabaseService {
       // Log error but don't throw - auth is still successful
       print('Realtime Database saveUserData error: $e');
       // Check if it's a permission denied error (API not enabled)
-      if (e.toString().contains('PERMISSION_DENIED') || 
+      if (e.toString().contains('PERMISSION_DENIED') ||
           e.toString().contains('API has not been used')) {
-        print('Realtime Database API is not enabled. Please enable it in Firebase Console.');
+        print(
+          'Realtime Database API is not enabled. Please enable it in Firebase Console.',
+        );
       }
       return false;
     }
@@ -120,11 +120,9 @@ class UserDatabaseService {
   Future<Map<String, dynamic>?> getUserDataByEmail(String email) async {
     try {
       final normalizedEmail = email.trim().toLowerCase();
-      
+
       // First, get userId from email mapping
-      final emailSnapshot = await _usersByEmailRef
-          .child(normalizedEmail)
-          .get();
+      final emailSnapshot = await _usersByEmailRef.child(normalizedEmail).get();
 
       if (!emailSnapshot.exists) {
         return null;
@@ -139,7 +137,7 @@ class UserDatabaseService {
         // If it's a Map, try to extract userId
         userId = value['userId']?.toString();
       }
-      
+
       if (userId == null || userId.isEmpty) {
         return null;
       }

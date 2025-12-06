@@ -11,9 +11,9 @@ import 'package:love_connect/core/widgets/quote_modal.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
 import 'package:love_connect/screens/add_plan/view/add_plan_view.dart';
+import 'package:love_connect/screens/all_plans/view/all_plans_view.dart';
 import 'package:love_connect/screens/journal/view/journal_view.dart';
 import 'package:love_connect/screens/ideas/view/ideas_view.dart';
-import 'package:love_connect/screens/profile/view/profile_view.dart';
 import 'package:love_connect/screens/notifications/view/notifications_view.dart';
 import 'package:love_connect/screens/home/model/home_model.dart';
 
@@ -27,13 +27,13 @@ class HomeViewModel extends GetxController {
   final PlansDatabaseService _plansDbService = PlansDatabaseService();
   final RxBool isLoggingOut = false.obs;
   final RxList<PlanModel> plans = <PlanModel>[].obs;
-  
+
   // Track navigation source: true = from navbar, false = from quick actions
   final RxMap<String, bool> navigationSource = <String, bool>{}.obs;
-  
+
   // Track if Add Plan is open from navbar (to show as overlay)
   final RxBool isAddPlanOpenFromNavbar = false.obs;
-  
+
   // Reactive user name and tagline
   final RxString userName = HomeStrings.userName.obs;
   final RxString userTagline = HomeStrings.userTagline.obs;
@@ -42,81 +42,163 @@ class HomeViewModel extends GetxController {
   void onInit() {
     super.onInit();
     _loadUserInfo();
+    _initializeUserData();
     loadPlans();
     loadNotifications();
+  }
+
+  /// Initialize user data - set current user ID and clear old user data
+  Future<void> _initializeUserData() async {
+    final currentUserId = _authService.currentUserId;
+    
+    if (currentUserId != null) {
+      // Get previous user ID (if any) BEFORE setting new one
+      final previousUserId = await _storageService.getCurrentUserId();
+      
+      // If this is a different user, clear previous user's local data
+      if (previousUserId != null && previousUserId != currentUserId) {
+        print('');
+        print('═══════════════════════════════════════════════════════════');
+        print('🔄 HOME: Different user detected - clearing previous user data...');
+        print('   Previous user: $previousUserId');
+        print('   Current user: $currentUserId');
+        await _storageService.clearUserData(previousUserId);
+        await _storageService.clearAnonymousData();
+        print('✅ HOME: Previous user data cleared');
+        print('═══════════════════════════════════════════════════════════');
+        print('');
+      }
+      
+      // Clear anonymous data for any unauthenticated plans
+      await _storageService.clearAnonymousData();
+      
+      // Set current user ID in local storage
+      await _storageService.setCurrentUserId(currentUserId);
+      print('✅ HOME: Current user ID set: $currentUserId');
+    } else {
+      // No user authenticated - clear any stored user ID and anonymous data
+      await _storageService.setCurrentUserId(null);
+      await _storageService.clearAnonymousData();
+    }
   }
 
   Future<void> loadPlans() async {
     try {
       final userId = _authService.currentUserId;
+      print('');
+      print('═══════════════════════════════════════════════════════════');
+      print('📱 HOME: Loading plans...');
+      print('👤 User ID: ${userId ?? "NOT AUTHENTICATED"}');
+
       List<PlanModel> loadedPlans = [];
 
-      // Try to load from Firebase if user is authenticated
+      // CRITICAL: Only load plans if user is authenticated
       if (userId != null) {
+        // Set current user ID in storage
+        await _storageService.setCurrentUserId(userId);
+        
         try {
+          print('🔄 HOME: Loading plans from Firebase for user: $userId');
           loadedPlans = await _plansDbService.getPlans(userId);
-          // If Firebase returned plans, use them
+
           if (loadedPlans.isNotEmpty) {
+            print('✅ HOME: Loaded ${loadedPlans.length} plan(s) from Firebase');
             // Sort by date, upcoming first
             loadedPlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = loadedPlans;
+
+            // Sync to user-specific local storage for offline access
+            try {
+              print('💾 HOME: Syncing Firebase plans to user-specific local storage...');
+              for (var plan in loadedPlans) {
+                await _storageService.savePlan(plan, userId: userId);
+              }
+              print('✅ HOME: Successfully synced to local storage');
+            } catch (e) {
+              print('⚠️ HOME: Failed to sync to local storage: $e');
+              // Continue - this is not critical
+            }
+
+            print(
+              '═══════════════════════════════════════════════════════════',
+            );
+            print('');
             return;
+          } else {
+            print('📭 HOME: No plans found in Firebase for user: $userId');
+            
+            // Check for user-specific local plans (only for this user)
+            final localPlans = await _storageService.getPlans(userId: userId);
+            if (localPlans.isNotEmpty) {
+              print(
+                '📦 HOME: Found ${localPlans.length} local plan(s) for this user - migrating to Firebase...',
+              );
+
+              // Migrate local plans to Firebase (one-time migration)
+              for (var plan in localPlans) {
+                final saved = await _plansDbService.savePlan(
+                  userId: userId,
+                  plan: plan,
+                );
+                if (saved) {
+                  print('✅ HOME: Migrated plan: ${plan.title}');
+                } else {
+                  print('❌ HOME: Failed to migrate plan: ${plan.title}');
+                }
+              }
+
+              // Reload from Firebase after migration
+              loadedPlans = await _plansDbService.getPlans(userId);
+            }
+            
+            // Sort by date, upcoming first
+            loadedPlans.sort((a, b) => a.date.compareTo(b.date));
+            plans.value = loadedPlans;
+            
+            if (loadedPlans.isEmpty) {
+              print('📭 HOME: No plans found for this user');
+            }
           }
         } catch (e) {
-          print('Failed to load plans from Firebase: $e');
-          // Continue to try local storage as fallback
-        }
+          print('❌ HOME: Error loading from Firebase: $e');
 
-        // If no plans from Firebase, check local storage and migrate if needed
-        final localPlans = await _storageService.getPlans();
-        if (localPlans.isNotEmpty) {
-          // Migrate local plans to Firebase
-          await _migrateLocalPlansToFirebase(userId, localPlans);
-          loadedPlans = localPlans;
+          // Fallback to user-specific local storage only
+          print('🔄 HOME: Falling back to user-specific local storage...');
+          try {
+            final localPlans = await _storageService.getPlans(userId: userId);
+            localPlans.sort((a, b) => a.date.compareTo(b.date));
+            plans.value = localPlans;
+            print(
+              '✅ HOME: Loaded ${localPlans.length} plan(s) from user-specific local storage',
+            );
+          } catch (localError) {
+            print('❌ HOME: Failed to load from local storage: $localError');
+            plans.value = [];
+          }
         }
       } else {
-        // No user authenticated, load from local storage
-        loadedPlans = await _storageService.getPlans();
+        // No user authenticated - show empty plans (don't load from local storage)
+        print('⚠️ HOME: No user authenticated - showing empty plans');
+        plans.value = [];
+        await _storageService.setCurrentUserId(null);
       }
 
-      // Sort by date, upcoming first
-      loadedPlans.sort((a, b) => a.date.compareTo(b.date));
-      plans.value = loadedPlans;
+      print('═══════════════════════════════════════════════════════════');
+      print('');
     } catch (e) {
-      print('Error loading plans: $e');
-      // Handle error silently or show snackbar
-      try {
-        // Last resort: try local storage
-        final localPlans = await _storageService.getPlans();
-        localPlans.sort((a, b) => a.date.compareTo(b.date));
-        plans.value = localPlans;
-      } catch (localError) {
-        print('Failed to load plans from local storage: $localError');
-      }
-    }
-  }
+      print('❌ HOME: Critical error in loadPlans: $e');
+      print('═══════════════════════════════════════════════════════════');
+      print('');
 
-  /// Migrate local plans to Firebase when user logs in
-  Future<void> _migrateLocalPlansToFirebase(String userId, List<PlanModel> localPlans) async {
-    try {
-      // Check if Firebase already has plans
-      final firebasePlans = await _plansDbService.getPlans(userId);
-      if (firebasePlans.isEmpty) {
-        // No plans in Firebase, migrate all local plans
-        for (var plan in localPlans) {
-          await _plansDbService.savePlan(userId: userId, plan: plan);
-        }
-        print('Migrated ${localPlans.length} plans from local storage to Firebase');
-      }
-    } catch (e) {
-      print('Failed to migrate plans to Firebase: $e');
-      // Don't throw - migration failure shouldn't block app usage
+      // Set empty plans on error
+      plans.value = [];
     }
   }
 
   Future<void> loadNotifications() async {
     try {
-      final notifications = await _storageService.getNotifications();
+      final userId = _authService.currentUserId;
+      final notifications = await _storageService.getNotifications(userId: userId);
       final unreadCount = notifications.where((n) => !n.isRead).length;
       notificationCount.value = unreadCount;
     } catch (e) {
@@ -128,12 +210,12 @@ class HomeViewModel extends GetxController {
   Future<void> _loadUserInfo() async {
     final user = _authService.currentUser;
     if (user == null) return;
-    
+
     await _reloadUserData();
-    
+
     final currentUser = _authService.currentUser;
     if (currentUser == null) return;
-    
+
     final name = _extractUserName(currentUser);
     userName.value = name.isNotEmpty ? name : HomeStrings.userName;
     userTagline.value = HomeStrings.userTagline;
@@ -152,9 +234,9 @@ class HomeViewModel extends GetxController {
   String _extractUserName(User user) {
     final displayName = user.displayName ?? '';
     if (displayName.isNotEmpty) return displayName;
-    
+
     if (user.email == null) return '';
-    
+
     return _formatEmailName(user.email!);
   }
 
@@ -165,9 +247,9 @@ class HomeViewModel extends GetxController {
         .replaceAll('.', ' ')
         .replaceAll('_', ' ')
         .replaceAll('-', ' ');
-    
+
     if (normalized.isEmpty) return '';
-    
+
     final words = normalized.split(' ').map(_capitalizeWord).toList();
     return words.join(' ');
   }
@@ -183,14 +265,23 @@ class HomeViewModel extends GetxController {
   /// After logout, user goes to login (not get started) since they've already seen it
   Future<void> logout() async {
     if (isLoggingOut.value) return;
-    
+
     isLoggingOut.value = true;
     HapticFeedback.lightImpact();
-    
+
     try {
+      final currentUserId = _authService.currentUserId;
+      
+      // Clear current user ID and anonymous data from storage
+      if (currentUserId != null) {
+        await _storageService.clearUserData(currentUserId);
+      }
+      await _storageService.clearAnonymousData();
+      await _storageService.setCurrentUserId(null);
+      
       // Sign out from Firebase and Google
       await _authService.signOut();
-      
+
       // After logout, always go to login screen (not get started)
       // because user has already seen get started screen before
       await SmoothNavigator.offAll(
@@ -240,10 +331,9 @@ class HomeViewModel extends GetxController {
       case HomeStrings.quote:
         QuoteModal.show();
         break;
-      case HomeStrings.settings:
-        // Navigate with Get.to() to show back arrow and hide bottom navbar
-        navigationSource['profile'] = false; // from quick actions
-        Get.to(() => const ProfileView());
+      case HomeStrings.viewAllPlans:
+        // Navigate to All Plans screen
+        onViewAllPlansTap();
         break;
       default:
         SnackbarHelper.showSafe(
@@ -274,6 +364,14 @@ class HomeViewModel extends GetxController {
     }
   }
 
+  void onViewAllPlansTap() {
+    HapticFeedback.lightImpact();
+    Get.to(() => const AllPlansView())?.then((_) {
+      // Reload plans when returning from All Plans screen
+      loadPlans();
+    });
+  }
+
   void editPlan(PlanModel plan) {
     HapticFeedback.lightImpact();
     Get.to(() => AddPlanView(planId: plan.id))?.then((result) {
@@ -288,33 +386,30 @@ class HomeViewModel extends GetxController {
     try {
       final userId = _authService.currentUserId;
 
-      // Delete from Firebase if user is authenticated
-      if (userId != null) {
-        await _plansDbService.deletePlan(
-          userId: userId,
-          planId: planId,
-        );
+      if (userId == null) {
+        SnackbarHelper.showSafe(title: 'Error', message: 'User not authenticated');
+        return;
       }
 
-      // Also delete from local storage
+      // Delete from Firebase
+      await _plansDbService.deletePlan(userId: userId, planId: planId);
+
+      // Also delete from user-specific local storage
       try {
-        await _storageService.deletePlan(planId);
+        await _storageService.deletePlan(planId, userId: userId);
       } catch (e) {
         print('Failed to delete plan from local storage: $e');
       }
 
       // Reload plans
       await loadPlans();
-      
+
       SnackbarHelper.showSafe(
         title: 'Plan Deleted',
         message: 'Plan has been deleted successfully',
       );
     } catch (e) {
-      SnackbarHelper.showSafe(
-        title: 'Error',
-        message: 'Failed to delete plan',
-      );
+      SnackbarHelper.showSafe(title: 'Error', message: 'Failed to delete plan');
     }
   }
 
@@ -336,14 +431,14 @@ class HomeViewModel extends GetxController {
 
   void onBottomNavTap(int index) {
     HapticFeedback.lightImpact();
-    
+
     // Handle navigation based on index
     switch (index) {
       case 0:
         // Home screen
         // If already on home and Add Plan is not open, do nothing
-        if (selectedBottomNavIndex.value == index && 
-            currentScreenIndex.value == 0 && 
+        if (selectedBottomNavIndex.value == index &&
+            currentScreenIndex.value == 0 &&
             !isAddPlanOpenFromNavbar.value) {
           return;
         }
@@ -373,8 +468,8 @@ class HomeViewModel extends GetxController {
       case 2:
         // Journal screen - navigate via IndexedStack
         // If already on journal, do nothing
-        if (selectedBottomNavIndex.value == index && 
-            currentScreenIndex.value == 1 && 
+        if (selectedBottomNavIndex.value == index &&
+            currentScreenIndex.value == 1 &&
             !isAddPlanOpenFromNavbar.value) {
           return;
         }
@@ -389,8 +484,8 @@ class HomeViewModel extends GetxController {
       case 3:
         // Profile/Settings screen - navigate via IndexedStack
         // If already on profile, do nothing
-        if (selectedBottomNavIndex.value == index && 
-            currentScreenIndex.value == 2 && 
+        if (selectedBottomNavIndex.value == index &&
+            currentScreenIndex.value == 2 &&
             !isAddPlanOpenFromNavbar.value) {
           return;
         }
@@ -404,7 +499,7 @@ class HomeViewModel extends GetxController {
         break;
     }
   }
-  
+
   // Check if navigation came from navbar (true) or quick actions (false)
   // For screens in IndexedStack (profile, journal), default to true (navbar)
   // For other screens (addPlan), default to false (not from navbar)
@@ -418,53 +513,52 @@ class HomeViewModel extends GetxController {
   }
 
   List<QuickActionModel> get quickActions => [
-        const QuickActionModel(
-          title: HomeStrings.newPlan,
-          iconPath: 'assets/svg/newplan.svg',
-        ),
-        const QuickActionModel(
-          title: HomeStrings.journal,
-          iconPath: 'assets/svg/journal.svg',
-        ),
-        const QuickActionModel(
-          title: HomeStrings.ideas,
-          iconPath: 'assets/svg/ideas.svg',
-        ),
-        const QuickActionModel(
-          title: HomeStrings.surprise,
-          iconPath: 'assets/svg/surprise.svg',
-        ),
-        const QuickActionModel(
-          title: HomeStrings.quote,
-          iconPath: 'assets/svg/quote.svg',
-        ),
-        const QuickActionModel(
-          title: HomeStrings.settings,
-          iconPath: 'assets/svg/setting.svg',
-        ),
-      ];
+    const QuickActionModel(
+      title: HomeStrings.newPlan,
+      iconPath: 'assets/svg/newplan.svg',
+    ),
+    const QuickActionModel(
+      title: HomeStrings.journal,
+      iconPath: 'assets/svg/journal.svg',
+    ),
+    const QuickActionModel(
+      title: HomeStrings.ideas,
+      iconPath: 'assets/svg/ideas.svg',
+    ),
+    const QuickActionModel(
+      title: HomeStrings.surprise,
+      iconPath: 'assets/svg/surprise.svg',
+    ),
+    const QuickActionModel(
+      title: HomeStrings.quote,
+      iconPath: 'assets/svg/quote.svg',
+    ),
+    const QuickActionModel(
+      title: HomeStrings.viewAllPlans,
+      iconPath: 'assets/svg/newplan.svg',
+    ),
+  ];
 
   List<BottomNavItem> get bottomNavItems => [
-        const BottomNavItem(
-          label: HomeStrings.home,
-          iconPath: 'assets/svg/home.svg',
-          index: 0,
-        ),
-        const BottomNavItem(
-          label: HomeStrings.addPlanNav,
-          iconPath: 'assets/svg/newplan.svg',
-          index: 1,
-        ),
-        const BottomNavItem(
-          label: HomeStrings.journalNav,
-          iconPath: 'assets/svg/journal.svg',
-          index: 2,
-        ),
-        const BottomNavItem(
-          label: HomeStrings.profileNav,
-          iconPath: 'assets/svg/profile_set.svg',
-          index: 3,
-        ),
-      ];
+    const BottomNavItem(
+      label: HomeStrings.home,
+      iconPath: 'assets/svg/home.svg',
+      index: 0,
+    ),
+    const BottomNavItem(
+      label: HomeStrings.addPlanNav,
+      iconPath: 'assets/svg/newplan.svg',
+      index: 1,
+    ),
+    const BottomNavItem(
+      label: HomeStrings.journalNav,
+      iconPath: 'assets/svg/journal.svg',
+      index: 2,
+    ),
+    const BottomNavItem(
+      label: HomeStrings.profileNav,
+      iconPath: 'assets/svg/profile_set.svg',
+      index: 3,
+    ),
+  ];
 }
-

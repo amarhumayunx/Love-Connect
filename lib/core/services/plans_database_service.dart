@@ -3,7 +3,8 @@ import 'package:love_connect/core/models/plan_model.dart';
 
 /// Service for managing user plans in Firebase Realtime Database
 class PlansDatabaseService {
-  static final PlansDatabaseService _instance = PlansDatabaseService._internal();
+  static final PlansDatabaseService _instance =
+      PlansDatabaseService._internal();
   factory PlansDatabaseService() => _instance;
   PlansDatabaseService._internal();
 
@@ -29,16 +30,22 @@ class PlansDatabaseService {
     required PlanModel plan,
   }) async {
     try {
+      print(
+        '💾 PlansDatabaseService: Saving plan "${plan.title}" for user: $userId',
+      );
       final planData = plan.toJson();
       final planRef = _getPlanRef(userId, plan.id);
-      
+
       // Use set() directly - Firebase Realtime Database is already optimized for fast writes
       // Using set() without await for priority makes it faster
       await planRef.set(planData);
-      
+
+      print(
+        '✅ PlansDatabaseService: Successfully saved plan: ${plan.title} (ID: ${plan.id})',
+      );
       return true;
     } catch (e) {
-      print('PlansDatabaseService savePlan error: $e');
+      print('❌ PlansDatabaseService savePlan error: $e');
       return false;
     }
   }
@@ -47,19 +54,28 @@ class PlansDatabaseService {
   /// Returns list of plans, empty list if none exist or on error
   Future<List<PlanModel>> getPlans(String userId) async {
     try {
+      print('🔍 PlansDatabaseService: Loading plans for user: $userId');
       final snapshot = await _getUserPlansRef(userId).get();
 
       if (!snapshot.exists || snapshot.value == null) {
+        print(
+          '📭 PlansDatabaseService: No plans found in Firebase for user: $userId',
+        );
         return [];
       }
 
       final value = snapshot.value;
       if (value is! Map) {
+        print('⚠️ PlansDatabaseService: Invalid data format in Firebase');
         return [];
       }
 
       final plansMap = value as Map<Object?, Object?>;
       final plans = <PlanModel>[];
+
+      print(
+        '📦 PlansDatabaseService: Found ${plansMap.length} plan(s) in Firebase',
+      );
 
       for (var entry in plansMap.entries) {
         try {
@@ -70,16 +86,22 @@ class PlansDatabaseService {
             );
             final plan = PlanModel.fromJson(planJson);
             plans.add(plan);
+            print(
+              '✅ PlansDatabaseService: Loaded plan: ${plan.title} (ID: ${plan.id})',
+            );
           }
         } catch (e) {
-          print('Error parsing plan ${entry.key}: $e');
+          print('❌ Error parsing plan ${entry.key}: $e');
           // Continue with other plans
         }
       }
 
+      print(
+        '✅ PlansDatabaseService: Successfully loaded ${plans.length} plan(s)',
+      );
       return plans;
     } catch (e) {
-      print('PlansDatabaseService getPlans error: $e');
+      print('❌ PlansDatabaseService getPlans error: $e');
       return [];
     }
   }
@@ -91,10 +113,14 @@ class PlansDatabaseService {
     required String planId,
   }) async {
     try {
+      print(
+        '🗑️ PlansDatabaseService: Deleting plan (ID: $planId) for user: $userId',
+      );
       await _getPlanRef(userId, planId).remove();
+      print('✅ PlansDatabaseService: Successfully deleted plan (ID: $planId)');
       return true;
     } catch (e) {
-      print('PlansDatabaseService deletePlan error: $e');
+      print('❌ PlansDatabaseService deletePlan error: $e');
       return false;
     }
   }
@@ -145,4 +171,3 @@ class PlansDatabaseService {
     }
   }
 }
-

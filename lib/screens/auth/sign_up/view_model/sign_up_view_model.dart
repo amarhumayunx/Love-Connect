@@ -37,8 +37,7 @@ class SignUpViewModel extends GetxController {
       emailController.text = email;
     }
   }
-  
-  
+
   @override
   void onClose() {
     nameController.dispose();
@@ -64,8 +63,9 @@ class SignUpViewModel extends GetxController {
 
     try {
       final email = emailController.text.trim();
-      final password = passwordController.text; // Don't trim password - preserve exact input
-      
+      final password =
+          passwordController.text; // Don't trim password - preserve exact input
+
       // Validate password is not empty
       if (password.isEmpty) {
         SnackbarHelper.showSafe(
@@ -74,7 +74,7 @@ class SignUpViewModel extends GetxController {
         );
         return;
       }
-      
+
       // Attempt to sign up - Firebase will handle account creation
       // If email already exists, we'll get 'email-already-in-use' error
       final result = await _authService.signUpWithEmailPassword(
@@ -87,7 +87,8 @@ class SignUpViewModel extends GetxController {
         // Show success message
         SnackbarHelper.showSafe(
           title: 'Account Created',
-          message: 'Please verify your email address. A verification email has been sent.',
+          message:
+              'Please verify your email address. A verification email has been sent.',
           duration: const Duration(seconds: 4),
         );
 
@@ -99,20 +100,22 @@ class SignUpViewModel extends GetxController {
         );
       } else {
         // Handle specific error cases
-        String errorMessage = result.errorMessage ?? 'An error occurred. Please try again.';
-        
+        String errorMessage =
+            result.errorMessage ?? 'An error occurred. Please try again.';
+
         if (result.errorCode == 'email-already-in-use') {
           // Email already exists - redirect to login
-          errorMessage = 'An account with this email already exists. Please sign in instead.';
-          
+          errorMessage =
+              'An account with this email already exists. Please sign in instead.';
+
           SnackbarHelper.showSafe(
             title: 'Account Already Exists',
             message: errorMessage,
             duration: const Duration(seconds: 4),
           );
-          
+
           // Navigate to login with email pre-filled
-          SmoothNavigator.to(
+          SmoothNavigator.off(
             () => LoginView(email: email),
             transition: Transition.cupertino,
             duration: SmoothNavigator.extraSlowDuration,
@@ -120,15 +123,15 @@ class SignUpViewModel extends GetxController {
           );
           return;
         } else if (result.errorCode == 'weak-password') {
-          errorMessage = result.errorMessage ?? 'Password is too weak. Please choose a stronger password.';
+          errorMessage =
+              result.errorMessage ??
+              'Password is too weak. Please choose a stronger password.';
         } else if (result.errorCode == 'network-request-failed') {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
+          errorMessage =
+              'Network error. Please check your internet connection and try again.';
         }
-        
-        SnackbarHelper.showSafe(
-          title: 'Sign Up Failed',
-          message: errorMessage,
-        );
+
+        SnackbarHelper.showSafe(title: 'Sign Up Failed', message: errorMessage);
       }
     } finally {
       isLoading.value = false;
@@ -193,18 +196,21 @@ class SignUpViewModel extends GetxController {
 
         // Check if user already exists in database
         // If user exists, they should sign in instead
-        final userExistsInDb = await _userDbService.checkUserExistsById(userId ?? '');
+        final userExistsInDb = await _userDbService.checkUserExistsById(
+          userId ?? '',
+        );
 
         if (userExistsInDb) {
           // User already exists in database - they should sign in, not sign up
           await _authService.signOut();
-          
+
           SnackbarHelper.showSafe(
             title: 'Account Already Exists',
-            message: 'An account with this email already exists. Please sign in instead.',
+            message:
+                'An account with this email already exists. Please sign in instead.',
             duration: const Duration(seconds: 4),
           );
-          
+
           // Navigate to login screen with email pre-filled
           SmoothNavigator.offAll(
             () => LoginView(email: userEmail),
@@ -240,7 +246,7 @@ class SignUpViewModel extends GetxController {
         if (!isVerified) {
           // Account created but not verified, send verification email and navigate to verification screen
           await _authService.resendEmailVerification();
-          
+
           SmoothNavigator.offAll(
             () => VerificationView(email: userEmail),
             transition: Transition.fadeIn,
@@ -256,10 +262,12 @@ class SignUpViewModel extends GetxController {
         }
       } else {
         // Only show error if user didn't cancel
-        if (result.errorCode != 'sign-up-canceled' && result.errorCode != 'sign-in-canceled') {
+        if (result.errorCode != 'sign-up-canceled' &&
+            result.errorCode != 'sign-in-canceled') {
           SnackbarHelper.showSafe(
             title: '${provider.tooltip} Failed',
-            message: result.errorMessage ?? 'An error occurred. Please try again.',
+            message:
+                result.errorMessage ?? 'An error occurred. Please try again.',
           );
         }
       }
@@ -267,5 +275,4 @@ class SignUpViewModel extends GetxController {
       isLoading.value = false;
     }
   }
-
 }

@@ -1,12 +1,14 @@
 import 'package:get/get.dart';
 import 'package:love_connect/core/models/notification_model.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
+import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/notifications/model/notifications_model.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 
 class NotificationsViewModel extends GetxController {
   final LocalStorageService _storageService = LocalStorageService();
+  final AuthService _authService = AuthService();
   final NotificationsModel model = const NotificationsModel();
   final RxList<NotificationModel> notifications = <NotificationModel>[].obs;
   final RxBool isLoading = false.obs;
@@ -20,7 +22,8 @@ class NotificationsViewModel extends GetxController {
   Future<void> loadNotifications() async {
     isLoading.value = true;
     try {
-      final loadedNotifications = await _storageService.getNotifications();
+      final userId = _authService.currentUserId;
+      final loadedNotifications = await _storageService.getNotifications(userId: userId);
       notifications.value = loadedNotifications..sort((a, b) => b.date.compareTo(a.date));
     } catch (e) {
       SnackbarHelper.showSafe(
@@ -34,7 +37,8 @@ class NotificationsViewModel extends GetxController {
 
   Future<void> markAsRead(String notificationId) async {
     try {
-      await _storageService.markNotificationAsRead(notificationId);
+      final userId = _authService.currentUserId;
+      await _storageService.markNotificationAsRead(notificationId, userId: userId);
       await loadNotifications();
       _updateHomeNotificationCount();
     } catch (e) {
@@ -47,7 +51,8 @@ class NotificationsViewModel extends GetxController {
 
   Future<void> markAllAsRead() async {
     try {
-      await _storageService.markAllNotificationsAsRead();
+      final userId = _authService.currentUserId;
+      await _storageService.markAllNotificationsAsRead(userId: userId);
       await loadNotifications();
       _updateHomeNotificationCount();
     } catch (e) {
@@ -60,7 +65,8 @@ class NotificationsViewModel extends GetxController {
 
   Future<void> deleteNotification(String notificationId) async {
     try {
-      await _storageService.deleteNotification(notificationId);
+      final userId = _authService.currentUserId;
+      await _storageService.deleteNotification(notificationId, userId: userId);
       await loadNotifications();
       _updateHomeNotificationCount();
       SnackbarHelper.showSafe(
