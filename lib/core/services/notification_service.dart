@@ -34,19 +34,22 @@ class NotificationService {
       }
       tz.setLocalLocation(tz.getLocation('UTC'));
     }
-    
+
     if (kDebugMode) {
-      debugPrint('NotificationService initialized with timezone: $timeZoneName');
+      debugPrint(
+        'NotificationService initialized with timezone: $timeZoneName',
+      );
     }
 
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
@@ -90,8 +93,9 @@ class NotificationService {
 
     final androidPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
     await androidPlugin?.createNotificationChannel(channel);
   }
 
@@ -99,11 +103,13 @@ class NotificationService {
     // Android 13+ runtime permission
     final androidPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.requestNotificationsPermission();
-    
+
     // Request exact alarm permission for Android 12+ (API 31+)
-    final canScheduleExactAlarms = await androidPlugin?.canScheduleExactNotifications();
+    final canScheduleExactAlarms = await androidPlugin
+        ?.canScheduleExactNotifications();
     if (canScheduleExactAlarms != null && !canScheduleExactAlarms) {
       await androidPlugin?.requestExactAlarmsPermission();
       if (kDebugMode) {
@@ -114,12 +120,9 @@ class NotificationService {
     // iOS permission (alert/sound/badge)
     final iosPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-    await iosPlugin?.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
   /// Check if notifications are enabled/permitted
@@ -130,8 +133,9 @@ class NotificationService {
 
     final androidPlugin = _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
     if (androidPlugin != null) {
       final granted = await androidPlugin.requestNotificationsPermission();
       return granted ?? false;
@@ -158,16 +162,17 @@ class NotificationService {
       return;
     }
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.max,
-      priority: Priority.high,
-      enableVibration: true,
-      playSound: true,
-      showWhen: true,
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
+          importance: Importance.max,
+          priority: Priority.high,
+          enableVibration: true,
+          playSound: true,
+          showWhen: true,
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -180,8 +185,14 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    final tz.TZDateTime tzTime =
-        tz.TZDateTime.from(scheduledTime, tz.local);
+    final tz.TZDateTime tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
+
+    if (kDebugMode) {
+      debugPrint('📱 NotificationService: Calling zonedSchedule...');
+      debugPrint('   ID: $id');
+      debugPrint('   Scheduled for: ${tzTime.toString()}');
+      debugPrint('   Android mode: exactAllowWhileIdle');
+    }
 
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
@@ -193,9 +204,10 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: null,
     );
-    
+
     if (kDebugMode) {
-      debugPrint('Scheduled notification ID $id for ${tzTime.toString()}');
+      debugPrint('✅ NotificationService: zonedSchedule completed successfully');
+      debugPrint('   Notification ID $id scheduled for ${tzTime.toString()}');
     }
   }
 
@@ -209,20 +221,23 @@ class NotificationService {
     // Check if permissions are granted
     final hasPermission = await areNotificationsEnabled();
     if (!hasPermission && kDebugMode) {
-      debugPrint('Notification permission not granted. Please grant permission in settings.');
+      debugPrint(
+        'Notification permission not granted. Please grant permission in settings.',
+      );
     }
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.max,
-      priority: Priority.high,
-      enableVibration: true,
-      playSound: true,
-      showWhen: false,
-      icon: '@mipmap/ic_launcher',
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
+          importance: Importance.max,
+          priority: Priority.high,
+          enableVibration: true,
+          playSound: true,
+          showWhen: false,
+          icon: '@mipmap/ic_launcher',
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -258,8 +273,9 @@ class NotificationService {
   /// Cancel all plan notifications (keeps test notifications)
   Future<void> cancelAllPlanNotifications() async {
     // Get all pending notifications
-    final pendingNotifications = await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
-    
+    final pendingNotifications = await _flutterLocalNotificationsPlugin
+        .pendingNotificationRequests();
+
     // Cancel all except test notification (ID 9999)
     for (var notification in pendingNotifications) {
       if (notification.id != 9999) {
@@ -270,8 +286,45 @@ class NotificationService {
 
   /// Get all pending notification IDs
   Future<List<int>> getPendingNotificationIds() async {
-    final pendingNotifications = await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    final pendingNotifications = await _flutterLocalNotificationsPlugin
+        .pendingNotificationRequests();
     return pendingNotifications.map((n) => n.id).toList();
+  }
+
+  /// Get detailed information about all pending notifications (for debugging)
+  Future<void> debugPendingNotifications() async {
+    final pendingNotifications = await _flutterLocalNotificationsPlugin
+        .pendingNotificationRequests();
+
+    if (kDebugMode) {
+      debugPrint('');
+      debugPrint(
+        '╔════════════════════════════════════════════════════════════╗',
+      );
+      debugPrint(
+        '║         PENDING NOTIFICATIONS                              ║',
+      );
+      debugPrint(
+        '╚════════════════════════════════════════════════════════════╝',
+      );
+
+      if (pendingNotifications.isEmpty) {
+        debugPrint('❌ No pending notifications found');
+      } else {
+        debugPrint(
+          '✅ Found ${pendingNotifications.length} pending notification(s):',
+        );
+        debugPrint('');
+        for (var notification in pendingNotifications) {
+          debugPrint('🔔 Notification ID: ${notification.id}');
+          debugPrint('   Title: ${notification.title}');
+          debugPrint('   Body: ${notification.body}');
+          debugPrint('   Payload: ${notification.payload}');
+          debugPrint('');
+        }
+      }
+      debugPrint('═══════════════════════════════════════════════════════════');
+    }
   }
 
   /// Legacy method name for backward compatibility
@@ -281,5 +334,3 @@ class NotificationService {
     await showTestNotification();
   }
 }
-
-

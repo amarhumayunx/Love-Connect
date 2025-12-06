@@ -34,7 +34,7 @@ class AddPlanViewModel extends GetxController {
   Future<void> _loadPlan() async {
     try {
       final userId = _authService.currentUserId;
-      
+
       // Try to load from Firebase first if user is authenticated
       if (userId != null) {
         final plans = await _plansDbService.getPlans(userId);
@@ -50,7 +50,7 @@ class AddPlanViewModel extends GetxController {
           return;
         }
       }
-      
+
       // Fallback to local storage
       final plans = await _storageService.getPlans();
       final plan = plans.firstWhereOrNull((p) => p.id == planId);
@@ -152,20 +152,19 @@ class AddPlanViewModel extends GetxController {
       // Save to Firebase in parallel (non-blocking)
       Future<bool>? firebaseFuture;
       if (userId != null) {
-        firebaseFuture = _plansDbService.savePlan(
-          userId: userId,
-          plan: plan,
-        );
+        firebaseFuture = _plansDbService.savePlan(userId: userId, plan: plan);
         // Don't await - let it run in background
-        firebaseFuture.then((success) {
-          if (success && kDebugMode) {
-            debugPrint('Plan saved to Firebase successfully');
-          }
-        }).catchError((e) {
-          if (kDebugMode) {
-            debugPrint('Firebase save error (non-blocking): $e');
-          }
-        });
+        firebaseFuture
+            .then((success) {
+              if (success && kDebugMode) {
+                debugPrint('Plan saved to Firebase successfully');
+              }
+            })
+            .catchError((e) {
+              if (kDebugMode) {
+                debugPrint('Firebase save error (non-blocking): $e');
+              }
+            });
       }
 
       // Schedule notification (non-blocking)
@@ -184,8 +183,7 @@ class AddPlanViewModel extends GetxController {
         }
 
         // Show success message
-        final String titleText =
-            planId != null ? 'Plan Updated' : 'Plan Saved';
+        final String titleText = planId != null ? 'Plan Updated' : 'Plan Saved';
         SnackbarHelper.showSafe(
           title: titleText,
           message: userId != null
@@ -210,7 +208,8 @@ class AddPlanViewModel extends GetxController {
           } else {
             SnackbarHelper.showSafe(
               title: 'Error',
-              message: 'Failed to save plan. Please check your connection and try again.',
+              message:
+                  'Failed to save plan. Please check your connection and try again.',
             );
           }
         } else {
@@ -236,7 +235,32 @@ class AddPlanViewModel extends GetxController {
   Future<void> _schedulePlanNotification(PlanModel plan) async {
     // Only schedule if we have a specific time
     final DateTime? planTime = plan.time;
+
+    if (kDebugMode) {
+      debugPrint('');
+      debugPrint(
+        '╔════════════════════════════════════════════════════════════╗',
+      );
+      debugPrint(
+        '║         NOTIFICATION SCHEDULING DEBUG                     ║',
+      );
+      debugPrint(
+        '╚════════════════════════════════════════════════════════════╝',
+      );
+      debugPrint('📅 Plan: ${plan.title}');
+      debugPrint('🆔 Plan ID: ${plan.id}');
+      debugPrint('⏰ Plan Time: ${planTime ?? "NOT SET"}');
+      debugPrint('🕐 Current Time: ${DateTime.now()}');
+      debugPrint('');
+    }
+
     if (planTime == null) {
+      if (kDebugMode) {
+        debugPrint('❌ FAILED: No plan time set - notification NOT scheduled');
+        debugPrint(
+          '═══════════════════════════════════════════════════════════',
+        );
+      }
       return;
     }
 
@@ -247,6 +271,14 @@ class AddPlanViewModel extends GetxController {
       final bool planReminderEnabled = settings['planReminder'] ?? true;
 
       if (!notificationsEnabled || !planReminderEnabled) {
+        if (kDebugMode) {
+          debugPrint('❌ FAILED: Notifications disabled in settings');
+          debugPrint('   Push Notifications: $notificationsEnabled');
+          debugPrint('   Plan Reminders: $planReminderEnabled');
+          debugPrint(
+            '═══════════════════════════════════════════════════════════',
+          );
+        }
         return;
       }
     } catch (_) {
@@ -254,15 +286,48 @@ class AddPlanViewModel extends GetxController {
     }
 
     // Schedule notification 10 minutes before the plan time
-    final DateTime notificationTime = planTime.subtract(const Duration(minutes: 10));
+    final DateTime notificationTime = planTime.subtract(
+      const Duration(minutes: 10),
+    );
+    final difference = notificationTime.difference(DateTime.now());
+
+    if (kDebugMode) {
+      debugPrint('⏱️  TIMING CALCULATION:');
+      debugPrint('   Notification will trigger: $notificationTime');
+      debugPrint(
+        '   Time from now: ${difference.inMinutes} minutes (${difference.inSeconds} seconds)',
+      );
+      debugPrint(
+        '   Status: ${difference.isNegative ? "⚠️  IN THE PAST" : "✅ IN THE FUTURE"}',
+      );
+      debugPrint('');
+    }
 
     // Only schedule if notification time is in the future
     if (notificationTime.isBefore(DateTime.now())) {
+      if (kDebugMode) {
+        debugPrint('❌ FAILED: Notification time is in the PAST');
+        debugPrint(
+          '   💡 TIP: Schedule plans at least 10 minutes in the future',
+        );
+        debugPrint(
+          '═══════════════════════════════════════════════════════════',
+        );
+      }
       return;
     }
 
     // Use a stable int ID derived from the plan id hashCode
     final int notificationId = plan.id.hashCode & 0x7fffffff;
+
+    if (kDebugMode) {
+      debugPrint('');
+      debugPrint('🔔 SCHEDULING NOTIFICATION:');
+      debugPrint('   Notification ID: $notificationId');
+      debugPrint('   Will trigger at: $notificationTime');
+      debugPrint('   Message: "${plan.title} at ${plan.place} in 10 minutes"');
+      debugPrint('');
+    }
 
     await _notificationService.schedulePlanNotification(
       id: notificationId,
@@ -270,6 +335,15 @@ class AddPlanViewModel extends GetxController {
       body: '${plan.title} at ${plan.place} in 10 minutes',
       scheduledTime: notificationTime,
     );
+
+    if (kDebugMode) {
+      debugPrint('✅ SUCCESS: Notification scheduled successfully!');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('');
+
+      // Show all pending notifications for verification
+      await _notificationService.debugPendingNotifications();
+    }
 
     // Also store a local notification entry for the in-app notifications screen
     try {
@@ -283,7 +357,9 @@ class AddPlanViewModel extends GetxController {
       await _storageService.saveNotification(notification);
     } catch (e) {
       // Ignore errors when saving notification locally
-      print('Failed to save notification locally: $e');
+      if (kDebugMode) {
+        debugPrint('Failed to save notification locally: $e');
+      }
     }
   }
 
@@ -305,12 +381,11 @@ class AddPlanViewModel extends GetxController {
   }
 
   List<String> get planTypes => [
-        'Surprise',
-        'Dinner',
-        'Movie',
-        'Walk',
-        'Trip',
-        'Other',
-      ];
+    'Surprise',
+    'Dinner',
+    'Movie',
+    'Walk',
+    'Trip',
+    'Other',
+  ];
 }
-

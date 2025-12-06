@@ -81,8 +81,10 @@ class SettingsViewModel extends GetxController {
       // Show success message
       if (key == 'notifications') {
         SnackbarHelper.showSafe(
-          title: value ? 'Push Notifications Enabled' : 'Push Notifications Disabled',
-          message: value 
+          title: value
+              ? 'Push Notifications Enabled'
+              : 'Push Notifications Disabled',
+          message: value
               ? 'You will receive notifications for your plans'
               : 'All notifications have been cancelled',
           duration: const Duration(seconds: 2),
@@ -90,7 +92,7 @@ class SettingsViewModel extends GetxController {
       } else if (key == 'planReminder') {
         SnackbarHelper.showSafe(
           title: value ? 'Plan Reminders Enabled' : 'Plan Reminders Disabled',
-          message: value 
+          message: value
               ? 'You will receive reminders 10 minutes before your plans'
               : 'Plan reminder notifications have been cancelled',
           duration: const Duration(seconds: 2),
@@ -112,8 +114,9 @@ class SettingsViewModel extends GetxController {
     if (enabled) {
       // Request system permissions when enabling
       await _notificationService.init();
-      final hasPermission = await _notificationService.areNotificationsEnabled();
-      
+      final hasPermission = await _notificationService
+          .areNotificationsEnabled();
+
       if (!hasPermission) {
         // Permission was denied, show message
         SnackbarHelper.showSafe(
@@ -130,7 +133,7 @@ class SettingsViewModel extends GetxController {
     } else {
       // Cancel all notifications when disabling
       await _notificationService.cancelAllNotifications();
-      
+
       // Also disable Plan Reminders if Push Notifications is disabled
       if (settings['planReminder'] == true) {
         await _storageService.saveSetting('planReminder', false);
@@ -184,7 +187,9 @@ class SettingsViewModel extends GetxController {
       final futurePlans = allPlans.where((plan) {
         if (plan.time == null) return false;
         // Check if notification time (10 min before) is in the future
-        final notificationTime = plan.time!.subtract(const Duration(minutes: 10));
+        final notificationTime = plan.time!.subtract(
+          const Duration(minutes: 10),
+        );
         return notificationTime.isAfter(now);
       }).toList();
 
@@ -192,7 +197,9 @@ class SettingsViewModel extends GetxController {
       int scheduledCount = 0;
       for (final plan in futurePlans) {
         try {
-          final notificationTime = plan.time!.subtract(const Duration(minutes: 10));
+          final notificationTime = plan.time!.subtract(
+            const Duration(minutes: 10),
+          );
           final notificationId = plan.id.hashCode & 0x7fffffff;
 
           await _notificationService.schedulePlanNotification(
@@ -204,7 +211,9 @@ class SettingsViewModel extends GetxController {
           scheduledCount++;
         } catch (e) {
           if (kDebugMode) {
-            debugPrint('Failed to schedule notification for plan ${plan.id}: $e');
+            debugPrint(
+              'Failed to schedule notification for plan ${plan.id}: $e',
+            );
           }
         }
       }
@@ -227,10 +236,7 @@ class SettingsViewModel extends GetxController {
         message: 'App cache has been cleared successfully',
       );
     } catch (e) {
-      SnackbarHelper.showSafe(
-        title: 'Error',
-        message: 'Failed to clear cache',
-      );
+      SnackbarHelper.showSafe(title: 'Error', message: 'Failed to clear cache');
     }
   }
 
@@ -242,10 +248,7 @@ class SettingsViewModel extends GetxController {
         message: 'All local data has been cleared',
       );
     } catch (e) {
-      SnackbarHelper.showSafe(
-        title: 'Error',
-        message: 'Failed to clear data',
-      );
+      SnackbarHelper.showSafe(title: 'Error', message: 'Failed to clear data');
     }
   }
 
@@ -300,21 +303,22 @@ class SettingsViewModel extends GetxController {
     try {
       // Play Store package name
       const String packageName = 'com.example.love_connect';
-      
+
       // Try to open Play Store
       final Uri playStoreUri = Uri.parse(
         'https://play.google.com/store/apps/details?id=$packageName',
       );
-      
+
       // For iOS, use App Store link (you'll need to replace with actual App Store ID)
       // final Uri appStoreUri = Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID');
-      
+
       if (await canLaunchUrl(playStoreUri)) {
         await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
       } else {
         SnackbarHelper.showSafe(
           title: 'Unable to Open',
-          message: 'Could not open Play Store. Please search for "Love Connect" manually.',
+          message:
+              'Could not open Play Store. Please search for "Love Connect" manually.',
         );
       }
     } catch (e) {
@@ -328,19 +332,20 @@ class SettingsViewModel extends GetxController {
   Future<void> shareApp() async {
     try {
       const String packageName = 'com.example.love_connect';
-      const String playStoreLink = 'https://play.google.com/store/apps/details?id=$packageName';
-      const String shareText = 'Check out Love Connect - the perfect app for couples!\n\n$playStoreLink';
-      
-      await Share.share(
-        shareText,
-        subject: 'Love Connect - App for Couples',
-      );
+      const String playStoreLink =
+          'https://play.google.com/store/apps/details?id=$packageName';
+      const String shareText =
+          'Check out Love Connect - the perfect app for couples!\n\n$playStoreLink';
+
+      await Share.share(shareText, subject: 'Love Connect - App for Couples');
     } catch (e) {
       // Fallback: Copy to clipboard
       const String packageName = 'com.example.love_connect';
-      const String playStoreLink = 'https://play.google.com/store/apps/details?id=$packageName';
-      const String shareText = 'Check out Love Connect - the perfect app for couples!\n\n$playStoreLink';
-      
+      const String playStoreLink =
+          'https://play.google.com/store/apps/details?id=$packageName';
+      const String shareText =
+          'Check out Love Connect - the perfect app for couples!\n\n$playStoreLink';
+
       await Clipboard.setData(ClipboardData(text: shareText));
       SnackbarHelper.showSafe(
         title: 'Link Copied',
@@ -373,9 +378,7 @@ class SettingsViewModel extends GetxController {
   void showAbout() {
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('About Love Connect'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -391,10 +394,7 @@ class SettingsViewModel extends GetxController {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Close'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Close')),
         ],
       ),
     );
@@ -403,18 +403,13 @@ class SettingsViewModel extends GetxController {
   void showClearDataDialog() {
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Clear All Data'),
         content: const Text(
           'This will permanently remove all locally stored data for this app. You can\'t undo this action.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               Get.back();
@@ -430,19 +425,33 @@ class SettingsViewModel extends GetxController {
     );
   }
 
+  Future<void> sendTestNotification() async {
+    try {
+      await _notificationService.showTestNotification();
+      SnackbarHelper.showSafe(
+        title: 'Test Notification Sent',
+        message: 'Check your notification tray!',
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error sending test notification: $e');
+      }
+      SnackbarHelper.showSafe(
+        title: 'Error',
+        message: 'Failed to send test notification',
+      );
+    }
+  }
+
   void showLogoutDialog() {
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               Get.back();
@@ -458,4 +467,3 @@ class SettingsViewModel extends GetxController {
     );
   }
 }
-
