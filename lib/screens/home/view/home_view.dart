@@ -18,7 +18,7 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
+class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, WidgetsBindingObserver {
   late final HomeViewModel viewModel;
   late final AnimationController _fadeController;
   late final AnimationController _slideController;
@@ -30,6 +30,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     viewModel = Get.put(HomeViewModel());
+    
+    // Add lifecycle observer to detect when app comes to foreground
+    WidgetsBinding.instance.addObserver(this);
 
     // Fade animation for overall content
     _fadeController = AnimationController(
@@ -60,10 +63,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _fadeController.dispose();
     _slideController.dispose();
     Get.delete<HomeViewModel>();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh notifications when app comes to foreground
+    if (state == AppLifecycleState.resumed) {
+      viewModel.loadNotifications();
+    }
   }
 
   Future<bool> _onWillPop() async {
@@ -131,6 +144,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                   userTagline: viewModel.userTagline.value,
                   onSearchTap: viewModel.onSearchTap,
                   onNotificationTap: viewModel.onNotificationTap,
+                  onProfileTap: viewModel.onProfileTap,
                   notificationCount: viewModel.notificationCount.value,
                   metrics: metrics,
                 ),
@@ -197,6 +211,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                                 viewModel.deletePlan(planId),
                             plans: viewModel.plans.toList(),
                             metrics: metrics,
+                            isLoading: viewModel.isLoadingPlans.value,
                           ),
                         ),
 

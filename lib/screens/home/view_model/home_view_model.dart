@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,6 +16,7 @@ import 'package:love_connect/screens/all_plans/view/all_plans_view.dart';
 import 'package:love_connect/screens/journal/view/journal_view.dart';
 import 'package:love_connect/screens/ideas/view/ideas_view.dart';
 import 'package:love_connect/screens/notifications/view/notifications_view.dart';
+import 'package:love_connect/screens/surprise/view/surprise_view.dart';
 import 'package:love_connect/screens/home/model/home_model.dart';
 
 class HomeViewModel extends GetxController {
@@ -26,6 +28,7 @@ class HomeViewModel extends GetxController {
   final LocalStorageService _storageService = LocalStorageService();
   final PlansDatabaseService _plansDbService = PlansDatabaseService();
   final RxBool isLoggingOut = false.obs;
+  final RxBool isLoadingPlans = false.obs;
   final RxList<PlanModel> plans = <PlanModel>[].obs;
 
   // Track navigation source: true = from navbar, false = from quick actions
@@ -38,6 +41,9 @@ class HomeViewModel extends GetxController {
   final RxString userName = HomeStrings.userName.obs;
   final RxString userTagline = HomeStrings.userTagline.obs;
 
+  // Timer for periodic notification refresh
+  Timer? _notificationRefreshTimer;
+
   @override
   void onInit() {
     super.onInit();
@@ -45,6 +51,22 @@ class HomeViewModel extends GetxController {
     _initializeUserData();
     loadPlans();
     loadNotifications();
+    _startNotificationRefreshTimer();
+  }
+
+  @override
+  void onClose() {
+    _notificationRefreshTimer?.cancel();
+    super.onClose();
+  }
+
+  /// Start periodic timer to refresh notification count
+  void _startNotificationRefreshTimer() {
+    // Refresh every 30 seconds to keep count updated
+    _notificationRefreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => loadNotifications(),
+    );
   }
 
   /// Initialize user data - set current user ID and clear old user data
@@ -83,6 +105,7 @@ class HomeViewModel extends GetxController {
   }
 
   Future<void> loadPlans() async {
+    isLoadingPlans.value = true;
     try {
       final userId = _authService.currentUserId;
       print('');
@@ -103,11 +126,8 @@ class HomeViewModel extends GetxController {
 
           if (loadedPlans.isNotEmpty) {
             print('✅ HOME: Loaded ${loadedPlans.length} plan(s) from Firebase');
-            // Sort by date, upcoming first
-            loadedPlans.sort((a, b) => a.date.compareTo(b.date));
-            plans.value = loadedPlans;
-
-            // Sync to user-specific local storage for offline access
+            
+            // Sync ALL plans to user-specific local storage for offline access (before filtering)
             try {
               print('💾 HOME: Syncing Firebase plans to user-specific local storage...');
               for (var plan in loadedPlans) {
@@ -118,6 +138,17 @@ class HomeViewModel extends GetxController {
               print('⚠️ HOME: Failed to sync to local storage: $e');
               // Continue - this is not critical
             }
+            
+            // Filter to show only future plans (date >= today) for home page display
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+            final futurePlans = loadedPlans.where((plan) {
+              final planDate = DateTime(plan.date.year, plan.date.month, plan.date.day);
+              return planDate.isAfter(today) || planDate.isAtSameMomentAs(today);
+            }).toList();
+            // Sort by date, upcoming first
+            futurePlans.sort((a, b) => a.date.compareTo(b.date));
+            plans.value = futurePlans;
 
             print(
               '═══════════════════════════════════════════════════════════',
@@ -151,6 +182,13 @@ class HomeViewModel extends GetxController {
               loadedPlans = await _plansDbService.getPlans(userId);
             }
             
+            // Filter to show only future plans (date >= today)
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+            loadedPlans = loadedPlans.where((plan) {
+              final planDate = DateTime(plan.date.year, plan.date.month, plan.date.day);
+              return planDate.isAfter(today) || planDate.isAtSameMomentAs(today);
+            }).toList();
             // Sort by date, upcoming first
             loadedPlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = loadedPlans;
@@ -166,8 +204,15 @@ class HomeViewModel extends GetxController {
           print('🔄 HOME: Falling back to user-specific local storage...');
           try {
             final localPlans = await _storageService.getPlans(userId: userId);
-            localPlans.sort((a, b) => a.date.compareTo(b.date));
-            plans.value = localPlans;
+            // Filter to show only future plans (date >= today)
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+            final filteredPlans = localPlans.where((plan) {
+              final planDate = DateTime(plan.date.year, plan.date.month, plan.date.day);
+              return planDate.isAfter(today) || planDate.isAtSameMomentAs(today);
+            }).toList();
+            filteredPlans.sort((a, b) => a.date.compareTo(b.date));
+            plans.value = filteredPlans;
             print(
               '✅ HOME: Loaded ${localPlans.length} plan(s) from user-specific local storage',
             );
@@ -192,9 +237,13 @@ class HomeViewModel extends GetxController {
 
       // Set empty plans on error
       plans.value = [];
+    } finally {
+      isLoadingPlans.value = false;
     }
   }
 
+  /// Load and update notification count
+  /// This method can be called from anywhere to refresh the notification count
   Future<void> loadNotifications() async {
     try {
       final userId = _authService.currentUserId;
@@ -206,7 +255,7 @@ class HomeViewModel extends GetxController {
     }
   }
 
-  /// Load user information from Firebase Auth
+  /// Load user information from Firebase Auth and user profile
   Future<void> _loadUserInfo() async {
     final user = _authService.currentUser;
     if (user == null) return;
@@ -218,7 +267,17 @@ class HomeViewModel extends GetxController {
 
     final name = _extractUserName(currentUser);
     userName.value = name.isNotEmpty ? name : HomeStrings.userName;
-    userTagline.value = HomeStrings.userTagline;
+    
+    // Load user profile to get the tagline (about field)
+    try {
+      final profile = await _storageService.getUserProfile();
+      userTagline.value = profile.about.isNotEmpty 
+          ? profile.about 
+          : HomeStrings.userTagline;
+    } catch (e) {
+      // If profile loading fails, use default tagline
+      userTagline.value = HomeStrings.userTagline;
+    }
   }
 
   /// Reload user data to ensure we have the latest information
@@ -320,12 +379,10 @@ class HomeViewModel extends GetxController {
         Get.to(() => const IdeasView());
         break;
       case HomeStrings.surprise:
-        // Navigate with Get.to() to show back arrow and hide bottom navbar
-        navigationSource['addPlan'] = false; // from quick actions
-        Get.to(() => const AddPlanView())?.then((result) {
-          if (result == true) {
-            loadPlans();
-          }
+        // Navigate to Surprise Hub screen
+        Get.to(() => const SurpriseView())?.then((_) {
+          // Reload plans when returning from surprise screen
+          loadPlans();
         });
         break;
       case HomeStrings.quote:
@@ -429,6 +486,14 @@ class HomeViewModel extends GetxController {
     });
   }
 
+  void onProfileTap() {
+    HapticFeedback.lightImpact();
+    // Navigate to profile screen via navbar
+    navigationSource['profile'] = true;
+    selectedBottomNavIndex.value = 3;
+    currentScreenIndex.value = 2; // Profile is index 2 in IndexedStack
+  }
+
   void onBottomNavTap(int index) {
     HapticFeedback.lightImpact();
 
@@ -448,8 +513,9 @@ class HomeViewModel extends GetxController {
         }
         selectedBottomNavIndex.value = index;
         currentScreenIndex.value = 0;
-        // Reload plans when switching back to home
+        // Reload plans and user info when switching back to home
         loadPlans();
+        _loadUserInfo(); // Reload user info to get updated tagline
         break;
       case 1:
         // Add Plan - show as overlay to keep bottom navbar visible

@@ -282,7 +282,7 @@ class _SettingsViewState extends State<SettingsView> {
                           'About',
                           Icons.info_outline,
                           subtitle: 'Version ${viewModel.appVersion.value}',
-                          onTap: viewModel.showAbout,
+                          onTap: () => viewModel.showAbout(context),
                           metrics: metrics,
                           context: context,
                         ),
@@ -295,7 +295,7 @@ class _SettingsViewState extends State<SettingsView> {
                         _buildSettingTile(
                           'Clear Cache',
                           Icons.delete_outline,
-                          onTap: viewModel.clearCache,
+                          onTap: () => viewModel.showClearCacheDialog(context),
                           metrics: metrics,
                           context: context,
                         ),
@@ -303,7 +303,7 @@ class _SettingsViewState extends State<SettingsView> {
                         _buildSettingTile(
                           'Clear All Data',
                           Icons.delete_forever_outlined,
-                          onTap: viewModel.showClearDataDialog,
+                          onTap: () => viewModel.showClearDataDialog(context),
                           metrics: metrics,
                           context: context,
                           isDestructive: true,
@@ -314,18 +314,59 @@ class _SettingsViewState extends State<SettingsView> {
 
                       // Logout Button
                       Container(
-                        padding: EdgeInsets.all(metrics.cardPadding),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _buildSettingTile(
-                          'Logout',
-                          Icons.logout,
-                          onTap: viewModel.showLogoutDialog,
-                          metrics: metrics,
-                          context: context,
-                          isDestructive: true,
+                        margin: EdgeInsets.only(bottom: metrics.sectionSpacing),
+                        child: Obx(
+                          () => ElevatedButton(
+                            onPressed: viewModel.isLoading.value
+                                ? null
+                                : () => viewModel.showLogoutDialog(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryRed,
+                              foregroundColor: AppColors.white,
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(
+                                vertical: context.responsiveSpacing(16),
+                                horizontal: metrics.cardPadding,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              disabledBackgroundColor:
+                                  AppColors.primaryRed.withOpacity(0.6),
+                            ),
+                            child: viewModel.isLoading.value
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.white,
+                                      ),
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.logout_rounded,
+                                        size: 20,
+                                        color: AppColors.white,
+                                      ),
+                                      SizedBox(
+                                        width: context.responsiveSpacing(8),
+                                      ),
+                                      Text(
+                                        'Logout',
+                                        style: GoogleFonts.inter(
+                                          fontSize: context.responsiveFont(16),
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
                         ),
                       ),
 

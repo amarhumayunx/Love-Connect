@@ -55,9 +55,9 @@ class _IdeasViewState extends State<IdeasView> {
                     onPressed: () => Get.back(),
                   ),
                   Text(
-                    viewModel.model.title,
+                    'Ideas',
                     style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(20),
+                      fontSize: context.responsiveFont(24),
                       fontWeight: FontWeight.w600,
                       color: AppColors.primaryDark,
                     ),
@@ -69,7 +69,7 @@ class _IdeasViewState extends State<IdeasView> {
             // Content
             Expanded(
               child: Obx(
-                () => ListView.builder(
+                    () => ListView.builder(
                   padding: EdgeInsets.symmetric(
                     horizontal: metrics.cardPadding,
                     vertical: metrics.sectionSpacing * 0.5,
@@ -89,18 +89,29 @@ class _IdeasViewState extends State<IdeasView> {
   }
 
   Widget _buildIdeaCard(
-    IdeaModel idea,
-    HomeLayoutMetrics metrics,
-    BuildContext context,
-  ) {
+      IdeaModel idea,
+      HomeLayoutMetrics metrics,
+      BuildContext context,
+      ) {
     return Container(
-      margin: EdgeInsets.only(bottom: metrics.sectionSpacing * 0.5),
-      padding: EdgeInsets.all(metrics.cardPadding),
+      margin: EdgeInsets.only(bottom: metrics.sectionSpacing * 0.6),
+      padding: EdgeInsets.symmetric(
+        horizontal: metrics.cardPadding * 1.1,
+        vertical: metrics.cardPadding * 0.9,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            spreadRadius: 1,
+            offset: Offset(0, 3),
+          ),
+        ],
         border: Border.all(
-          color: AppColors.textLightPink.withValues(alpha: 0.3),
+          color: AppColors.IdeaColorText,
           width: 1,
         ),
       ),
@@ -116,29 +127,37 @@ class _IdeasViewState extends State<IdeasView> {
                   style: GoogleFonts.inter(
                     fontSize: context.responsiveFont(16),
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryDark,
+                    color: AppColors.textDarkPink,
+                    height: 1.3,
                   ),
                 ),
-                SizedBox(height: 4),
+                SizedBox(height: 6),
                 Text(
                   '${idea.category} • ${idea.location}',
                   style: GoogleFonts.inter(
-                    fontSize: context.responsiveFont(12),
+                    fontSize: context.responsiveFont(13),
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textLightPink,
+                    color: AppColors.IdeaColorText,
+                    height: 1.2,
                   ),
                 ),
               ],
             ),
           ),
+          SizedBox(width: 12),
           ElevatedButton(
             onPressed: () => viewModel.useIdea(idea),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryRed,
+              foregroundColor: AppColors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(34),
               ),
-              minimumSize: Size(80, context.responsiveButtonHeight() * 0.8),
+              padding: EdgeInsets.symmetric(
+                horizontal: 26,
+                vertical: 8,
+              ),
             ),
             child: Text(
               'Use',
@@ -154,4 +173,3 @@ class _IdeasViewState extends State<IdeasView> {
     );
   }
 }
-

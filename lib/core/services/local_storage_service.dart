@@ -10,26 +10,27 @@ class LocalStorageService {
   static final LocalStorageService _instance = LocalStorageService._internal();
   factory LocalStorageService() => _instance;
   LocalStorageService._internal();
-
-  // CRITICAL: Store current logged-in user ID to track user-specific data
   static const String _currentUserIdKey = 'current_logged_in_user_id';
-  
   static const String _plansKeyPrefix = 'plans_user_';
-  static const String _journalEntriesKey = 'journal_entries';
+  static const String _journalEntriesKeyPrefix = 'journal_entries_user_';
   static const String _userProfileKey = 'user_profile';
   static const String _settingsKey = 'settings';
   static const String _notificationsKeyPrefix = 'notifications_user_';
 
-  // Get storage key for user-specific plans
   String _getPlansKey(String? userId) {
     if (userId == null || userId.isEmpty) {
-      // For unauthenticated users, use a default key (will be cleared on login)
       return '${_plansKeyPrefix}anonymous';
     }
     return '$_plansKeyPrefix$userId';
   }
 
-  // Get storage key for user-specific notifications
+  String _getJournalEntriesKey(String? userId) {
+    if (userId == null || userId.isEmpty) {
+      return '${_journalEntriesKeyPrefix}anonymous';
+    }
+    return '$_journalEntriesKeyPrefix$userId';
+  }
+
   String _getNotificationsKey(String? userId) {
     if (userId == null || userId.isEmpty) {
       return '${_notificationsKeyPrefix}anonymous';
@@ -37,7 +38,7 @@ class LocalStorageService {
     return '$_notificationsKeyPrefix$userId';
   }
 
-  // Store current user ID (called on login)
+
   Future<void> setCurrentUserId(String? userId) async {
     final prefs = await SharedPreferences.getInstance();
     if (userId != null && userId.isNotEmpty) {
@@ -47,32 +48,29 @@ class LocalStorageService {
     }
   }
 
-  // Get current user ID from storage
   Future<String?> getCurrentUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_currentUserIdKey);
   }
 
-  // Clear all data for a specific user (called on logout)
   Future<void> clearUserData(String userId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_getPlansKey(userId));
     await prefs.remove(_getNotificationsKey(userId));
+    await prefs.remove(_getJournalEntriesKey(userId));
   }
 
-  // Clear all anonymous/unauthenticated data
   Future<void> clearAnonymousData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_getPlansKey(null));
     await prefs.remove(_getNotificationsKey(null));
+    await prefs.remove(_getJournalEntriesKey(null));
   }
 
-  // Plans - NOW USER-SPECIFIC
   Future<List<PlanModel>> getPlans({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // Use provided userId or get from storage
       final effectiveUserId = userId ?? await getCurrentUserId();
       final plansKey = _getPlansKey(effectiveUserId);
       
@@ -87,7 +85,6 @@ class LocalStorageService {
   }
 
   Future<void> savePlan(PlanModel plan, {String? userId}) async {
-    // Use provided userId or get from storage
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final plansKey = _getPlansKey(effectiveUserId);
@@ -120,11 +117,14 @@ class LocalStorageService {
     await prefs.setString(plansKey, plansJson);
   }
 
-  // Journal Entries
-  Future<List<JournalEntryModel>> getJournalEntries() async {
+  Future<List<JournalEntryModel>> getJournalEntries({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? entriesJson = prefs.getString(_journalEntriesKey);
+      
+      final effectiveUserId = userId ?? await getCurrentUserId();
+      final journalKey = _getJournalEntriesKey(effectiveUserId);
+      
+      final String? entriesJson = prefs.getString(journalKey);
       if (entriesJson == null) return [];
       
       final List<dynamic> entriesList = json.decode(entriesJson);
@@ -134,8 +134,12 @@ class LocalStorageService {
     }
   }
 
-  Future<void> saveJournalEntry(JournalEntryModel entry) async {
-    final entries = await getJournalEntries();
+  Future<void> saveJournalEntry(JournalEntryModel entry, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final journalKey = _getJournalEntriesKey(effectiveUserId);
+    
+    final entries = await getJournalEntries(userId: effectiveUserId);
     final existingIndex = entries.indexWhere((e) => e.id == entry.id);
     
     if (existingIndex >= 0) {
@@ -144,22 +148,25 @@ class LocalStorageService {
       entries.add(entry);
     }
     
-    await _saveJournalEntries(entries);
+    await _saveJournalEntries(entries, journalKey);
   }
 
-  Future<void> deleteJournalEntry(String entryId) async {
-    final entries = await getJournalEntries();
+  Future<void> deleteJournalEntry(String entryId, {String? userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveUserId = userId ?? await getCurrentUserId();
+    final journalKey = _getJournalEntriesKey(effectiveUserId);
+    
+    final entries = await getJournalEntries(userId: effectiveUserId);
     entries.removeWhere((e) => e.id == entryId);
-    await _saveJournalEntries(entries);
+    await _saveJournalEntries(entries, journalKey);
   }
 
-  Future<void> _saveJournalEntries(List<JournalEntryModel> entries) async {
+  Future<void> _saveJournalEntries(List<JournalEntryModel> entries, String journalKey) async {
     final prefs = await SharedPreferences.getInstance();
     final entriesJson = json.encode(entries.map((e) => e.toJson()).toList());
-    await prefs.setString(_journalEntriesKey, entriesJson);
+    await prefs.setString(journalKey, entriesJson);
   }
 
-  // User Profile
   Future<UserProfileModel> getUserProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -187,7 +194,6 @@ class LocalStorageService {
     await prefs.setString(_userProfileKey, profileJson);
   }
 
-  // Settings
   Future<Map<String, bool>> getSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -218,12 +224,10 @@ class LocalStorageService {
     await prefs.setBool(key, value);
   }
 
-  // Notifications - NOW USER-SPECIFIC
   Future<List<NotificationModel>> getNotifications({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // Use provided userId or get from storage
       final effectiveUserId = userId ?? await getCurrentUserId();
       final notificationsKey = _getNotificationsKey(effectiveUserId);
       
@@ -293,21 +297,16 @@ class LocalStorageService {
     await prefs.setString(notificationsKey, notificationsJson);
   }
 
-  // Clear all data for current user
   Future<void> clearAllData({String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     
-    // Clear user-specific data
     if (effectiveUserId != null) {
       await clearUserData(effectiveUserId);
     }
     
-    // Clear anonymous data
     await clearAnonymousData();
     
-    // Clear general data
-    await prefs.remove(_journalEntriesKey);
     await prefs.remove(_userProfileKey);
     await prefs.remove(_settingsKey);
     await prefs.remove('notifications');
@@ -320,20 +319,18 @@ class LocalStorageService {
     await prefs.remove(_currentUserIdKey);
   }
 
-  // Clear all data from all users (for complete reset)
   Future<void> clearAllUsersData() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
     
-    // Remove all user-specific plans
     for (final key in keys) {
-      if (key.startsWith(_plansKeyPrefix) || key.startsWith(_notificationsKeyPrefix)) {
+      if (key.startsWith(_plansKeyPrefix) || 
+          key.startsWith(_notificationsKeyPrefix) ||
+          key.startsWith(_journalEntriesKeyPrefix)) {
         await prefs.remove(key);
       }
     }
     
-    // Clear general data
-    await prefs.remove(_journalEntriesKey);
     await prefs.remove(_userProfileKey);
     await prefs.remove(_settingsKey);
     await prefs.remove('notifications');
@@ -346,7 +343,6 @@ class LocalStorageService {
     await prefs.remove(_currentUserIdKey);
   }
 
-  // Get default ideas
   List<IdeaModel> getDefaultIdeas() {
     return [
       IdeaModel(
@@ -382,4 +378,3 @@ class LocalStorageService {
     ];
   }
 }
-

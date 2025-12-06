@@ -89,60 +89,53 @@ class _SplashViewState extends State<SplashView>
               {
 
                 final logoSize = context.responsiveImage(220);
-                final spacing = context.responsiveSpacing(150);
                 final loadingSize = context.responsiveImage(50);
 
-                return Center(
-                  child: SingleChildScrollView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: logoSize * 1.25,
-                            height: logoSize * 0.89,
-                            child: AnimatedBuilder(
-                              animation: _animationController,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale:
-                                  _scaleAnimation.value *
-                                      _bounceAnimation.value,
-                                  child: Opacity(
-                                    opacity: _fadeAnimation.value,
-                                    child: SplashLogo(size: logoSize),
-                                  ),
-                                );
-                              },
-                            ),
+                return Column(
+                  children: [
+                    SizedBox(height: context.responsiveSpacing(80)),
+                    Expanded(
+                      child: Center(
+                        child: SizedBox(
+                          width: logoSize * 1.25,
+                          height: logoSize * 0.89,
+                          child: AnimatedBuilder(
+                            animation: _animationController,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale:
+                                _scaleAnimation.value *
+                                    _bounceAnimation.value,
+                                child: Opacity(
+                                  opacity: _fadeAnimation.value,
+                                  child: SplashLogo(size: logoSize),
+                                ),
+                              );
+                            },
                           ),
-
-                          SizedBox(height: spacing),
-
-                          SizedBox(
-                            height: loadingSize,
-                            child: Visibility(
-                              visible: controller.isLoading.value,
-                              maintainSize: true,
-                              maintainAnimation: true,
-                              maintainState: true,
-                              child: FadeTransition(
-                                opacity: _fadeAnimation,
-                                child: LoadingAnimationWidget.staggeredDotsWave(
-                                    color: AppColors.primaryDark,
-                                    size: 50
-                                )
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: context.responsiveSpacing(50)),
+                      child: SizedBox(
+                        height: loadingSize,
+                        child: Visibility(
+                          visible: controller.isLoading.value,
+                          maintainSize: true,
+                          maintainAnimation: true,
+                          maintainState: true,
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: LoadingAnimationWidget.horizontalRotatingDots(
+                                color: AppColors.primaryRed,
+                                size: 50
+                            )
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

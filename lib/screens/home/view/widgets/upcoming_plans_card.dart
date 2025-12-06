@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/plan_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view/widgets/plan_card.dart';
+import 'package:love_connect/screens/home/view/widgets/add_plan_card.dart';
 
 class UpcomingPlansCard extends StatelessWidget {
   final String message;
@@ -15,6 +17,7 @@ class UpcomingPlansCard extends StatelessWidget {
   final Function(String)? onDeletePlan;
   final HomeLayoutMetrics metrics;
   final List<PlanModel> plans;
+  final bool isLoading;
 
   const UpcomingPlansCard({
     super.key,
@@ -26,82 +29,71 @@ class UpcomingPlansCard extends StatelessWidget {
     this.onDeletePlan,
     required this.metrics,
     this.plans = const [],
+    this.isLoading = false,
   });
+
+  /// Calculate responsive card width for saved plan cards
+  double _getPlanCardWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final baseWidth = 188.0;
+    
+    // Responsive scaling based on screen width
+    if (screenWidth < 360) {
+      return baseWidth * 0.85;
+    } else if (screenWidth < 414) {
+      return baseWidth;
+    } else if (screenWidth < 768) {
+      return baseWidth * 1.05;
+    } else {
+      return baseWidth * 1.2;
+    }
+  }
+
+  /// Calculate responsive spacing between cards
+  double _getCardSpacing(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return metrics.cardPadding;
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth - (metrics.cardPadding * 3)) / 2;
+    final planCardWidth = _getPlanCardWidth(context);
+    final cardSpacing = _getCardSpacing(context);
 
-    // If no plans, show the empty state (full-width card with Add button)
+    // Show loading animation when loading
+    if (isLoading) {
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: metrics.cardPadding,
+          vertical: metrics.sectionSpacing * 0.5,
+        ),
+        child: Center(
+          child: SizedBox(
+            height: 200,
+            child: LoadingAnimationWidget.horizontalRotatingDots(
+              color: AppColors.primaryRed,
+              size: 50,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // If no plans, show the empty state (large add card)
     if (plans.isEmpty) {
-      return Center(
-        child: Container(
-          margin: EdgeInsets.symmetric(
-            horizontal: metrics.cardPadding,
-            vertical: metrics.sectionSpacing * 0.5,
-          ),
-          width: 392,
-          height: 143,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.textLightPink.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: metrics.addButtonFontSize * 0.9,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textLightPink,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 97,
-                height: 40,
-                child: ElevatedButton(
-                  onPressed: onAddTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(34),
-                    ),
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(97, 40),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add, size: 18, color: Colors.white),
-                      SizedBox(width: 4),
-                      Text(
-                        buttonText.replaceAll('+', '').trim(),
-                        style: GoogleFonts.inter(
-                          fontSize: metrics.addButtonFontSize,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: metrics.cardPadding,
+          vertical: metrics.sectionSpacing * 0.5,
+        ),
+        child: Center(
+          child: AddPlanCard(
+            message: message,
+            buttonText: buttonText,
+            onAddTap: onAddTap,
+            metrics: metrics,
+            size: AddPlanCardSize.large,
           ),
         ),
       );
@@ -110,8 +102,8 @@ class UpcomingPlansCard extends StatelessWidget {
     // Determine how many plans to show (max 4)
     final plansToShow = plans.length > 4 ? plans.sublist(0, 4) : plans;
     final hasMorePlans = plans.length > 4;
+    final planCount = plansToShow.length;
 
-    // If there are plans, show them in a 2-column grid
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: metrics.cardPadding,
@@ -120,46 +112,95 @@ class UpcomingPlansCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // First row (index 0 and 1 / Add card)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: cardWidth,
-                child: PlanCard(
-                  plan: plansToShow[0],
-                  onEdit: () => onEditPlan?.call(plansToShow[0]),
-                  onDelete: () => onDeletePlan?.call(plansToShow[0].id),
-                  metrics: metrics,
+          // Flow based on number of plans
+          if (planCount == 1) ...[
+            // 1 plan: 1 saved plan card + 1 small add card (side by side)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[0],
+                    onEdit: () => onEditPlan?.call(plansToShow[0]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[0].id),
+                    metrics: metrics,
+                  ),
                 ),
-              ),
-              SizedBox(width: metrics.cardPadding),
-              SizedBox(
-                width: cardWidth,
-                child: plansToShow.length >= 2
-                    ? PlanCard(
-                        plan: plansToShow[1],
-                        onEdit: () => onEditPlan?.call(plansToShow[1]),
-                        onDelete: () => onDeletePlan?.call(plansToShow[1].id),
-                        metrics: metrics,
-                      )
-                    : _buildAddNewPlanCard(context, cardWidth),
-              ),
-            ],
-          ),
-
-          // Second row - show Add card if exactly 2 plans, or show plans 2 and 3
-          if (plansToShow.length == 2) ...[
-            // Show full-width Add card below when there are exactly 2 plans
+                SizedBox(width: cardSpacing),
+                Expanded(
+                  child: AddPlanCard(
+                    message: message,
+                    buttonText: buttonText,
+                    onAddTap: onAddTap,
+                    metrics: metrics,
+                    size: AddPlanCardSize.small,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (planCount == 2) ...[
+            // 2 plans: 2 saved plan cards (side by side) + 1 large add card below
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[0],
+                    onEdit: () => onEditPlan?.call(plansToShow[0]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[0].id),
+                    metrics: metrics,
+                  ),
+                ),
+                SizedBox(width: cardSpacing),
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[1],
+                    onEdit: () => onEditPlan?.call(plansToShow[1]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[1].id),
+                    metrics: metrics,
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: metrics.sectionSpacing * 0.5),
-            Center(child: _buildFullWidthAddCard(context, screenWidth)),
-          ] else if (plansToShow.length > 2) ...[
+            Center(
+              child: AddPlanCard(
+                message: message,
+                buttonText: buttonText,
+                onAddTap: onAddTap,
+                metrics: metrics,
+                size: AddPlanCardSize.large,
+              ),
+            ),
+          ] else if (planCount == 3) ...[
+            // 3 plans: 3 saved plan cards (2 on top row, 1 on second row) + 1 small add card (side by side with 3rd card)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[0],
+                    onEdit: () => onEditPlan?.call(plansToShow[0]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[0].id),
+                    metrics: metrics,
+                  ),
+                ),
+                SizedBox(width: cardSpacing),
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[1],
+                    onEdit: () => onEditPlan?.call(plansToShow[1]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[1].id),
+                    metrics: metrics,
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: metrics.sectionSpacing * 0.5),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: cardWidth,
+                Expanded(
                   child: PlanCard(
                     plan: plansToShow[2],
                     onEdit: () => onEditPlan?.call(plansToShow[2]),
@@ -167,17 +208,62 @@ class UpcomingPlansCard extends StatelessWidget {
                     metrics: metrics,
                   ),
                 ),
-                SizedBox(width: metrics.cardPadding),
-                SizedBox(
-                  width: cardWidth,
-                  child: plansToShow.length >= 4
-                      ? PlanCard(
-                          plan: plansToShow[3],
-                          onEdit: () => onEditPlan?.call(plansToShow[3]),
-                          onDelete: () => onDeletePlan?.call(plansToShow[3].id),
-                          metrics: metrics,
-                        )
-                      : _buildAddNewPlanCard(context, cardWidth),
+                SizedBox(width: cardSpacing),
+                Expanded(
+                  child: AddPlanCard(
+                    message: message,
+                    buttonText: buttonText,
+                    onAddTap: onAddTap,
+                    metrics: metrics,
+                    size: AddPlanCardSize.small,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (planCount == 4) ...[
+            // 4 plans: 4 saved plan cards (2x2 grid), no add card
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[0],
+                    onEdit: () => onEditPlan?.call(plansToShow[0]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[0].id),
+                    metrics: metrics,
+                  ),
+                ),
+                SizedBox(width: cardSpacing),
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[1],
+                    onEdit: () => onEditPlan?.call(plansToShow[1]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[1].id),
+                    metrics: metrics,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: metrics.sectionSpacing * 0.5),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[2],
+                    onEdit: () => onEditPlan?.call(plansToShow[2]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[2].id),
+                    metrics: metrics,
+                  ),
+                ),
+                SizedBox(width: cardSpacing),
+                Expanded(
+                  child: PlanCard(
+                    plan: plansToShow[3],
+                    onEdit: () => onEditPlan?.call(plansToShow[3]),
+                    onDelete: () => onDeletePlan?.call(plansToShow[3].id),
+                    metrics: metrics,
+                  ),
                 ),
               ],
             ),
@@ -218,154 +304,6 @@ class UpcomingPlansCard extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFullWidthAddCard(BuildContext context, double screenWidth) {
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: plans.isEmpty
-            ? metrics.cardPadding
-            : 0, // Only apply horizontal margin if it's the initial empty state
-        vertical: metrics.sectionSpacing * 0.5,
-      ),
-      width:
-          screenWidth -
-          (metrics.cardPadding * 2), // Adjust width for full-width card
-      height: 143,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textLightPink.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: metrics.addButtonFontSize * 0.9,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textLightPink,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: 97,
-            height: 40,
-            child: ElevatedButton(
-              onPressed: onAddTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(34),
-                ),
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(97, 40),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, size: 18, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text(
-                    buttonText.replaceAll('+', '').trim(),
-                    style: GoogleFonts.inter(
-                      fontSize: metrics.addButtonFontSize,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddNewPlanCard(BuildContext context, double cardWidth) {
-    return Container(
-      constraints: BoxConstraints(minHeight: 180),
-      padding: EdgeInsets.all(metrics.cardPadding),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textLightPink.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Center(
-              child: Text(
-                message,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: context.responsiveFont(12),
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textLightPink,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          SizedBox(height: metrics.sectionSpacing * 0.5),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onAddTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(34),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 10),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, size: 18, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text(
-                    buttonText.replaceAll('+', '').trim(),
-                    style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(14),
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

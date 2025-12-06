@@ -8,6 +8,7 @@ import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/notification_service.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/add_plan/model/add_plan_model.dart';
+import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:uuid/uuid.dart';
 
 class AddPlanViewModel extends GetxController {
@@ -306,9 +307,22 @@ class AddPlanViewModel extends GetxController {
           type: NotificationType.reminder,
         );
         await _storageService.saveNotification(notification, userId: userId);
+        
+        // Update home screen notification count
+        _updateHomeNotificationCount();
       }
     } catch (_) {
       // Ignore errors when saving notification locally
+    }
+  }
+
+  /// Update home screen notification count after saving a notification
+  void _updateHomeNotificationCount() {
+    try {
+      final homeViewModel = Get.find<HomeViewModel>();
+      homeViewModel.loadNotifications();
+    } catch (e) {
+      // HomeViewModel not found, ignore (might not be initialized yet)
     }
   }
 

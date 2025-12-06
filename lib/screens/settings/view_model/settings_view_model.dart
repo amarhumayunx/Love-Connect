@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/notification_service.dart';
@@ -12,6 +13,8 @@ import 'package:love_connect/screens/settings/model/settings_model.dart';
 import 'package:love_connect/screens/settings/change_password/view/change_password_view.dart';
 import 'package:love_connect/screens/settings/terms_privacy/view/terms_of_service_view.dart';
 import 'package:love_connect/screens/settings/terms_privacy/view/privacy_policy_view.dart';
+import 'package:love_connect/core/colors/app_colors.dart';
+import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -230,37 +233,113 @@ class SettingsViewModel extends GetxController {
 
   Future<void> clearCache() async {
     try {
-      // Clear cache logic here
+      isLoading.value = true;
+      
+      // Cancel all notifications (they're cached)
+      await _notificationService.cancelAllNotifications();
+      
+      // Clear any cached notification data
+      // Note: Flutter's image cache is automatically managed by the framework
+      // and doesn't need manual clearing in most cases
+      
+      // Force garbage collection hint (optional)
+      // This is just a hint to the Dart VM, not guaranteed to run immediately
+      
+      isLoading.value = false;
+      
       SnackbarHelper.showSafe(
         title: 'Cache Cleared',
         message: 'App cache has been cleared successfully',
+        duration: const Duration(seconds: 2),
       );
     } catch (e) {
-      SnackbarHelper.showSafe(title: 'Error', message: 'Failed to clear cache');
+      isLoading.value = false;
+      if (kDebugMode) {
+        debugPrint('Error clearing cache: $e');
+      }
+      SnackbarHelper.showSafe(
+        title: 'Error',
+        message: 'Failed to clear cache. Please try again.',
+      );
     }
   }
 
   Future<void> clearAllData() async {
     try {
-      await _storageService.clearAllData();
+      isLoading.value = true;
+      
+      // Get current user ID before clearing
+      final userId = _authService.currentUserId;
+      
+      // Clear all local storage data
+      await _storageService.clearAllData(userId: userId);
+      
+      // Clear user data from database if user exists
+      if (userId != null) {
+        await _storageService.clearUserData(userId);
+      }
+      
+      // Clear anonymous data
+      await _storageService.clearAnonymousData();
+      
+      // Cancel all notifications
+      await _notificationService.cancelAllNotifications();
+      
+      // Cancel all notifications
+      await _notificationService.cancelAllNotifications();
+      
+      isLoading.value = false;
+      
       SnackbarHelper.showSafe(
         title: 'Data Cleared',
-        message: 'All local data has been cleared',
+        message: 'All user data has been permanently deleted',
+        duration: const Duration(seconds: 3),
       );
     } catch (e) {
-      SnackbarHelper.showSafe(title: 'Error', message: 'Failed to clear data');
+      isLoading.value = false;
+      if (kDebugMode) {
+        debugPrint('Error clearing all data: $e');
+      }
+      SnackbarHelper.showSafe(
+        title: 'Error',
+        message: 'Failed to clear data. Please try again.',
+      );
     }
   }
 
   Future<void> logout() async {
     try {
+      isLoading.value = true;
+      
+      // Get current user ID before logout
+      final userId = _authService.currentUserId;
+      
+      // Clear current user ID and anonymous data from storage
+      if (userId != null) {
+        await _storageService.clearUserData(userId);
+      }
+      await _storageService.clearAnonymousData();
+      await _storageService.setCurrentUserId(null);
+      
+      // Cancel all notifications
+      await _notificationService.cancelAllNotifications();
+      
+      // Sign out from Firebase and Google
       await _authService.signOut();
+      
+      isLoading.value = false;
+      
+      // Navigate to login screen
       SmoothNavigator.offAll(
         () => const LoginView(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
     } catch (e) {
+      isLoading.value = false;
+      if (kDebugMode) {
+        debugPrint('Error during logout: $e');
+      }
       SnackbarHelper.showSafe(
         title: 'Logout Failed',
         message: 'An error occurred during logout. Please try again.',
@@ -375,53 +454,363 @@ class SettingsViewModel extends GetxController {
     );
   }
 
-  void showAbout() {
+  void showAbout(BuildContext context) {
     Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('About Love Connect'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Love Connect'),
-            const SizedBox(height: 8),
-            Text('Version: ${appVersion.value}'),
-            const SizedBox(height: 16),
-            const Text(
-              'A beautiful app designed for couples to plan dates, share memories, and strengthen their relationship.',
-            ),
-          ],
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: context.widthPct(5),
+          vertical: context.heightPct(10),
         ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Close')),
-        ],
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          padding: EdgeInsets.all(context.responsiveSpacing(20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // App Icon/Logo
+              Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryRed.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.favorite_rounded,
+                    color: AppColors.primaryRed,
+                    size: 40,
+                  ),
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(20)),
+              
+              // App Name
+              Text(
+                'Love Connect',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(24),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(8)),
+              
+              // Version
+              Text(
+                'Version ${appVersion.value}',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(14),
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textLightPink,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(20)),
+              
+              // Description
+              Container(
+                padding: EdgeInsets.all(context.responsiveSpacing(16)),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundPink,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'A beautiful app designed for couples to plan dates, share memories, and strengthen their relationship.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: context.responsiveFont(14),
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.primaryDark,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(24)),
+              
+              // Close Button
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryRed,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: context.responsiveSpacing(14),
+                  ),
+                ),
+                child: Text(
+                  'Close',
+                  style: GoogleFonts.inter(
+                    fontSize: context.responsiveFont(16),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+      barrierDismissible: true,
     );
   }
 
-  void showClearDataDialog() {
+  void showClearCacheDialog(BuildContext context) {
     Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Clear All Data'),
-        content: const Text(
-          'This will permanently remove all locally stored data for this app. You can\'t undo this action.',
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: context.widthPct(5),
+          vertical: context.heightPct(10),
         ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              clearAllData();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Get.theme.colorScheme.error,
-            ),
-            child: const Text('Clear'),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(22),
           ),
-        ],
+          padding: EdgeInsets.all(context.responsiveSpacing(20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Icon
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryRed.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: AppColors.primaryRed,
+                    size: 32,
+                  ),
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(20)),
+              
+              // Title
+              Text(
+                'Clear Cache',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(20),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(12)),
+              
+              // Message
+              Text(
+                'This will clear temporary files and cached data. Your plans, profile, and settings will not be affected.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(14),
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textLightPink,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(24)),
+              
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primaryRed),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryRed,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: context.responsiveSpacing(12)),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        clearCache();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Clear Cache',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
+      barrierDismissible: true,
+    );
+  }
+
+  void showClearDataDialog(BuildContext context) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: context.widthPct(5),
+          vertical: context.heightPct(10),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          padding: EdgeInsets.all(context.responsiveSpacing(20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Warning Icon
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryRed.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.primaryRed,
+                    size: 32,
+                  ),
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(20)),
+              
+              // Title
+              Text(
+                'Clear All Data',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(20),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(12)),
+              
+              // Warning Message
+              Container(
+                padding: EdgeInsets.all(context.responsiveSpacing(12)),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryRed.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '⚠️ This will permanently delete ALL your data including:\n\n• All your plans\n• Your profile information\n• Journal entries\n• Notifications\n• Settings\n\nThis action cannot be undone!',
+                  textAlign: TextAlign.left,
+                  style: GoogleFonts.inter(
+                    fontSize: context.responsiveFont(14),
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.primaryDark,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(24)),
+              
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primaryRed),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryRed,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: context.responsiveSpacing(12)),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        clearAllData();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Delete All',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
     );
   }
 
@@ -444,26 +833,125 @@ class SettingsViewModel extends GetxController {
     }
   }
 
-  void showLogoutDialog() {
+  void showLogoutDialog(BuildContext context) {
     Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Get.theme.colorScheme.error,
-            ),
-            child: const Text('Logout'),
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: context.widthPct(5),
+          vertical: context.heightPct(10),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(22),
           ),
-        ],
+          padding: EdgeInsets.all(context.responsiveSpacing(20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Icon
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryRed.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.primaryRed,
+                    size: 32,
+                  ),
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(20)),
+              
+              // Title
+              Text(
+                'Logout',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(20),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(12)),
+              
+              // Message
+              Text(
+                'Are you sure you want to logout? You will need to sign in again to access your account.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(14),
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textLightPink,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: context.responsiveSpacing(24)),
+              
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primaryRed),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryRed,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: context.responsiveSpacing(12)),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        logout();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Logout',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
+      barrierDismissible: true,
     );
   }
 }

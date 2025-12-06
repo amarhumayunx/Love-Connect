@@ -51,25 +51,24 @@ class _AllPlansViewState extends State<AllPlansView> {
             color: AppColors.primaryDark,
           ),
         ),
-        actions: [
-          // Plus icon in top right corner
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              icon: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryRed,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.add, color: AppColors.white, size: 24),
-              ),
-              onPressed: viewModel.onAddPlanTap,
-            ),
-          ),
-        ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: viewModel.onAddPlanTap,
+        backgroundColor: AppColors.primaryRed,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(34),
+        ),
+        icon: Icon(Icons.add, color: Colors.white, size: 24),
+        label: Text(
+          'Add Plan',
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: Obx(() {
         if (viewModel.isLoading.value && viewModel.plans.isEmpty) {
           return Center(
@@ -141,14 +140,14 @@ class _AllPlansViewState extends State<AllPlansView> {
                         width: cardWidth,
                         child: i + 1 < viewModel.plans.length
                             ? PlanCard(
-                                plan: viewModel.plans[i + 1],
-                                onEdit: () =>
-                                    viewModel.editPlan(viewModel.plans[i + 1]),
-                                onDelete: () => viewModel.deletePlan(
-                                  viewModel.plans[i + 1].id,
-                                ),
-                                metrics: metrics,
-                              )
+                          plan: viewModel.plans[i + 1],
+                          onEdit: () =>
+                              viewModel.editPlan(viewModel.plans[i + 1]),
+                          onDelete: () => viewModel.deletePlan(
+                            viewModel.plans[i + 1].id,
+                          ),
+                          metrics: metrics,
+                        )
                             : const SizedBox.shrink(),
                       ),
                     ],

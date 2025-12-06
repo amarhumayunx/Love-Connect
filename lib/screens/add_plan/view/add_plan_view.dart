@@ -347,6 +347,10 @@ class _AddPlanViewState extends State<AddPlanView> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.IdeaColorText,
+          width: 1,
+        ),
       ),
       child: TextField(
         controller: controller,
@@ -362,6 +366,14 @@ class _AddPlanViewState extends State<AddPlanView> {
             color: AppColors.textLightPink,
           ),
           border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
@@ -382,6 +394,10 @@ class _AddPlanViewState extends State<AddPlanView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.IdeaColorText,
+            width: 1,
+          ),
         ),
         padding: EdgeInsets.symmetric(
           horizontal: metrics.cardPadding * 0.6,
@@ -417,6 +433,10 @@ class _AddPlanViewState extends State<AddPlanView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.IdeaColorText,
+            width: 1,
+          ),
         ),
         padding: EdgeInsets.symmetric(
           horizontal: metrics.cardPadding * 0.6,
@@ -456,6 +476,10 @@ class _AddPlanViewState extends State<AddPlanView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.IdeaColorText,
+            width: 1,
+          ),
         ),
         padding: EdgeInsets.symmetric(
           horizontal: metrics.cardPadding * 0.6,
@@ -484,7 +508,7 @@ class _AddPlanViewState extends State<AddPlanView> {
   }
 
   Widget _buildCancelButton(AddPlanLayoutMetrics metrics) {
-    return TextButton(
+    return OutlinedButton(
       onPressed: () {
         if (widget.onClose != null) {
           widget.onClose!();
@@ -492,8 +516,9 @@ class _AddPlanViewState extends State<AddPlanView> {
           Get.back();
         }
       },
-      style: TextButton.styleFrom(
+      style: OutlinedButton.styleFrom(
         backgroundColor: Colors.white,
+        side: const BorderSide(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(34),
         ),
@@ -504,7 +529,7 @@ class _AddPlanViewState extends State<AddPlanView> {
         style: GoogleFonts.inter(
           fontSize: metrics.buttonFontSize,
           fontWeight: FontWeight.w600,
-          color: AppColors.primaryDark, // Red text
+          color: AppColors.primaryRed,
         ),
       ),
     );

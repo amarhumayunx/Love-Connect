@@ -132,23 +132,19 @@ class QuotesService {
     ),
   ];
 
-  /// Get a random quote
   String getRandomQuote() {
     final random = Random();
     return _quotes[random.nextInt(_quotes.length)];
   }
 
-  /// Get all quotes
   List<String> getAllQuotes() {
     return List.unmodifiable(_quotes);
   }
 
-  /// Get all ideas
   List<IdeaModel> getAllIdeas() {
     return List.unmodifiable(_ideas);
   }
 
-  /// Get random ideas (limited count)
   List<IdeaModel> getRandomIdeas({int count = 5}) {
     final random = Random();
     final shuffled = List<IdeaModel>.from(_ideas)..shuffle(random);

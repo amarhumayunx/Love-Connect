@@ -194,7 +194,6 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledTime,
-    int autoDismissedSeconds = 15,
   }) async {
     // Ensure initialized and permissions are granted
     final hasPermission = await ensureInitializedWithPermissions();
@@ -225,7 +224,6 @@ class NotificationService {
           when: null,
           usesChronometer: false,
           channelShowBadge: true,
-          timeoutAfter: Duration(seconds: autoDismissedSeconds).inMilliseconds,
         );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
@@ -295,9 +293,8 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    // Use show() for immediate notification instead of scheduling
     await _flutterLocalNotificationsPlugin.show(
-      9999, // Use a fixed ID for test notifications
+      9999,
       'Test Notification',
       'If you see this, local notifications are working! 🎉',
       notificationDetails,
@@ -305,23 +302,19 @@ class NotificationService {
     );
   }
 
-  /// Cancel a specific notification by ID
+
   Future<void> cancelNotification(int id) async {
     await _flutterLocalNotificationsPlugin.cancel(id);
   }
 
-  /// Cancel all scheduled notifications
   Future<void> cancelAllNotifications() async {
     await _flutterLocalNotificationsPlugin.cancelAll();
   }
 
-  /// Cancel all plan notifications (keeps test notifications)
   Future<void> cancelAllPlanNotifications() async {
-    // Get all pending notifications
     final pendingNotifications = await _flutterLocalNotificationsPlugin
         .pendingNotificationRequests();
 
-    // Cancel all except test notification (ID 9999)
     for (var notification in pendingNotifications) {
       if (notification.id != 9999) {
         await _flutterLocalNotificationsPlugin.cancel(notification.id);
@@ -329,7 +322,6 @@ class NotificationService {
     }
   }
 
-  /// Get all pending notification IDs
   Future<List<int>> getPendingNotificationIds() async {
     final pendingNotifications = await _flutterLocalNotificationsPlugin
         .pendingNotificationRequests();
@@ -337,8 +329,6 @@ class NotificationService {
   }
 
 
-  /// Legacy method name for backward compatibility
-  /// Now shows immediate notification instead of scheduling
   @Deprecated('Use showTestNotification() instead')
   Future<void> scheduleTestNotification() async {
     await showTestNotification();

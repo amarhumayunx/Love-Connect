@@ -9,6 +9,7 @@ class HomeHeader extends StatelessWidget {
   final String userTagline;
   final VoidCallback onSearchTap;
   final VoidCallback onNotificationTap;
+  final VoidCallback? onProfileTap;
   final int notificationCount;
   final HomeLayoutMetrics metrics;
 
@@ -18,6 +19,7 @@ class HomeHeader extends StatelessWidget {
     required this.userTagline,
     required this.onSearchTap,
     required this.onNotificationTap,
+    this.onProfileTap,
     required this.notificationCount,
     required this.metrics,
   });
@@ -34,15 +36,18 @@ class HomeHeader extends StatelessWidget {
       child: Row(
         children: [
           // Profile Picture
-          SizedBox(
-            width: metrics.profileImageSize,
-            height: metrics.profileImageSize,
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/profile.jpg',
-                width: metrics.profileImageSize,
-                height: metrics.profileImageSize,
-                fit: BoxFit.cover,
+          GestureDetector(
+            onTap: onProfileTap,
+            child: SizedBox(
+              width: metrics.profileImageSize,
+              height: metrics.profileImageSize,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/profile.jpg',
+                  width: metrics.profileImageSize,
+                  height: metrics.profileImageSize,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
