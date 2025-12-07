@@ -216,7 +216,7 @@ class _JournalViewState extends State<JournalView> {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.primaryRed,
+          color: AppColors.IdeaColorText,
           width: 1.0,
         ),
       ),
@@ -248,7 +248,7 @@ class _JournalViewState extends State<JournalView> {
                 color: AppColors.primaryRed.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.primaryRed,
+                  color: AppColors.IdeaColorText,
                   width: 1.0,
                 ),
               ),
@@ -296,7 +296,7 @@ class _JournalViewState extends State<JournalView> {
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: isRewardEntry ? FontWeight.w600 : FontWeight.w400,
-                          color: AppColors.primaryRed,
+                          color: AppColors.IdeaColorText,
                         ),
                       ),
                     ],
@@ -426,7 +426,7 @@ class _JournalViewState extends State<JournalView> {
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: isRewardEntry ? FontWeight.w600 : FontWeight.w400,
-            color: AppColors.primaryRed,
+            color: AppColors.IdeaColorText,
             height: 1.5, // Line height for better readability
           ),
           softWrap: true,

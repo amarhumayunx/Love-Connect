@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/plan_model.dart';
-import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view/widgets/plan_card.dart';
 import 'package:love_connect/screens/home/view/widgets/add_plan_card.dart';
@@ -32,33 +30,13 @@ class UpcomingPlansCard extends StatelessWidget {
     this.isLoading = false,
   });
 
-  /// Calculate responsive card width for saved plan cards
-  double _getPlanCardWidth(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final baseWidth = 188.0;
-    
-    // Responsive scaling based on screen width
-    if (screenWidth < 360) {
-      return baseWidth * 0.85;
-    } else if (screenWidth < 414) {
-      return baseWidth;
-    } else if (screenWidth < 768) {
-      return baseWidth * 1.05;
-    } else {
-      return baseWidth * 1.2;
-    }
-  }
-
   /// Calculate responsive spacing between cards
   double _getCardSpacing(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     return metrics.cardPadding;
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final planCardWidth = _getPlanCardWidth(context);
     final cardSpacing = _getCardSpacing(context);
 
     // Show loading animation when loading
@@ -101,7 +79,6 @@ class UpcomingPlansCard extends StatelessWidget {
 
     // Determine how many plans to show (max 4)
     final plansToShow = plans.length > 4 ? plans.sublist(0, 4) : plans;
-    final hasMorePlans = plans.length > 4;
     final planCount = plansToShow.length;
 
     return Padding(
@@ -266,42 +243,6 @@ class UpcomingPlansCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ],
-
-          // View All Plans button - only show if more than 4 plans
-          if (hasMorePlans) ...[
-            SizedBox(height: metrics.sectionSpacing * 0.7),
-            Center(
-              child: SizedBox(
-                width: screenWidth - (metrics.cardPadding * 2),
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: onViewAllTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'View All Plans',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                    ],
-                  ),
-                ),
-              ),
             ),
           ],
         ],

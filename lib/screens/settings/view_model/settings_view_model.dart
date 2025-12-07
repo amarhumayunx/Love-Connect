@@ -70,46 +70,71 @@ class SettingsViewModel extends GetxController {
 
   Future<void> updateSetting(String key, bool value) async {
     try {
-      // Handle notification-related settings
-      if (key == 'notifications') {
-        await _handlePushNotificationsSetting(value);
-      } else if (key == 'planReminder') {
-        await _handlePlanReminderSetting(value);
-      }
-
-      // Save the setting
-      await _storageService.saveSetting(key, value);
-      settings[key] = value;
-
-      // Show success message
-      if (key == 'notifications') {
-        SnackbarHelper.showSafe(
-          title: value
-              ? 'Push Notifications Enabled'
-              : 'Push Notifications Disabled',
-          message: value
-              ? 'You will receive notifications for your plans'
-              : 'All notifications have been cancelled',
-          duration: const Duration(seconds: 2),
-        );
-      } else if (key == 'planReminder') {
-        SnackbarHelper.showSafe(
-          title: value ? 'Plan Reminders Enabled' : 'Plan Reminders Disabled',
-          message: value
-              ? 'You will receive reminders 10 minutes before your plans'
-              : 'Plan reminder notifications have been cancelled',
-          duration: const Duration(seconds: 2),
-        );
-      }
+      await _handleSettingSpecificLogic(key, value);
+      await _saveSetting(key, value);
+      _showSettingUpdateMessage(key, value);
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error updating setting $key: $e');
-      }
-      SnackbarHelper.showSafe(
-        title: 'Error',
-        message: 'Failed to update setting',
-      );
+      _handleSettingUpdateError(key, e);
     }
+  }
+
+  Future<void> _handleSettingSpecificLogic(String key, bool value) async {
+    switch (key) {
+      case 'notifications':
+        await _handlePushNotificationsSetting(value);
+        break;
+      case 'planReminder':
+        await _handlePlanReminderSetting(value);
+        break;
+    }
+  }
+
+  Future<void> _saveSetting(String key, bool value) async {
+    await _storageService.saveSetting(key, value);
+    settings[key] = value;
+  }
+
+  void _showSettingUpdateMessage(String key, bool value) {
+    switch (key) {
+      case 'notifications':
+        _showNotificationMessage(value);
+        break;
+      case 'planReminder':
+        _showPlanReminderMessage(value);
+        break;
+    }
+  }
+
+  void _showNotificationMessage(bool enabled) {
+    SnackbarHelper.showSafe(
+      title: enabled
+          ? 'Push Notifications Enabled'
+          : 'Push Notifications Disabled',
+      message: enabled
+          ? 'You will receive notifications for your plans'
+          : 'All notifications have been cancelled',
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  void _showPlanReminderMessage(bool enabled) {
+    SnackbarHelper.showSafe(
+      title: enabled ? 'Plan Reminders Enabled' : 'Plan Reminders Disabled',
+      message: enabled
+          ? 'You will receive reminders 10 minutes before your plans'
+          : 'Plan reminder notifications have been cancelled',
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  void _handleSettingUpdateError(String key, dynamic error) {
+    if (kDebugMode) {
+      debugPrint('Error updating setting $key: $error');
+    }
+    SnackbarHelper.showSafe(
+      title: 'Error',
+      message: 'Failed to update setting',
+    );
   }
 
   /// Handle Push Notifications setting changes
@@ -159,94 +184,116 @@ class SettingsViewModel extends GetxController {
   /// Reschedule notifications for all future plans
   Future<void> _rescheduleAllPlanNotifications() async {
     try {
-      // Check if notifications are enabled
-      final notificationsEnabled = settings['notifications'] ?? true;
-      if (!notificationsEnabled) {
-        return; // Don't schedule if notifications are disabled
+      if (!_areNotificationsEnabled()) {
+        return;
       }
 
-      // Get all plans
-      final userId = _authService.currentUserId;
-      List<PlanModel> allPlans = [];
+      final allPlans = await _loadAllPlans();
+      final futurePlans = _filterFuturePlans(allPlans);
+      final scheduledCount = await _schedulePlanNotifications(futurePlans);
 
-      if (userId != null) {
-        // Try Firebase first
-        try {
-          allPlans = await _plansDbService.getPlans(userId);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('Failed to load plans from Firebase: $e');
-          }
-        }
+      _logSchedulingResult(scheduledCount);
+    } catch (e) {
+      _logSchedulingError(e);
+    }
+  }
+
+  bool _areNotificationsEnabled() {
+    return settings['notifications'] ?? true;
+  }
+
+  Future<List<PlanModel>> _loadAllPlans() async {
+    final userId = _authService.currentUserId;
+    if (userId != null) {
+      final plans = await _loadPlansFromFirebase(userId);
+      if (plans.isNotEmpty) {
+        return plans;
       }
+    }
+    return await _storageService.getPlans();
+  }
 
-      // Fallback to local storage
-      if (allPlans.isEmpty) {
-        allPlans = await _storageService.getPlans();
-      }
-
-      // Filter future plans with times
-      final now = DateTime.now();
-      final futurePlans = allPlans.where((plan) {
-        if (plan.time == null) return false;
-        // Check if notification time (10 min before) is in the future
-        final notificationTime = plan.time!.subtract(
-          const Duration(minutes: 10),
-        );
-        return notificationTime.isAfter(now);
-      }).toList();
-
-      // Reschedule notifications for each plan
-      int scheduledCount = 0;
-      for (final plan in futurePlans) {
-        try {
-          final notificationTime = plan.time!.subtract(
-            const Duration(minutes: 10),
-          );
-          final notificationId = plan.id.hashCode & 0x7fffffff;
-
-          await _notificationService.schedulePlanNotification(
-            id: notificationId,
-            title: 'Upcoming Plan',
-            body: '${plan.title} at ${plan.place} in 10 minutes',
-            scheduledTime: notificationTime,
-          );
-          scheduledCount++;
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint(
-              'Failed to schedule notification for plan ${plan.id}: $e',
-            );
-          }
-        }
-      }
-
-      if (kDebugMode && scheduledCount > 0) {
-        debugPrint('Rescheduled $scheduledCount plan notifications');
-      }
+  Future<List<PlanModel>> _loadPlansFromFirebase(String userId) async {
+    try {
+      return await _plansDbService.getPlans(userId);
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error rescheduling plan notifications: $e');
+        debugPrint('Failed to load plans from Firebase: $e');
       }
+      return [];
+    }
+  }
+
+  List<PlanModel> _filterFuturePlans(List<PlanModel> allPlans) {
+    final now = DateTime.now();
+    return allPlans.where((plan) => _isPlanInFuture(plan, now)).toList();
+  }
+
+  bool _isPlanInFuture(PlanModel plan, DateTime now) {
+    if (plan.time == null) return false;
+    final notificationTime = plan.time!.subtract(const Duration(hours: 1));
+    return notificationTime.isAfter(now);
+  }
+
+  Future<int> _schedulePlanNotifications(List<PlanModel> futurePlans) async {
+    int scheduledCount = 0;
+    for (final plan in futurePlans) {
+      final success = await _scheduleSinglePlanNotification(plan);
+      if (success) {
+        scheduledCount++;
+      }
+    }
+    return scheduledCount;
+  }
+
+  Future<bool> _scheduleSinglePlanNotification(PlanModel plan) async {
+    try {
+      final notificationTime = plan.time!.subtract(const Duration(hours: 1));
+      final notificationId = plan.id.hashCode & 0x7fffffff;
+
+      await _notificationService.schedulePlanNotification(
+        id: notificationId,
+        title: 'Upcoming Plan',
+        body: '${plan.title} at ${plan.place} in 1 hour',
+        scheduledTime: notificationTime,
+      );
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to schedule notification for plan ${plan.id}: $e');
+      }
+      return false;
+    }
+  }
+
+  void _logSchedulingResult(int scheduledCount) {
+    if (kDebugMode && scheduledCount > 0) {
+      debugPrint('Rescheduled $scheduledCount plan notifications');
+    }
+  }
+
+  void _logSchedulingError(dynamic error) {
+    if (kDebugMode) {
+      debugPrint('Error rescheduling plan notifications: $error');
     }
   }
 
   Future<void> clearCache() async {
     try {
       isLoading.value = true;
-      
+
       // Cancel all notifications (they're cached)
       await _notificationService.cancelAllNotifications();
-      
+
       // Clear any cached notification data
       // Note: Flutter's image cache is automatically managed by the framework
       // and doesn't need manual clearing in most cases
-      
+
       // Force garbage collection hint (optional)
       // This is just a hint to the Dart VM, not guaranteed to run immediately
-      
+
       isLoading.value = false;
-      
+
       SnackbarHelper.showSafe(
         title: 'Cache Cleared',
         message: 'App cache has been cleared successfully',
@@ -267,29 +314,29 @@ class SettingsViewModel extends GetxController {
   Future<void> clearAllData() async {
     try {
       isLoading.value = true;
-      
+
       // Get current user ID before clearing
       final userId = _authService.currentUserId;
-      
+
       // Clear all local storage data
       await _storageService.clearAllData(userId: userId);
-      
+
       // Clear user data from database if user exists
       if (userId != null) {
         await _storageService.clearUserData(userId);
       }
-      
+
       // Clear anonymous data
       await _storageService.clearAnonymousData();
-      
+
       // Cancel all notifications
       await _notificationService.cancelAllNotifications();
-      
+
       // Cancel all notifications
       await _notificationService.cancelAllNotifications();
-      
+
       isLoading.value = false;
-      
+
       SnackbarHelper.showSafe(
         title: 'Data Cleared',
         message: 'All user data has been permanently deleted',
@@ -310,25 +357,25 @@ class SettingsViewModel extends GetxController {
   Future<void> logout() async {
     try {
       isLoading.value = true;
-      
+
       // Get current user ID before logout
       final userId = _authService.currentUserId;
-      
+
       // Clear current user ID and anonymous data from storage
       if (userId != null) {
         await _storageService.clearUserData(userId);
       }
       await _storageService.clearAnonymousData();
       await _storageService.setCurrentUserId(null);
-      
+
       // Cancel all notifications
       await _notificationService.cancelAllNotifications();
-      
+
       // Sign out from Firebase and Google
       await _authService.signOut();
-      
+
       isLoading.value = false;
-      
+
       // Navigate to login screen
       SmoothNavigator.offAll(
         () => const LoginView(),
@@ -489,7 +536,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(20)),
-              
+
               // App Name
               Text(
                 'Love Connect',
@@ -501,7 +548,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(8)),
-              
+
               // Version
               Text(
                 'Version ${appVersion.value}',
@@ -513,7 +560,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(20)),
-              
+
               // Description
               Container(
                 padding: EdgeInsets.all(context.responsiveSpacing(16)),
@@ -533,7 +580,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(24)),
-              
+
               // Close Button
               ElevatedButton(
                 onPressed: () => Get.back(),
@@ -598,7 +645,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(20)),
-              
+
               // Title
               Text(
                 'Clear Cache',
@@ -610,7 +657,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(12)),
-              
+
               // Message
               Text(
                 'This will clear temporary files and cached data. Your plans, profile, and settings will not be affected.',
@@ -623,7 +670,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(24)),
-              
+
               // Buttons
               Row(
                 children: [
@@ -720,7 +767,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(20)),
-              
+
               // Title
               Text(
                 'Clear All Data',
@@ -732,7 +779,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(12)),
-              
+
               // Warning Message
               Container(
                 padding: EdgeInsets.all(context.responsiveSpacing(12)),
@@ -752,7 +799,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(24)),
-              
+
               // Buttons
               Row(
                 children: [
@@ -868,7 +915,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(20)),
-              
+
               // Title
               Text(
                 'Logout',
@@ -880,7 +927,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(12)),
-              
+
               // Message
               Text(
                 'Are you sure you want to logout? You will need to sign in again to access your account.',
@@ -893,7 +940,7 @@ class SettingsViewModel extends GetxController {
                 ),
               ),
               SizedBox(height: context.responsiveSpacing(24)),
-              
+
               // Buttons
               Row(
                 children: [

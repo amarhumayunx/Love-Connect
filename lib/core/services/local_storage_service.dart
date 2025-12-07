@@ -240,18 +240,35 @@ class LocalStorageService {
       final prefs = await SharedPreferences.getInstance();
 
       final effectiveUserId = userId ?? await getCurrentUserId();
+      if (effectiveUserId == null || effectiveUserId.isEmpty) {
+        print(
+          '⚠️ STORAGE: Cannot get notifications - effectiveUserId is null or empty',
+        );
+        return [];
+      }
+
       final notificationsKey = _getNotificationsKey(effectiveUserId);
+      print('📬 STORAGE: Loading notifications with key: $notificationsKey');
 
       final String? notificationsJson = prefs.getString(notificationsKey);
-      if (notificationsJson == null) return [];
+      if (notificationsJson == null) {
+        print('📬 STORAGE: No notifications found for key: $notificationsKey');
+        return [];
+      }
 
       final List<dynamic> notificationsList = json.decode(notificationsJson);
-      return notificationsList
+      final notifications = notificationsList
           .map(
             (json) => NotificationModel.fromJson(json as Map<String, dynamic>),
           )
           .toList();
+
+      print(
+        '📬 STORAGE: Successfully loaded ${notifications.length} notification(s)',
+      );
+      return notifications;
     } catch (e) {
+      print('❌ STORAGE: Error loading notifications: $e');
       return [];
     }
   }
@@ -260,22 +277,49 @@ class LocalStorageService {
     NotificationModel notification, {
     String? userId,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final effectiveUserId = userId ?? await getCurrentUserId();
-    final notificationsKey = _getNotificationsKey(effectiveUserId);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final effectiveUserId = userId ?? await getCurrentUserId();
 
-    final notifications = await getNotifications(userId: effectiveUserId);
-    final existingIndex = notifications.indexWhere(
-      (n) => n.id == notification.id,
-    );
+      if (effectiveUserId == null || effectiveUserId.isEmpty) {
+        print(
+          '⚠️ STORAGE: Cannot save notification - effectiveUserId is null or empty',
+        );
+        return;
+      }
 
-    if (existingIndex >= 0) {
-      notifications[existingIndex] = notification;
-    } else {
-      notifications.add(notification);
+      final notificationsKey = _getNotificationsKey(effectiveUserId);
+      print(
+        '💾 STORAGE: Saving notification ${notification.id} with key: $notificationsKey',
+      );
+
+      final notifications = await getNotifications(userId: effectiveUserId);
+      print(
+        '💾 STORAGE: Found ${notifications.length} existing notification(s)',
+      );
+
+      final existingIndex = notifications.indexWhere(
+        (n) => n.id == notification.id,
+      );
+
+      if (existingIndex >= 0) {
+        print(
+          '💾 STORAGE: Updating existing notification at index $existingIndex',
+        );
+        notifications[existingIndex] = notification;
+      } else {
+        print('💾 STORAGE: Adding new notification');
+        notifications.add(notification);
+      }
+
+      await _saveNotifications(notifications, notificationsKey);
+      print(
+        '✅ STORAGE: Successfully saved ${notifications.length} notification(s)',
+      );
+    } catch (e) {
+      print('❌ STORAGE: Error saving notification: $e');
+      rethrow;
     }
-
-    await _saveNotifications(notifications, notificationsKey);
   }
 
   Future<void> markNotificationAsRead(
@@ -467,6 +511,96 @@ class LocalStorageService {
         title: 'Surprise Gulab Jamun',
         category: 'Surprise',
         location: 'Favorite Sweet Shop',
+      ),
+      IdeaModel(
+        id: '16',
+        title: 'Shopping at Emporium Mall',
+        category: 'Trip',
+        location: 'Johar Town, Lahore',
+      ),
+      IdeaModel(
+        id: '17',
+        title: 'Date at Fortress Square',
+        category: 'Trip',
+        location: 'Lahore Cantonment',
+      ),
+      IdeaModel(
+        id: '18',
+        title: 'Visit Lahore Fort',
+        category: 'Trip',
+        location: 'Lahore',
+      ),
+      IdeaModel(
+        id: '19',
+        title: 'Shopping at Dolmen Mall Clifton',
+        category: 'Trip',
+        location: 'Clifton, Karachi',
+      ),
+      IdeaModel(
+        id: '20',
+        title: 'Fun Day at Lucky One Mall',
+        category: 'Trip',
+        location: 'Karachi',
+      ),
+      IdeaModel(
+        id: '21',
+        title: 'Evening at Clifton Beach',
+        category: 'Walk',
+        location: 'Clifton, Karachi',
+      ),
+      IdeaModel(
+        id: '22',
+        title: 'Visit Mohatta Palace',
+        category: 'Trip',
+        location: 'Karachi',
+      ),
+      IdeaModel(
+        id: '23',
+        title: 'Shopping at The Centaurus Mall',
+        category: 'Trip',
+        location: 'Islamabad',
+      ),
+      IdeaModel(
+        id: '24',
+        title: 'Date at Giga Mall',
+        category: 'Trip',
+        location: 'Islamabad',
+      ),
+      IdeaModel(
+        id: '25',
+        title: 'Visit Faisal Mosque',
+        category: 'Trip',
+        location: 'Islamabad',
+      ),
+      IdeaModel(
+        id: '26',
+        title: 'Explore Pakistan Monument',
+        category: 'Trip',
+        location: 'Islamabad',
+      ),
+      IdeaModel(
+        id: '27',
+        title: 'Dinner at Mall Food Court',
+        category: 'Dinner',
+        location: 'Any Mall',
+      ),
+      IdeaModel(
+        id: '28',
+        title: 'Movie Date at Cinema',
+        category: 'Movie',
+        location: 'Mall Cinema',
+      ),
+      IdeaModel(
+        id: '29',
+        title: 'Shopping Spree Together',
+        category: 'Surprise',
+        location: 'Favorite Mall',
+      ),
+      IdeaModel(
+        id: '30',
+        title: 'Coffee Date at Mall',
+        category: 'Dinner',
+        location: 'Mall Cafe',
       ),
     ];
   }

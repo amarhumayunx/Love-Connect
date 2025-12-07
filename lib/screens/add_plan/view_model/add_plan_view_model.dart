@@ -192,9 +192,14 @@ class AddPlanViewModel extends GetxController {
   }
 
   void _initiateBackgroundSave(PlanModel plan, String userId) {
-    _plansDbService.savePlan(userId: userId, plan: plan).catchError((_) {
-      // Background save errors are handled silently
-    });
+    _plansDbService
+        .savePlan(userId: userId, plan: plan)
+        .then(
+          (_) {},
+          onError: (_) {
+            // Background save errors are handled silently
+          },
+        );
   }
 
   void _scheduleNotification(PlanModel plan) {
@@ -213,10 +218,7 @@ class AddPlanViewModel extends GetxController {
     );
   }
 
-  Future<void> _handleLocalSaveFailure(
-    PlanModel plan,
-    String userId,
-  ) async {
+  Future<void> _handleLocalSaveFailure(PlanModel plan, String userId) async {
     try {
       final savedToFirebase = await _plansDbService.savePlan(
         userId: userId,
@@ -248,7 +250,8 @@ class AddPlanViewModel extends GetxController {
   void _showSaveError() {
     SnackbarHelper.showSafe(
       title: 'Error',
-      message: 'Failed to save plan. Please check your connection and try again.',
+      message:
+          'Failed to save plan. Please check your connection and try again.',
     );
   }
 
@@ -265,54 +268,130 @@ class AddPlanViewModel extends GetxController {
       return;
     }
 
+    // Check if plan is in the future
+    if (planTime.isBefore(DateTime.now())) {
+      return;
+    }
+
     await _notificationService.ensureInitializedWithPermissions();
 
+    bool notificationsEnabled = true;
+    bool planReminderEnabled = true;
     try {
       final settings = await _storageService.getSettings();
-      final bool notificationsEnabled = settings['notifications'] ?? true;
-      final bool planReminderEnabled = settings['planReminder'] ?? true;
-
-      if (!notificationsEnabled || !planReminderEnabled) {
-        return;
-      }
+      notificationsEnabled = settings['notifications'] ?? true;
+      planReminderEnabled = settings['planReminder'] ?? true;
     } catch (_) {
       // If settings can't be loaded, default to allowing notifications
     }
 
-    final DateTime notificationTime = planTime.subtract(
-      const Duration(minutes: 10),
-    );
+    // Always save notification model for upcoming plans
+    await _saveNotificationModel(plan, planTime);
 
-    if (notificationTime.isBefore(DateTime.now())) {
-      return;
+    // Schedule multiple notifications if enabled
+    if (notificationsEnabled && planReminderEnabled) {
+      await _scheduleMultipleNotifications(plan, planTime);
     }
+  }
 
-    final int notificationId = plan.id.hashCode & 0x7fffffff;
+  /// Schedule multiple notifications at different intervals before the plan
+  Future<void> _scheduleMultipleNotifications(
+    PlanModel plan,
+    DateTime planTime,
+  ) async {
+    final now = DateTime.now();
+    final baseNotificationId = plan.id.hashCode & 0x7fffffff;
 
-    await _notificationService.schedulePlanNotification(
-      id: notificationId,
-      title: 'Upcoming Plan',
-      body: '${plan.title} at ${plan.place} in 10 minutes',
-      scheduledTime: notificationTime,
-    );
+    // Define notification intervals: 1 hour, 30 minutes, 15 minutes, 7 minutes, and on-time
+    final intervals = [
+      const Duration(hours: 1),
+      const Duration(minutes: 30),
+      const Duration(minutes: 15),
+      const Duration(minutes: 7),
+      Duration.zero, // On time
+    ];
 
+    final messages = [
+      '${plan.title} at ${plan.place} in 1 hour',
+      '${plan.title} at ${plan.place} in 30 minutes',
+      '${plan.title} at ${plan.place} in 15 minutes',
+      '${plan.title} at ${plan.place} in 7 minutes',
+      '${plan.title} at ${plan.place} is starting now!',
+    ];
+
+    for (int i = 0; i < intervals.length; i++) {
+      final interval = intervals[i];
+      final notificationTime = planTime.subtract(interval);
+
+      // Only schedule if notification time is in the future
+      if (notificationTime.isAfter(now)) {
+        // Use different notification IDs for each interval
+        final notificationId = baseNotificationId + i;
+
+        try {
+          await _notificationService.schedulePlanNotification(
+            id: notificationId,
+            title: 'Upcoming Plan',
+            body: messages[i],
+            scheduledTime: notificationTime,
+          );
+          print(
+            '✅ ADD_PLAN: Scheduled notification ${i + 1} for plan ${plan.id} at ${notificationTime.toString()}',
+          );
+        } catch (e) {
+          print(
+            '❌ ADD_PLAN: Error scheduling notification ${i + 1} for plan ${plan.id}: $e',
+          );
+        }
+      }
+    }
+  }
+
+  /// Save notification model to storage
+  Future<void> _saveNotificationModel(PlanModel plan, DateTime planTime) async {
     try {
       final userId = _authService.currentUserId;
-      if (userId != null) {
-        final notification = NotificationModel(
-          id: const Uuid().v4(),
-          title: 'Upcoming Plan',
-          message: '${plan.title} at ${plan.place}',
-          date: planTime,
-          type: NotificationType.reminder,
+      if (userId != null && userId.isNotEmpty) {
+        // Check if notification already exists to avoid duplicates
+        final existingNotifications = await _storageService.getNotifications(
+          userId: userId,
         );
-        await _storageService.saveNotification(notification, userId: userId);
-        
-        // Update home screen notification count
-        _updateHomeNotificationCount();
+        final notificationMessage = '${plan.title} at ${plan.place}';
+        final alreadyExists = existingNotifications.any(
+          (n) =>
+              n.type == NotificationType.reminder &&
+              n.message == notificationMessage &&
+              n.date.isAtSameMomentAs(planTime),
+        );
+
+        if (!alreadyExists) {
+          final notification = NotificationModel(
+            id: const Uuid().v4(),
+            title: 'Upcoming Plan',
+            message: notificationMessage,
+            date: planTime,
+            type: NotificationType.reminder,
+          );
+
+          print(
+            '💾 ADD_PLAN: Saving notification for plan ${plan.id}, userId: $userId',
+          );
+          await _storageService.saveNotification(notification, userId: userId);
+          print('✅ ADD_PLAN: Notification saved successfully');
+
+          // Update home screen notification count
+          _updateHomeNotificationCount();
+        } else {
+          print('ℹ️ ADD_PLAN: Notification already exists for plan ${plan.id}');
+        }
+      } else {
+        print(
+          '⚠️ ADD_PLAN: Cannot save notification - userId is null or empty',
+        );
       }
-    } catch (_) {
-      // Ignore errors when saving notification locally
+    } catch (e) {
+      // Log error for debugging but don't block the main flow
+      print('❌ ADD_PLAN: Error saving notification for plan ${plan.id}: $e');
     }
   }
 

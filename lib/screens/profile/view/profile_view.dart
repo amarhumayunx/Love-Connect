@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/profile/view_model/profile_view_model.dart';
-import 'package:love_connect/screens/settings/view_model/settings_view_model.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -17,14 +17,12 @@ class ProfileView extends StatefulWidget {
 
 class _ProfileViewState extends State<ProfileView> {
   late final ProfileViewModel viewModel;
-  late final SettingsViewModel settingsViewModel;
   HomeViewModel? homeViewModel;
 
   @override
   void initState() {
     super.initState();
     viewModel = Get.put(ProfileViewModel());
-    settingsViewModel = Get.put(SettingsViewModel());
     // Try to find HomeViewModel, but don't fail if it doesn't exist
     try {
       homeViewModel = Get.find<HomeViewModel>();
@@ -39,7 +37,6 @@ class _ProfileViewState extends State<ProfileView> {
   @override
   void dispose() {
     Get.delete<ProfileViewModel>();
-    Get.delete<SettingsViewModel>();
     super.dispose();
   }
 
@@ -126,27 +123,14 @@ class _ProfileViewState extends State<ProfileView> {
                               ),
                             ),
                             SizedBox(height: metrics.sectionSpacing * 0.5),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  viewModel.userProfile.value.name,
-                                  style: GoogleFonts.inter(
-                                    fontSize: context.responsiveFont(18),
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primaryDark,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.edit,
-                                    color: AppColors.primaryRed,
-                                    size: 20,
-                                  ),
-                                  onPressed: viewModel.showEditProfileModal,
-                                ),
-                              ],
+                            Text(
+                              viewModel.userProfile.value.name,
+                              style: GoogleFonts.inter(
+                                fontSize: context.responsiveFont(18),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryDark,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                             Text(
                               viewModel.userProfile.value.about,
@@ -173,10 +157,23 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         _buildDivider(),
                         _buildSettingTile(
+                          'Change Email',
+                          Icons.email_outlined,
+                          onTap: () {
+                            SnackbarHelper.showSafe(
+                              title: 'Change Email',
+                              message: 'Email change coming soon',
+                            );
+                          },
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
                           'Change Password',
                           Icons.lock_outline,
                           onTap: () {
-                            settingsViewModel.navigateToChangePassword();
+                            viewModel.navigateToChangePassword();
                           },
                           metrics: metrics,
                           context: context,
@@ -191,7 +188,7 @@ class _ProfileViewState extends State<ProfileView> {
                           'Push Notifications',
                           'notifications',
                           Icons.notifications_outlined,
-                          settingsViewModel,
+                          viewModel,
                           metrics,
                           context,
                         ),
@@ -200,9 +197,87 @@ class _ProfileViewState extends State<ProfileView> {
                           'Plan Reminders',
                           'planReminder',
                           Icons.calendar_today_outlined,
-                          settingsViewModel,
+                          viewModel,
                           metrics,
                           context,
+                        ),
+                        _buildDivider(),
+                        _buildToggleTile(
+                          'Email Notifications',
+                          'emailNotifications',
+                          Icons.email_outlined,
+                          viewModel,
+                          metrics,
+                          context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Test Notification',
+                          Icons.notifications_active_outlined,
+                          subtitle: 'Send a test notification now',
+                          onTap: viewModel.sendTestNotification,
+                          metrics: metrics,
+                          context: context,
+                        ),
+                      ], metrics),
+
+                      SizedBox(height: metrics.sectionSpacing),
+
+                      // Privacy & Security Section
+                      _buildSection('Privacy & Security', [
+                        _buildToggleTile(
+                          'Private Journal',
+                          'privateJournal',
+                          Icons.lock_outline,
+                          viewModel,
+                          metrics,
+                          context,
+                        ),
+                        _buildDivider(),
+                        _buildToggleTile(
+                          'Hide Location',
+                          'hideLocation',
+                          Icons.location_off_outlined,
+                          viewModel,
+                          metrics,
+                          context,
+                        ),
+                        _buildDivider(),
+                        _buildToggleTile(
+                          'App Lock',
+                          'appLock',
+                          Icons.fingerprint_outlined,
+                          viewModel,
+                          metrics,
+                          context,
+                        ),
+                      ], metrics),
+
+                      SizedBox(height: metrics.sectionSpacing),
+
+                      // App Preferences Section
+                      _buildSection('App Preferences', [
+                        _buildToggleTile(
+                          'Romantic Theme',
+                          'romanticTheme',
+                          Icons.favorite_outline,
+                          viewModel,
+                          metrics,
+                          context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Language',
+                          Icons.language_outlined,
+                          subtitle: 'English',
+                          onTap: () {
+                            SnackbarHelper.showSafe(
+                              title: 'Language',
+                              message: 'Language selection coming soon',
+                            );
+                          },
+                          metrics: metrics,
+                          context: context,
                         ),
                       ], metrics),
 
@@ -213,7 +288,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Help & Support',
                           Icons.help_outline,
-                          onTap: settingsViewModel.contactSupport,
+                          onTap: viewModel.contactSupport,
                           metrics: metrics,
                           context: context,
                         ),
@@ -221,7 +296,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Rate App',
                           Icons.star_outline,
-                          onTap: settingsViewModel.rateApp,
+                          onTap: viewModel.rateApp,
                           metrics: metrics,
                           context: context,
                         ),
@@ -229,7 +304,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Share App',
                           Icons.share_outlined,
-                          onTap: settingsViewModel.shareApp,
+                          onTap: viewModel.shareApp,
                           metrics: metrics,
                           context: context,
                         ),
@@ -237,7 +312,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Terms of Service',
                           Icons.description_outlined,
-                          onTap: settingsViewModel.showTermsOfService,
+                          onTap: viewModel.showTermsOfService,
                           metrics: metrics,
                           context: context,
                         ),
@@ -245,7 +320,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Privacy Policy',
                           Icons.privacy_tip_outlined,
-                          onTap: settingsViewModel.showPrivacyPolicy,
+                          onTap: viewModel.showPrivacyPolicy,
                           metrics: metrics,
                           context: context,
                         ),
@@ -253,9 +328,8 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'About',
                           Icons.info_outline,
-                          subtitle:
-                              'Version ${settingsViewModel.appVersion.value}',
-                          onTap: () => settingsViewModel.showAbout(context),
+                          subtitle: 'Version ${viewModel.appVersion.value}',
+                          onTap: () => viewModel.showAbout(context),
                           metrics: metrics,
                           context: context,
                         ),
@@ -268,8 +342,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Clear Cache',
                           Icons.delete_outline,
-                          onTap: () =>
-                              settingsViewModel.showClearCacheDialog(context),
+                          onTap: () => viewModel.showClearCacheDialog(context),
                           metrics: metrics,
                           context: context,
                         ),
@@ -277,8 +350,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildSettingTile(
                           'Clear All Data',
                           Icons.delete_forever_outlined,
-                          onTap: () =>
-                              settingsViewModel.showClearDataDialog(context),
+                          onTap: () => viewModel.showClearDataDialog(context),
                           metrics: metrics,
                           context: context,
                           isDestructive: true,
@@ -292,11 +364,9 @@ class _ProfileViewState extends State<ProfileView> {
                         margin: EdgeInsets.only(bottom: metrics.sectionSpacing),
                         child: Obx(
                           () => ElevatedButton(
-                            onPressed: settingsViewModel.isLoading.value
+                            onPressed: viewModel.isLoading.value
                                 ? null
-                                : () => settingsViewModel.showLogoutDialog(
-                                    context,
-                                  ),
+                                : () => viewModel.showLogoutDialog(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryRed,
                               foregroundColor: AppColors.white,
@@ -311,7 +381,7 @@ class _ProfileViewState extends State<ProfileView> {
                               disabledBackgroundColor: AppColors.primaryRed
                                   .withOpacity(0.6),
                             ),
-                            child: settingsViewModel.isLoading.value
+                            child: viewModel.isLoading.value
                                 ? SizedBox(
                                     height: 20,
                                     width: 20,
@@ -435,7 +505,7 @@ class _ProfileViewState extends State<ProfileView> {
     String title,
     String key,
     IconData icon,
-    SettingsViewModel viewModel,
+    ProfileViewModel viewModel,
     HomeLayoutMetrics metrics,
     BuildContext context,
   ) {
@@ -491,7 +561,8 @@ class _ProfileViewState extends State<ProfileView> {
     return Divider(
       height: 1,
       thickness: 1,
-      indent: 60,
+      indent: 40,
+      endIndent: 40,
       color: AppColors.textLightPink.withOpacity(0.2),
     );
   }

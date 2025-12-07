@@ -99,78 +99,91 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                       final buttonHeight = context.responsiveButtonHeight();
                       final buttonFontSize = context.responsiveFont(16);
 
-                      return SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(height: context.responsiveSpacing(20)),
-
-                                Row(
-                                  children: [
-                                    GetStartedLogo(
-                                      width: logoWidth,
-                                      height: logoHeight,
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: context.responsiveSpacing(20)),
-
-                                Center(
-                                  child: GetStartedIllustration(
-                                    size: heartImageSize,
+                      return Stack(
+                        children: [
+                          SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    height: context.responsiveSpacing(20),
                                   ),
-                                ),
 
-                                SizedBox(height: context.responsiveSpacing(25)),
+                                  Row(
+                                    children: [
+                                      GetStartedLogo(
+                                        width: logoWidth,
+                                        height: logoHeight,
+                                      ),
+                                    ],
+                                  ),
 
-                                Center(
-                                  child: GetStartedTitle(
-                                    text: viewModel.data.title,
-                                    fontSize: titleFontSize,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: horizontalPadding,
+                                  SizedBox(
+                                    height: context.responsiveSpacing(20),
+                                  ),
+
+                                  Center(
+                                    child: GetStartedIllustration(
+                                      size: heartImageSize,
                                     ),
                                   ),
-                                ),
 
-                                SizedBox(height: context.responsiveSpacing(16)),
+                                  SizedBox(
+                                    height: context.responsiveSpacing(25),
+                                  ),
 
-                                Center(
-                                  child: GetStartedSubtitle(
-                                    text: viewModel.data.subtitle,
-                                    fontSize: subtitleFontSize,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: horizontalPadding,
+                                  Center(
+                                    child: GetStartedTitle(
+                                      text: viewModel.data.title,
+                                      fontSize: titleFontSize,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: horizontalPadding,
+                                      ),
                                     ),
                                   ),
-                                ),
 
-                                SizedBox(height: context.responsiveSpacing(80)),
-
-                                Center(
-                                  child: GetStartedCtaButton(
-                                    width: buttonWidth,
-                                    height: buttonHeight,
-                                    fontSize: buttonFontSize,
-                                    label: AppStrings.getStarted,
-                                    onPressed: viewModel.onGetStartedClick,
+                                  SizedBox(
+                                    height: context.responsiveSpacing(16),
                                   ),
-                                ),
-                                SizedBox(height: context.responsiveSpacing(40)),
-                              ],
+
+                                  Center(
+                                    child: GetStartedSubtitle(
+                                      text: viewModel.data.subtitle,
+                                      fontSize: subtitleFontSize,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: horizontalPadding,
+                                      ),
+                                    ),
+                                  ),
+
+                                  SizedBox(
+                                    height: context.responsiveSpacing(100),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+                          // Button at bottom center
+                          Positioned(
+                            bottom: context.responsiveSpacing(40),
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: GetStartedCtaButton(
+                                width: buttonWidth,
+                                height: buttonHeight,
+                                fontSize: buttonFontSize,
+                                label: AppStrings.getStarted,
+                                onPressed: viewModel.onGetStartedClick,
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),

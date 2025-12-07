@@ -8,7 +8,9 @@ import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
 import 'package:love_connect/core/services/user_database_service.dart';
 import 'package:love_connect/core/services/plans_database_service.dart';
+import 'package:love_connect/core/services/notification_service.dart';
 import 'package:love_connect/core/models/plan_model.dart';
+import 'package:love_connect/core/models/notification_model.dart';
 import 'package:love_connect/core/widgets/quote_modal.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
@@ -19,6 +21,7 @@ import 'package:love_connect/screens/ideas/view/ideas_view.dart';
 import 'package:love_connect/screens/notifications/view/notifications_view.dart';
 import 'package:love_connect/screens/surprise/view/surprise_view.dart';
 import 'package:love_connect/screens/home/model/home_model.dart';
+import 'package:uuid/uuid.dart';
 
 class HomeViewModel extends GetxController {
   final HomeModel model = const HomeModel();
@@ -29,6 +32,7 @@ class HomeViewModel extends GetxController {
   final LocalStorageService _storageService = LocalStorageService();
   final UserDatabaseService _userDbService = UserDatabaseService();
   final PlansDatabaseService _plansDbService = PlansDatabaseService();
+  final NotificationService _notificationService = NotificationService();
   final RxBool isLoggingOut = false.obs;
   final RxBool isLoadingPlans = false.obs;
   final RxList<PlanModel> plans = <PlanModel>[].obs;
@@ -162,6 +166,9 @@ class HomeViewModel extends GetxController {
             futurePlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = futurePlans;
 
+            // Schedule notifications for all upcoming plans
+            _scheduleNotificationsForPlans(futurePlans);
+
             print(
               '═══════════════════════════════════════════════════════════',
             );
@@ -210,6 +217,9 @@ class HomeViewModel extends GetxController {
             loadedPlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = loadedPlans;
 
+            // Schedule notifications for all upcoming plans
+            _scheduleNotificationsForPlans(loadedPlans);
+
             if (loadedPlans.isEmpty) {
               print('📭 HOME: No plans found for this user');
             }
@@ -235,6 +245,10 @@ class HomeViewModel extends GetxController {
             }).toList();
             filteredPlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = filteredPlans;
+
+            // Schedule notifications for all upcoming plans
+            _scheduleNotificationsForPlans(filteredPlans);
+
             print(
               '✅ HOME: Loaded ${localPlans.length} plan(s) from user-specific local storage',
             );
@@ -262,6 +276,159 @@ class HomeViewModel extends GetxController {
     } finally {
       isLoadingPlans.value = false;
     }
+  }
+
+  /// Schedule notifications for all upcoming plans
+  Future<void> _scheduleNotificationsForPlans(List<PlanModel> plansList) async {
+    try {
+      final userId = _authService.currentUserId;
+      if (userId == null || userId.isEmpty) {
+        print('⚠️ HOME: Cannot create notifications - userId is null or empty');
+        return;
+      }
+
+      // Check if notifications are enabled
+      bool notificationsEnabled = true;
+      bool planReminderEnabled = true;
+      try {
+        final settings = await _storageService.getSettings();
+        notificationsEnabled = settings['notifications'] ?? true;
+        planReminderEnabled = settings['planReminder'] ?? true;
+      } catch (_) {
+        // If settings can't be loaded, default to allowing notifications
+      }
+
+      // Initialize notification service if notifications are enabled
+      if (notificationsEnabled && planReminderEnabled) {
+        await _notificationService.ensureInitializedWithPermissions();
+      }
+
+      // Get existing notifications to avoid duplicates
+      final existingNotifications = await _storageService.getNotifications(
+        userId: userId,
+      );
+      final existingNotificationKeys = existingNotifications
+          .where((n) => n.type == NotificationType.reminder)
+          .map((n) => '${n.message}_${n.date.toIso8601String()}')
+          .toSet();
+
+      final now = DateTime.now();
+      int scheduledCount = 0;
+      int savedCount = 0;
+
+      for (final plan in plansList) {
+        if (plan.time == null) continue;
+
+        // Only process plans that are in the future
+        if (plan.time!.isBefore(now)) {
+          continue;
+        }
+
+        // Always save notification model for upcoming plans
+        final notificationMessage = '${plan.title} at ${plan.place}';
+        final notificationKey =
+            '${notificationMessage}_${plan.time!.toIso8601String()}';
+
+        if (!existingNotificationKeys.contains(notificationKey)) {
+          try {
+            final notification = NotificationModel(
+              id: const Uuid().v4(),
+              title: 'Upcoming Plan',
+              message: notificationMessage,
+              date: plan.time!,
+              type: NotificationType.reminder,
+            );
+
+            await _storageService.saveNotification(
+              notification,
+              userId: userId,
+            );
+            savedCount++;
+            print('💾 HOME: Created notification for plan: ${plan.title}');
+          } catch (e) {
+            print('❌ HOME: Error saving notification for plan ${plan.id}: $e');
+          }
+        }
+
+        // Schedule multiple notifications if enabled
+        if (notificationsEnabled && planReminderEnabled) {
+          final scheduled = await _scheduleMultipleNotificationsForPlan(
+            plan,
+            plan.time!,
+            now,
+          );
+          scheduledCount += scheduled;
+        }
+      }
+
+      if (scheduledCount > 0 || savedCount > 0) {
+        print(
+          '✅ HOME: Scheduled $scheduledCount notification(s), saved $savedCount notification(s) to storage',
+        );
+        // Update notification count
+        await loadNotifications();
+      }
+    } catch (e) {
+      // Handle errors silently - notifications are not critical
+      print('❌ HOME: Error scheduling plan notifications: $e');
+    }
+  }
+
+  /// Schedule multiple notifications at different intervals before the plan
+  Future<int> _scheduleMultipleNotificationsForPlan(
+    PlanModel plan,
+    DateTime planTime,
+    DateTime now,
+  ) async {
+    final baseNotificationId = plan.id.hashCode & 0x7fffffff;
+    int scheduledCount = 0;
+
+    // Define notification intervals: 1 hour, 30 minutes, 15 minutes, 7 minutes, and on-time
+    final intervals = [
+      const Duration(hours: 1),
+      const Duration(minutes: 30),
+      const Duration(minutes: 15),
+      const Duration(minutes: 7),
+      Duration.zero, // On time
+    ];
+
+    final messages = [
+      '${plan.title} at ${plan.place} in 1 hour',
+      '${plan.title} at ${plan.place} in 30 minutes',
+      '${plan.title} at ${plan.place} in 15 minutes',
+      '${plan.title} at ${plan.place} in 7 minutes',
+      '${plan.title} at ${plan.place} is starting now!',
+    ];
+
+    for (int i = 0; i < intervals.length; i++) {
+      final interval = intervals[i];
+      final notificationTime = planTime.subtract(interval);
+
+      // Only schedule if notification time is in the future
+      if (notificationTime.isAfter(now)) {
+        // Use different notification IDs for each interval
+        final notificationId = baseNotificationId + i;
+
+        try {
+          await _notificationService.schedulePlanNotification(
+            id: notificationId,
+            title: 'Upcoming Plan',
+            body: messages[i],
+            scheduledTime: notificationTime,
+          );
+          scheduledCount++;
+          print(
+            '✅ HOME: Scheduled notification ${i + 1} for plan ${plan.id} at ${notificationTime.toString()}',
+          );
+        } catch (e) {
+          print(
+            '❌ HOME: Error scheduling notification ${i + 1} for plan ${plan.id}: $e',
+          );
+        }
+      }
+    }
+
+    return scheduledCount;
   }
 
   /// Load and update notification count

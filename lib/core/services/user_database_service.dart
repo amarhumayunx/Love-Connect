@@ -70,6 +70,7 @@ class UserDatabaseService {
     required String about,
     String? profilePictureUrl,
     String? email,
+    String? gender,
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -85,6 +86,10 @@ class UserDatabaseService {
 
       if (email != null) {
         profileData['email'] = email.trim().toLowerCase();
+      }
+
+      if (gender != null) {
+        profileData['gender'] = gender;
       }
 
       await _usersRef.child(userId).child('profile').update(profileData);

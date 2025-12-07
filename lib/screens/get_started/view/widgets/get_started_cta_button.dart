@@ -29,7 +29,7 @@ class GetStartedCtaButton extends StatelessWidget {
           backgroundColor: AppColors.primaryRed,
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(34),
           ),
         ),
         child: Text(

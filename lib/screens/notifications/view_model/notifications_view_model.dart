@@ -23,9 +23,24 @@ class NotificationsViewModel extends GetxController {
     isLoading.value = true;
     try {
       final userId = _authService.currentUserId;
-      final loadedNotifications = await _storageService.getNotifications(userId: userId);
-      notifications.value = loadedNotifications..sort((a, b) => b.date.compareTo(a.date));
+      if (userId == null || userId.isEmpty) {
+        print('⚠️ NOTIFICATIONS: No user ID found, cannot load notifications');
+        notifications.value = [];
+        return;
+      }
+
+      print('📬 NOTIFICATIONS: Loading notifications for user: $userId');
+      final loadedNotifications = await _storageService.getNotifications(
+        userId: userId,
+      );
+      print(
+        '📬 NOTIFICATIONS: Loaded ${loadedNotifications.length} notification(s)',
+      );
+
+      notifications.value = loadedNotifications
+        ..sort((a, b) => b.date.compareTo(a.date));
     } catch (e) {
+      print('❌ NOTIFICATIONS: Error loading notifications: $e');
       SnackbarHelper.showSafe(
         title: 'Error',
         message: 'Failed to load notifications',
@@ -38,7 +53,10 @@ class NotificationsViewModel extends GetxController {
   Future<void> markAsRead(String notificationId) async {
     try {
       final userId = _authService.currentUserId;
-      await _storageService.markNotificationAsRead(notificationId, userId: userId);
+      await _storageService.markNotificationAsRead(
+        notificationId,
+        userId: userId,
+      );
       await loadNotifications();
       _updateHomeNotificationCount();
     } catch (e) {
@@ -94,4 +112,3 @@ class NotificationsViewModel extends GetxController {
     return notifications.where((n) => !n.isRead).length;
   }
 }
-
