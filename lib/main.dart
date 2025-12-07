@@ -5,55 +5,65 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/MyApp.dart';
 
+/// Checks if an error string represents a font loading network error
+bool _isFontLoadingNetworkError(String errorString) {
+  if (!errorString.contains('google_fonts')) {
+    return false;
+  }
+
+  return errorString.contains('Failed host lookup') ||
+      errorString.contains('SocketException') ||
+      errorString.contains('fonts.gstatic.com');
+}
+
+/// Handles font loading errors by logging in debug mode
+void _handleFontLoadingError(Object error) {
+  if (kDebugMode) {
+    debugPrint(
+      'Font loading error (network issue) - using system fonts: $error',
+    );
+  }
+}
+
+/// Error handler for FlutterError.onError
+void _flutterErrorHandler(FlutterErrorDetails details) {
+  final exceptionString = details.exception.toString();
+
+  if (_isFontLoadingNetworkError(exceptionString)) {
+    _handleFontLoadingError(details.exception);
+    return; // Don't crash the app
+  }
+
+  // Handle other errors normally
+  FlutterError.presentError(details);
+}
+
+/// Error handler for unhandled exceptions in runZonedGuarded
+void _unhandledExceptionHandler(Object error, StackTrace stack) {
+  final errorString = error.toString();
+
+  if (_isFontLoadingNetworkError(errorString)) {
+    _handleFontLoadingError(error);
+    return; // Don't crash the app
+  }
+
+  // Re-throw other errors
+  throw error;
+}
+
+/// Initializes the app by setting up Firebase and running MyApp
+Future<void> _initializeApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Note: Notification permissions will be requested when user creates their first plan
+  // This provides better context and UX than requesting at app startup
+  runApp(const MyApp());
+}
+
 void main() async {
   // Configure error handling for font loading failures on iOS
-  FlutterError.onError = (FlutterErrorDetails details) {
-    // Suppress font loading errors to prevent crashes
-    final exceptionString = details.exception.toString();
-    if (exceptionString.contains('google_fonts') &&
-        (exceptionString.contains('Failed host lookup') ||
-            exceptionString.contains('SocketException') ||
-            exceptionString.contains('fonts.gstatic.com'))) {
-      // Silently handle font loading network errors - app will use system fonts
-      if (kDebugMode) {
-        debugPrint(
-          'Font loading error (network issue) - using system fonts: ${details.exception}',
-        );
-      }
-      return; // Don't crash the app
-    }
-    // Handle other errors normally
-    FlutterError.presentError(details);
-  };
+  FlutterError.onError = _flutterErrorHandler;
 
   // Handle unhandled exceptions (like font loading errors)
-  runZonedGuarded(
-    () async {
-      WidgetsFlutterBinding.ensureInitialized();
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      // Note: Notification permissions will be requested when user creates their first plan
-      // This provides better context and UX than requesting at app startup
-      runApp(const MyApp());
-    },
-    (error, stack) {
-      // Catch unhandled exceptions, especially font loading errors
-      final errorString = error.toString();
-      if (errorString.contains('google_fonts') &&
-          (errorString.contains('Failed host lookup') ||
-              errorString.contains('SocketException') ||
-              errorString.contains('fonts.gstatic.com'))) {
-        // Silently handle font loading network errors
-        if (kDebugMode) {
-          debugPrint(
-            'Unhandled font loading error (network issue) - using system fonts: $error',
-          );
-        }
-        return; // Don't crash the app
-      }
-      // Re-throw other errors
-      throw error;
-    },
-  );
+  runZonedGuarded(_initializeApp, _unhandledExceptionHandler);
 }
