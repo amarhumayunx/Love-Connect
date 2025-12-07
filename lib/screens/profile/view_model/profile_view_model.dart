@@ -165,7 +165,6 @@ class ProfileViewModel extends GetxController {
       'privateJournal': true,
       'hideLocation': true,
       'romanticTheme': true,
-      'appLock': false,
     };
   }
 

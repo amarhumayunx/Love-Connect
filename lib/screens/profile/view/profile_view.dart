@@ -157,19 +157,6 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         _buildDivider(),
                         _buildSettingTile(
-                          'Change Email',
-                          Icons.email_outlined,
-                          onTap: () {
-                            SnackbarHelper.showSafe(
-                              title: 'Change Email',
-                              message: 'Email change coming soon',
-                            );
-                          },
-                          metrics: metrics,
-                          context: context,
-                        ),
-                        _buildDivider(),
-                        _buildSettingTile(
                           'Change Password',
                           Icons.lock_outline,
                           onTap: () {
@@ -201,87 +188,37 @@ class _ProfileViewState extends State<ProfileView> {
                           metrics,
                           context,
                         ),
-                        _buildDivider(),
-                        _buildToggleTile(
-                          'Email Notifications',
-                          'emailNotifications',
-                          Icons.email_outlined,
-                          viewModel,
-                          metrics,
-                          context,
-                        ),
-                        _buildDivider(),
-                        _buildSettingTile(
-                          'Test Notification',
-                          Icons.notifications_active_outlined,
-                          subtitle: 'Send a test notification now',
-                          onTap: viewModel.sendTestNotification,
-                          metrics: metrics,
-                          context: context,
-                        ),
-                      ], metrics),
-
-                      SizedBox(height: metrics.sectionSpacing),
-
-                      // Privacy & Security Section
-                      _buildSection('Privacy & Security', [
-                        _buildToggleTile(
-                          'Private Journal',
-                          'privateJournal',
-                          Icons.lock_outline,
-                          viewModel,
-                          metrics,
-                          context,
-                        ),
-                        _buildDivider(),
-                        _buildToggleTile(
-                          'Hide Location',
-                          'hideLocation',
-                          Icons.location_off_outlined,
-                          viewModel,
-                          metrics,
-                          context,
-                        ),
-                        _buildDivider(),
-                        _buildToggleTile(
-                          'App Lock',
-                          'appLock',
-                          Icons.fingerprint_outlined,
-                          viewModel,
-                          metrics,
-                          context,
-                        ),
                       ], metrics),
 
                       SizedBox(height: metrics.sectionSpacing),
 
                       // App Preferences Section
-                      _buildSection('App Preferences', [
-                        _buildToggleTile(
-                          'Romantic Theme',
-                          'romanticTheme',
-                          Icons.favorite_outline,
-                          viewModel,
-                          metrics,
-                          context,
-                        ),
-                        _buildDivider(),
-                        _buildSettingTile(
-                          'Language',
-                          Icons.language_outlined,
-                          subtitle: 'English',
-                          onTap: () {
-                            SnackbarHelper.showSafe(
-                              title: 'Language',
-                              message: 'Language selection coming soon',
-                            );
-                          },
-                          metrics: metrics,
-                          context: context,
-                        ),
-                      ], metrics),
-
-                      SizedBox(height: metrics.sectionSpacing),
+                      // // _buildSection('App Preferences', [
+                      // //   _buildToggleTile(
+                      // //     'Romantic Theme',
+                      // //     'romanticTheme',
+                      // //     Icons.favorite_outline,
+                      // //     viewModel,
+                      // //     metrics,
+                      // //     context,
+                      // //   ),
+                      // //   _buildDivider(),
+                      // //   _buildSettingTile(
+                      // //     'Language',
+                      // //     Icons.language_outlined,
+                      // //     subtitle: 'English',
+                      // //     onTap: () {
+                      // //       SnackbarHelper.showSafe(
+                      // //         title: 'Language',
+                      // //         message: 'Language selection coming soon',
+                      // //       );
+                      // //     },
+                      // //     metrics: metrics,
+                      // //     context: context,
+                      // //   ),
+                      // // ], metrics),
+                      //
+                      // SizedBox(height: metrics.sectionSpacing),
 
                       // Support & About Section
                       _buildSection('Support & About', [

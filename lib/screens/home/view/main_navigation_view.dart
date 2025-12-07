@@ -29,13 +29,9 @@ class MainNavigationView extends StatelessWidget {
           child: Stack(
             children: [
               Obx(
-                    () => IndexedStack(
+                () => IndexedStack(
                   index: viewModel.currentScreenIndex.value,
-                  children: const [
-                    HomeView(),
-                    JournalView(),
-                    ProfileView(),
-                  ],
+                  children: const [HomeView(), JournalView(), ProfileView()],
                 ),
               ),
 

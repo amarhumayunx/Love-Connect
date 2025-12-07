@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/add_plan_layout_metrics.dart';
+import 'package:love_connect/screens/add_plan/view/widgets/custom_date_picker.dart';
 import 'package:love_connect/screens/add_plan/view_model/add_plan_view_model.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:intl/intl.dart';
@@ -27,11 +28,10 @@ class _AddPlanViewState extends State<AddPlanView> {
   @override
   void initState() {
     super.initState();
-    viewModel = Get.put(AddPlanViewModel(
-      planId: widget.planId,
-      onCloseCallback: widget.onClose,
-    ));
-    
+    viewModel = Get.put(
+      AddPlanViewModel(planId: widget.planId, onCloseCallback: widget.onClose),
+    );
+
     // Try to find HomeViewModel to check navigation source
     try {
       homeViewModel = Get.find<HomeViewModel>();
@@ -39,13 +39,13 @@ class _AddPlanViewState extends State<AddPlanView> {
       // HomeViewModel not found, likely navigated via Get.to() from outside MainNavigationView
       homeViewModel = null;
     }
-    
+
     // Get arguments if passed from Ideas screen
     final args = Get.arguments as Map<String, dynamic>?;
-    
+
     titleController = TextEditingController(text: args?['title'] ?? '');
     placeController = TextEditingController(text: args?['place'] ?? '');
-    
+
     if (args != null) {
       if (args['title'] != null) {
         viewModel.updateTitle(args['title']);
@@ -57,7 +57,7 @@ class _AddPlanViewState extends State<AddPlanView> {
         viewModel.updateType(args['type']);
       }
     }
-    
+
     // Listen to model changes
     ever(viewModel.model, (model) {
       if (titleController.text != model.title) {
@@ -78,28 +78,19 @@ class _AddPlanViewState extends State<AddPlanView> {
   }
 
   Future<void> _selectDate() async {
-    final picked = await showDatePicker(
+    await showDialog(
       context: context,
-      initialDate: viewModel.model.value.date,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primaryRed,
-              onPrimary: AppColors.white,
-              surface: AppColors.white,
-              onSurface: AppColors.primaryDark,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      builder: (context) => CustomDatePicker(
+        initialDate: viewModel.model.value.date,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+        onDateSelected: (picked) {
+          if (picked != null) {
+            viewModel.updateDate(picked);
+          }
+        },
+      ),
     );
-    if (picked != null) {
-      viewModel.updateDate(picked);
-    }
   }
 
   Future<void> _selectTime() async {
@@ -182,145 +173,143 @@ class _AddPlanViewState extends State<AddPlanView> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundPink,
         body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: metrics.cardPadding,
-                vertical: metrics.sectionSpacing,
-              ),
-              child: Row(
-                children: [
-                  // Show back arrow only if NOT navigated from navbar
-                  homeViewModel != null
-                      ? Obx(
-                          () => homeViewModel!.isFromNavbar('addPlan')
-                              ? const SizedBox.shrink() // Hide back arrow if from navbar
-                              : IconButton(
-                                  icon: Icon(
-                                    Icons.arrow_back_ios,
-                                    color: AppColors.primaryDark,
-                                    size: metrics.iconSize,
-                                  ),
-                                  onPressed: () {
-                                    if (widget.onClose != null) {
-                                      widget.onClose!();
-                                    } else {
-                                      Get.back();
-                                    }
-                                  },
-                                ),
-                        )
-                      : IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios,
-                            color: AppColors.primaryDark,
-                            size: metrics.iconSize,
-                          ),
-                          onPressed: () {
-                            if (widget.onClose != null) {
-                              widget.onClose!();
-                            } else {
-                              Get.back();
-                            }
-                          },
-                        ),
-                  Text(
-                    'Add Plan',
-                    style: GoogleFonts.inter(
-                      fontSize: metrics.headerFontSize,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Form
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: metrics.cardPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: metrics.cardPadding,
+                  vertical: metrics.sectionSpacing,
+                ),
+                child: Row(
                   children: [
-                    // Title
-                    _buildLabel('Title', metrics),
-                    SizedBox(height: metrics.sectionSpacing * 0.5),
-                    _buildTextField(
-                      controller: titleController,
-                      hintText: 'Surprise Date',
-                      onChanged: viewModel.updateTitle,
-                      metrics: metrics,
-                    ),
-                    SizedBox(height: metrics.sectionSpacing),
-
-                    // Date and Time Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('Date', metrics),
-                              SizedBox(height: metrics.sectionSpacing * 0.5),
-                              _buildDateField(metrics),
-                            ],
+                    // Show back arrow only if NOT navigated from navbar
+                    homeViewModel != null
+                        ? Obx(
+                            () => homeViewModel!.isFromNavbar('addPlan')
+                                ? const SizedBox.shrink() // Hide back arrow if from navbar
+                                : IconButton(
+                                    icon: Icon(
+                                      Icons.arrow_back_ios,
+                                      color: AppColors.primaryDark,
+                                      size: metrics.iconSize,
+                                    ),
+                                    onPressed: () {
+                                      if (widget.onClose != null) {
+                                        widget.onClose!();
+                                      } else {
+                                        Get.back();
+                                      }
+                                    },
+                                  ),
+                          )
+                        : IconButton(
+                            icon: Icon(
+                              Icons.arrow_back_ios,
+                              color: AppColors.primaryDark,
+                              size: metrics.iconSize,
+                            ),
+                            onPressed: () {
+                              if (widget.onClose != null) {
+                                widget.onClose!();
+                              } else {
+                                Get.back();
+                              }
+                            },
                           ),
-                        ),
-                        SizedBox(width: metrics.sectionSpacing),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('Time', metrics),
-                              SizedBox(height: metrics.sectionSpacing * 0.5),
-                              _buildTimeField(metrics),
-                            ],
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Add Plan',
+                      style: GoogleFonts.inter(
+                        fontSize: metrics.headerFontSize,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
-                    SizedBox(height: metrics.sectionSpacing),
-
-                    // Place
-                    _buildLabel('Place', metrics),
-                    SizedBox(height: metrics.sectionSpacing * 0.5),
-                    _buildTextField(
-                      controller: placeController,
-                      hintText: 'The Rosewood',
-                      onChanged: viewModel.updatePlace,
-                      metrics: metrics,
-                    ),
-                    SizedBox(height: metrics.sectionSpacing),
-
-                    // Type
-                    _buildLabel('Type', metrics),
-                    SizedBox(height: metrics.sectionSpacing * 0.5),
-                    _buildTypeField(metrics),
-                    SizedBox(height: metrics.sectionSpacing * 2),
-
-                    // Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildCancelButton(metrics),
-                        ),
-                        SizedBox(width: metrics.sectionSpacing),
-                        Expanded(
-                          child: _buildSaveButton(metrics),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: metrics.sectionSpacing * 4),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              // Form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: metrics.cardPadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      _buildLabel('Title', metrics),
+                      SizedBox(height: metrics.sectionSpacing * 0.5),
+                      _buildTextField(
+                        controller: titleController,
+                        hintText: 'Surprise Date',
+                        onChanged: viewModel.updateTitle,
+                        metrics: metrics,
+                      ),
+                      SizedBox(height: metrics.sectionSpacing),
+
+                      // Date and Time Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLabel('Date', metrics),
+                                SizedBox(height: metrics.sectionSpacing * 0.5),
+                                _buildDateField(metrics),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: metrics.sectionSpacing),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLabel('Time', metrics),
+                                SizedBox(height: metrics.sectionSpacing * 0.5),
+                                _buildTimeField(metrics),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: metrics.sectionSpacing),
+
+                      // Place
+                      _buildLabel('Place', metrics),
+                      SizedBox(height: metrics.sectionSpacing * 0.5),
+                      _buildTextField(
+                        controller: placeController,
+                        hintText: 'The Rosewood',
+                        onChanged: viewModel.updatePlace,
+                        metrics: metrics,
+                      ),
+                      SizedBox(height: metrics.sectionSpacing),
+
+                      // Type
+                      _buildLabel('Type', metrics),
+                      SizedBox(height: metrics.sectionSpacing * 0.5),
+                      _buildTypeField(metrics),
+                      SizedBox(height: metrics.sectionSpacing * 2),
+
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(child: _buildCancelButton(metrics)),
+                          SizedBox(width: metrics.sectionSpacing),
+                          Expanded(child: _buildSaveButton(metrics)),
+                        ],
+                      ),
+                      SizedBox(height: metrics.sectionSpacing * 4),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -347,10 +336,7 @@ class _AddPlanViewState extends State<AddPlanView> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.IdeaColorText,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.IdeaColorText, width: 1),
       ),
       child: TextField(
         controller: controller,
@@ -394,14 +380,9 @@ class _AddPlanViewState extends State<AddPlanView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.IdeaColorText,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.IdeaColorText, width: 1),
         ),
-        padding: EdgeInsets.symmetric(
-          horizontal: metrics.cardPadding * 0.6,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: metrics.cardPadding * 0.6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -433,14 +414,9 @@ class _AddPlanViewState extends State<AddPlanView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.IdeaColorText,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.IdeaColorText, width: 1),
         ),
-        padding: EdgeInsets.symmetric(
-          horizontal: metrics.cardPadding * 0.6,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: metrics.cardPadding * 0.6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -476,14 +452,9 @@ class _AddPlanViewState extends State<AddPlanView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.IdeaColorText,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.IdeaColorText, width: 1),
         ),
-        padding: EdgeInsets.symmetric(
-          horizontal: metrics.cardPadding * 0.6,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: metrics.cardPadding * 0.6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -519,9 +490,7 @@ class _AddPlanViewState extends State<AddPlanView> {
       style: OutlinedButton.styleFrom(
         backgroundColor: Colors.white,
         side: const BorderSide(color: Colors.white),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(34),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(34)),
         minimumSize: Size(double.infinity, metrics.buttonHeight),
       ),
       child: Text(
@@ -567,4 +536,3 @@ class _AddPlanViewState extends State<AddPlanView> {
     );
   }
 }
-

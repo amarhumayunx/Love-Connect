@@ -74,5 +74,9 @@
     <key>NSUserNotificationsUsageDescription</key>
     <string>We need notification permission to remind you about your romantic plans 10 minutes before they start.</string>
 
+    <!-- Privacy - Face ID Usage Description -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>We need Face ID permission to secure your app with biometric authentication.</string>
+
 </dict>
 </plist>

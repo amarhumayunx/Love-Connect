@@ -38,6 +38,7 @@ dependencies:
   package_info_plus: ^9.0.0
   image_picker: ^1.0.7
   permission_handler: ^11.3.0
+  local_auth: ^2.3.0
 
   # Local notifications
   flutter_local_notifications: ^19.5.0

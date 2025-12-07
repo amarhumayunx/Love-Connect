@@ -215,7 +215,6 @@ class LocalStorageService {
         'privateJournal': prefs.getBool('privateJournal') ?? true,
         'hideLocation': prefs.getBool('hideLocation') ?? true,
         'romanticTheme': prefs.getBool('romanticTheme') ?? true,
-        'appLock': prefs.getBool('appLock') ?? false,
       };
     } catch (e) {
       return {
@@ -225,7 +224,6 @@ class LocalStorageService {
         'privateJournal': true,
         'hideLocation': true,
         'romanticTheme': true,
-        'appLock': false,
       };
     }
   }
@@ -392,7 +390,6 @@ class LocalStorageService {
     await prefs.remove('privateJournal');
     await prefs.remove('hideLocation');
     await prefs.remove('romanticTheme');
-    await prefs.remove('appLock');
     await prefs.remove(_currentUserIdKey);
   }
 
@@ -416,7 +413,6 @@ class LocalStorageService {
     await prefs.remove('privateJournal');
     await prefs.remove('hideLocation');
     await prefs.remove('romanticTheme');
-    await prefs.remove('appLock');
     await prefs.remove(_currentUserIdKey);
   }
 
