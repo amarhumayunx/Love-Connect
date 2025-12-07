@@ -27,16 +27,13 @@ class _GetStartedScreenState extends State<GetStartedScreen>
   @override
   void initState() {
     super.initState();
-    // Initialize the controller
     Get.put(GetStartedViewModel());
 
-    // Setup animation controller
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
 
-    // Fade animation
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -44,7 +41,6 @@ class _GetStartedScreenState extends State<GetStartedScreen>
       ),
     );
 
-    // Slide animation (from bottom)
     _slideAnimation = Tween<double>(begin: 30.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -52,7 +48,6 @@ class _GetStartedScreenState extends State<GetStartedScreen>
       ),
     );
 
-    // Scale animation (subtle zoom in)
     _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -60,7 +55,6 @@ class _GetStartedScreenState extends State<GetStartedScreen>
       ),
     );
 
-    // Start animation
     _animationController.forward();
   }
 
@@ -72,11 +66,21 @@ class _GetStartedScreenState extends State<GetStartedScreen>
 
   @override
   Widget build(BuildContext context) {
-    final GetStartedViewModel viewModel = Get.find<GetStartedViewModel>();
+    final GetStartedViewModel viewModel = Get.find();
+    final horizontalPadding = context.widthPct(2.5);
+    final logoWidth = context.responsiveImage(170);
+    final logoHeight = context.responsiveImage(67);
+    final heartImageSize = context.responsiveImage(300);
+    final titleFontSize = context.responsiveFont(30);
+    final subtitleFontSize = context.responsiveFont(16);
+    final buttonWidth = context.widthPct(45);
+    final buttonHeight = context.responsiveButtonHeight();
+    final buttonFontSize = context.responsiveFont(16);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundPink,
       body: SafeArea(
+        bottom: false,
         child: AnimatedBuilder(
           animation: _animationController,
           builder: (context, child) {
@@ -86,111 +90,79 @@ class _GetStartedScreenState extends State<GetStartedScreen>
                 opacity: _fadeAnimation.value,
                 child: Transform.translate(
                   offset: Offset(0, _slideAnimation.value),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Responsive values
-                      final horizontalPadding = context.widthPct(2.5);
-                      final logoWidth = context.responsiveImage(170);
-                      final logoHeight = context.responsiveImage(67);
-                      final heartImageSize = context.responsiveImage(300);
-                      final titleFontSize = context.responsiveFont(30);
-                      final subtitleFontSize = context.responsiveFont(16);
-                      final buttonWidth = context.widthPct(58);
-                      final buttonHeight = context.responsiveButtonHeight();
-                      final buttonFontSize = context.responsiveFont(16);
-
-                      return Stack(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      bottom: context.responsiveSpacing(4),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Padding(
+                          SizedBox(height: context.responsiveSpacing(20)),
+                          Row(
+                            children: [
+                              GetStartedLogo(
+                                width: logoWidth,
+                                height: logoHeight,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: context.responsiveSpacing(20)),
+                          Center(
+                            child: GetStartedIllustration(
+                              size: heartImageSize,
+                            ),
+                          ),
+                          SizedBox(height: context.responsiveSpacing(25)),
+                          Center(
+                            child: GetStartedTitle(
+                              text: viewModel.data.title,
+                              fontSize: titleFontSize,
                               padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    height: context.responsiveSpacing(20),
-                                  ),
-
-                                  Row(
-                                    children: [
-                                      GetStartedLogo(
-                                        width: logoWidth,
-                                        height: logoHeight,
-                                      ),
-                                    ],
-                                  ),
-
-                                  SizedBox(
-                                    height: context.responsiveSpacing(20),
-                                  ),
-
-                                  Center(
-                                    child: GetStartedIllustration(
-                                      size: heartImageSize,
-                                    ),
-                                  ),
-
-                                  SizedBox(
-                                    height: context.responsiveSpacing(25),
-                                  ),
-
-                                  Center(
-                                    child: GetStartedTitle(
-                                      text: viewModel.data.title,
-                                      fontSize: titleFontSize,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: horizontalPadding,
-                                      ),
-                                    ),
-                                  ),
-
-                                  SizedBox(
-                                    height: context.responsiveSpacing(16),
-                                  ),
-
-                                  Center(
-                                    child: GetStartedSubtitle(
-                                      text: viewModel.data.subtitle,
-                                      fontSize: subtitleFontSize,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: horizontalPadding,
-                                      ),
-                                    ),
-                                  ),
-
-                                  SizedBox(
-                                    height: context.responsiveSpacing(100),
-                                  ),
-                                ],
+                            ),
+                          ),
+                          SizedBox(height: context.responsiveSpacing(16)),
+                          Center(
+                            child: GetStartedSubtitle(
+                              text: viewModel.data.subtitle,
+                              fontSize: subtitleFontSize,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding,
                               ),
                             ),
                           ),
-                          // Button at bottom center
-                          Positioned(
-                            bottom: context.responsiveSpacing(40),
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: GetStartedCtaButton(
-                                width: buttonWidth,
-                                height: buttonHeight,
-                                fontSize: buttonFontSize,
-                                label: AppStrings.getStarted,
-                                onPressed: viewModel.onGetStartedClick,
-                              ),
-                            ),
-                          ),
+                          SizedBox(height: context.responsiveSpacing(10)),
                         ],
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
             );
           },
+        ),
+      ),
+      // Button alag container mein bottom pe
+      bottomNavigationBar: Container(
+        color: AppColors.backgroundPink,
+        padding: EdgeInsets.only(
+          left: context.widthPct(14),
+          right: context.widthPct(14),
+          top: context.responsiveSpacing(2),
+          bottom: MediaQuery.of(context).padding.bottom + context.responsiveSpacing(30),
+        ),
+        child: GetStartedCtaButton(
+          width: buttonWidth,
+          height: buttonHeight,
+          fontSize: buttonFontSize,
+          label: AppStrings.getStarted,
+          onPressed: viewModel.onGetStartedClick,
         ),
       ),
     );
