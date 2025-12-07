@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/screens/all_plans/view_model/all_plans_view_model.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
@@ -72,7 +73,10 @@ class _AllPlansViewState extends State<AllPlansView> {
       body: Obx(() {
         if (viewModel.isLoading.value && viewModel.plans.isEmpty) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primaryRed),
+            child: LoadingAnimationWidget.horizontalRotatingDots(
+              color: AppColors.primaryRed,
+              size: 50,
+            ),
           );
         }
 

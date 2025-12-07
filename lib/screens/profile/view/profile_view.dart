@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
@@ -320,15 +321,13 @@ class _ProfileViewState extends State<ProfileView> {
                             ),
                             child: viewModel.isLoading.value
                                 ? SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.white,
-                                      ),
-                                    ),
-                                  )
+                              height: 20,
+                              width: 20,
+                              child: LoadingAnimationWidget.horizontalRotatingDots(
+                                color: AppColors.white,
+                                size: 20,
+                              ),
+                            )
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -515,13 +514,10 @@ class _ProfileViewState extends State<ProfileView> {
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                  : null,
-              color: AppColors.primaryRed,
-            ),
+              child: LoadingAnimationWidget.horizontalRotatingDots(
+                color: AppColors.primaryRed,
+                size: 20, // jitna chaho set kar lo
+              ),
           );
         },
       );

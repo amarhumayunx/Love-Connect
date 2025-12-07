@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/user_profile_model.dart';
@@ -1156,24 +1158,27 @@ class ProfileViewModel extends GetxController {
 
   Future<File?> pickImage() async {
     try {
-      // Request permissions for Android 13+ (READ_MEDIA_IMAGES) or older (READ_EXTERNAL_STORAGE)
-      PermissionStatus status;
-      if (await Permission.photos.isRestricted) {
-        status = await Permission.storage.request();
-      } else {
-        status = await Permission.photos.request();
-        if (!status.isGranted) {
-          // Fallback to storage permission for older Android versions
+      // On iOS, image_picker handles permissions automatically if Info.plist has the required keys
+      // On Android, we need to explicitly request permissions
+      if (Platform.isAndroid) {
+        PermissionStatus status;
+        if (await Permission.photos.isRestricted) {
           status = await Permission.storage.request();
+        } else {
+          status = await Permission.photos.request();
+          if (!status.isGranted) {
+            // Fallback to storage permission for older Android versions
+            status = await Permission.storage.request();
+          }
         }
-      }
 
-      if (!status.isGranted) {
-        SnackbarHelper.showSafe(
-          title: 'Permission Denied',
-          message: 'Please grant photo access permission in app settings',
-        );
-        return null;
+        if (!status.isGranted) {
+          SnackbarHelper.showSafe(
+            title: 'Permission Denied',
+            message: 'Please grant photo access permission in app settings',
+          );
+          return null;
+        }
       }
 
       final ImagePicker picker = ImagePicker();
@@ -1187,7 +1192,10 @@ class ProfileViewModel extends GetxController {
       }
       return null;
     } catch (e) {
-      SnackbarHelper.showSafe(title: 'Error', message: 'Failed to pick image');
+      SnackbarHelper.showSafe(
+        title: 'Error', 
+        message: 'Failed to pick image: ${e.toString()}'
+      );
       return null;
     }
   }
@@ -1295,7 +1303,10 @@ class _EditProfileModalState extends State<EditProfileModal> {
           color: Colors.grey[200],
         ),
         child: Center(
-          child: CircularProgressIndicator(color: AppColors.primaryRed),
+          child: LoadingAnimationWidget.horizontalRotatingDots(
+            color: AppColors.primaryRed,
+            size: 50,
+          ),
         ),
       );
     }

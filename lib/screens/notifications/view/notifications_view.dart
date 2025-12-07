@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/notification_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
@@ -99,9 +100,10 @@ class _NotificationsViewState extends State<NotificationsView> {
             Expanded(
               child: Obx(() {
                 if (viewModel.isLoading.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(
+                  return Center(
+                    child: LoadingAnimationWidget.horizontalRotatingDots(
                       color: AppColors.primaryRed,
+                      size: 50,
                     ),
                   );
                 }

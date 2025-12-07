@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/add_plan_layout_metrics.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/custom_date_picker.dart';
+import 'package:love_connect/screens/add_plan/view/widgets/custom_time_picker.dart';
 import 'package:love_connect/screens/add_plan/view_model/add_plan_view_model.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
-import 'package:intl/intl.dart';
 
 class AddPlanView extends StatefulWidget {
   final String? planId;
@@ -99,34 +101,17 @@ class _AddPlanViewState extends State<AddPlanView> {
         ? TimeOfDay.fromDateTime(currentTime)
         : TimeOfDay.now();
 
-    try {
-      final picked = await showTimePicker(
-        context: context,
+    await showDialog(
+      context: context,
+      builder: (context) => CustomTimePicker(
         initialTime: initialTime,
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: AppColors.primaryRed,
-                onPrimary: AppColors.white,
-                surface: AppColors.white,
-                onSurface: AppColors.primaryDark,
-              ),
-            ),
-            child: child!,
-          );
+        onTimeSelected: (picked) {
+          if (picked != null) {
+            viewModel.updateTime(picked);
+          }
         },
-      );
-      if (picked != null) {
-        viewModel.updateTime(picked);
-      }
-    } catch (e) {
-      // Handle Navigator assertion error gracefully
-      // This can happen when the dialog is dismissed while Navigator is locked
-      if (mounted) {
-        // Just ignore the error - user canceled the picker
-      }
-    }
+      ),
+    );
   }
 
   Future<void> _selectType() async {
@@ -519,9 +504,9 @@ class _AddPlanViewState extends State<AddPlanView> {
             ? SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                child: LoadingAnimationWidget.horizontalRotatingDots(
+                  color: AppColors.white,
+                  size: 20,
                 ),
               )
             : Text(

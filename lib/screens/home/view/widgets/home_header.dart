@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 
@@ -164,12 +165,9 @@ class HomeHeader extends StatelessWidget {
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                  : null,
+            child: LoadingAnimationWidget.horizontalRotatingDots(
               color: AppColors.primaryRed,
+              size: 50,
             ),
           );
         },

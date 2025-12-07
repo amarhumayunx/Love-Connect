@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/idea_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
@@ -62,7 +63,7 @@ class _DateWheelWidgetState extends State<DateWheelWidget> {
 
     final random = Random();
     final selectedIndex = random.nextInt(_wheelIdeas.length);
-    
+
     _selected.add(selectedIndex);
 
     // After animation completes
@@ -82,10 +83,10 @@ class _DateWheelWidgetState extends State<DateWheelWidget> {
 
     // Save the plan
     final saved = await _viewModel.savePlanFromIdea(_selectedIdea!);
-    
+
     if (saved && mounted) {
       Get.back(); // Close the wheel dialog
-      
+
       // Show popup that plan can be changed
       Get.dialog(
         AlertDialog(
@@ -281,23 +282,21 @@ class _DateWheelWidgetState extends State<DateWheelWidget> {
                       ),
                       child: _isSpinning
                           ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.white,
-                                ),
-                              ),
-                            )
+                        height: 20,
+                        width: 20,
+                        child: LoadingAnimationWidget.horizontalRotatingDots(
+                          color: AppColors.white,
+                          size: 20,
+                        ),
+                      )
                           : Text(
-                              'Spin the Wheel',
-                              style: GoogleFonts.inter(
-                                fontSize: context.responsiveFont(16),
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.white,
-                              ),
-                            ),
+                        'Spin the Wheel',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(16),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.white,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -372,7 +371,7 @@ class _DateWheelWidgetState extends State<DateWheelWidget> {
                       SizedBox(width: context.responsiveSpacing(12)),
                       Expanded(
                         child: Obx(
-                          () => ElevatedButton(
+                              () => ElevatedButton(
                             onPressed: _viewModel.isSavingPlan.value ? null : _useIdea,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryRed,
@@ -387,23 +386,21 @@ class _DateWheelWidgetState extends State<DateWheelWidget> {
                             ),
                             child: _viewModel.isSavingPlan.value
                                 ? SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.white,
-                                      ),
-                                    ),
-                                  )
+                              height: 20,
+                              width: 20,
+                              child: LoadingAnimationWidget.horizontalRotatingDots(
+                                color: AppColors.white,
+                                size: 20,
+                              ),
+                            )
                                 : Text(
-                                    'Plan This',
-                                    style: GoogleFonts.inter(
-                                      fontSize: context.responsiveFont(14),
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.white,
-                                    ),
-                                  ),
+                              'Plan This',
+                              style: GoogleFonts.inter(
+                                fontSize: context.responsiveFont(14),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -418,4 +415,3 @@ class _DateWheelWidgetState extends State<DateWheelWidget> {
     );
   }
 }
-

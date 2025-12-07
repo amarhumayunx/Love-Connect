@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
 
@@ -38,17 +39,18 @@ class AuthPrimaryButton extends StatelessWidget {
           elevation: 0,
         ),
         child: isLoading
-            ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryDark),
-              )
+            ? LoadingAnimationWidget.dotsTriangle(
+          color: Colors.white,
+          size: 35,
+        )
             : Text(
-                label,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: context.responsiveFont(18),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          label,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: context.responsiveFont(18),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
 

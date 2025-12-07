@@ -87,10 +87,11 @@ class PlanCard extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: [
+          child: ClipRect(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
           // Title and Type Tag
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,7 +129,7 @@ class PlanCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: metrics.sectionSpacing * 0.25),
+          SizedBox(height: metrics.sectionSpacing * 0.2),
           
           // Date
           Row(
@@ -145,7 +146,7 @@ class PlanCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 1.5),
+          SizedBox(height: 1.0),
           
           // Time
           if (plan.time != null)
@@ -163,7 +164,7 @@ class PlanCard extends StatelessWidget {
                 ),
               ],
             ),
-          if (plan.time != null) SizedBox(height: 1.5),
+          if (plan.time != null) SizedBox(height: 1.0),
           
           // Place
           Row(
@@ -183,7 +184,7 @@ class PlanCard extends StatelessWidget {
             ],
           ),
           
-          SizedBox(height: metrics.sectionSpacing * 0.25),
+          SizedBox(height: metrics.sectionSpacing * 0.2),
           
           // Action Buttons
           Spacer(),
@@ -261,7 +262,8 @@ class PlanCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
+            ),
+          ),
         );
       },
     );

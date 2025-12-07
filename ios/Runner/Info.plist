@@ -78,5 +78,17 @@
     <key>NSFaceIDUsageDescription</key>
     <string>We need Face ID permission to secure your app with biometric authentication.</string>
 
+    <!-- Privacy - Photo Library Usage Description -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need access to your photo library to upload profile pictures and images.</string>
+    
+    <!-- Privacy - Photo Library Add Usage Description (iOS 11+) -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>We need access to save images to your photo library.</string>
+    
+    <!-- Privacy - Camera Usage Description -->
+    <key>NSCameraUsageDescription</key>
+    <string>We need access to your camera to take photos for your profile picture.</string>
+
 </dict>
 </plist>

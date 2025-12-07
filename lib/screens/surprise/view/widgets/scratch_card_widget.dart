@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/screens/surprise/view_model/surprise_view_model.dart';
@@ -22,16 +23,40 @@ class ScratchCardWidget extends StatefulWidget {
   State<ScratchCardWidget> createState() => _ScratchCardWidgetState();
 }
 
-class _ScratchCardWidgetState extends State<ScratchCardWidget> {
+class _ScratchCardWidgetState extends State<ScratchCardWidget>
+    with SingleTickerProviderStateMixin {
   final SurpriseViewModel _viewModel = Get.find<SurpriseViewModel>();
   final GlobalKey<ScratcherState> _scratcherKey = GlobalKey<ScratcherState>();
   late String _coupon;
   bool _isRevealed = false;
+  bool _isClaimed = false;
+  late AnimationController _celebrationController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _coupon = _viewModel.getRandomCoupon();
+    
+    // Celebration animation
+    _celebrationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _celebrationController,
+      curve: Curves.elasticOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _celebrationController.dispose();
+    super.dispose();
   }
 
   void _onScratchUpdate(double value) {
@@ -40,11 +65,30 @@ class _ScratchCardWidgetState extends State<ScratchCardWidget> {
         _isRevealed = true;
       });
       HapticFeedback.mediumImpact();
+      _celebrationController.forward().then((_) {
+        _celebrationController.reverse();
+      });
+    } else if (value > 0.1 && value < 0.5) {
+      // Light haptic feedback while scratching
+      HapticFeedback.selectionClick();
     }
+  }
+  
+  void _resetCard() {
+    setState(() {
+      _isRevealed = false;
+      _isClaimed = false;
+      _coupon = _viewModel.getRandomCoupon();
+    });
+    _scratcherKey.currentState?.reset();
   }
 
   void _claimReward() async {
-    if (_viewModel.isSavingJournal.value) return;
+    if (_viewModel.isSavingJournal.value || _isClaimed) return;
+
+    setState(() {
+      _isClaimed = true;
+    });
 
     // Save coupon to journal
     final saved = await _viewModel.saveCouponToJournal(_coupon);
@@ -87,6 +131,10 @@ class _ScratchCardWidgetState extends State<ScratchCardWidget> {
         ),
         barrierDismissible: true,
       );
+    } else if (mounted) {
+      setState(() {
+        _isClaimed = false;
+      });
     }
   }
 
@@ -218,45 +266,48 @@ class _ScratchCardWidgetState extends State<ScratchCardWidget> {
                           ),
                           // Content
                           Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(context.responsiveSpacing(20)),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.card_giftcard_rounded,
-                                    size: context.responsiveImage(60),
-                                    color: AppColors.primaryRed,
-                                  ),
-                                  SizedBox(height: context.responsiveSpacing(20)),
-                                  Text(
-                                    _coupon,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.inter(
-                                      fontSize: context.responsiveFont(18),
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryDark,
-                                      height: 1.4,
+                            child: ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: Padding(
+                                padding: EdgeInsets.all(context.responsiveSpacing(20)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.card_giftcard_rounded,
+                                      size: context.responsiveImage(60),
+                                      color: AppColors.primaryRed,
                                     ),
-                                  ),
-                                  SizedBox(height: context.responsiveSpacing(16)),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: context.responsiveSpacing(16),
-                                      vertical: context.responsiveSpacing(8),
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryRed.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '💝',
+                                    SizedBox(height: context.responsiveSpacing(20)),
+                                    Text(
+                                      _coupon,
+                                      textAlign: TextAlign.center,
                                       style: GoogleFonts.inter(
-                                        fontSize: context.responsiveFont(24),
+                                        fontSize: context.responsiveFont(18),
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryDark,
+                                        height: 1.4,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(height: context.responsiveSpacing(16)),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: context.responsiveSpacing(16),
+                                        vertical: context.responsiveSpacing(8),
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryRed.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        '💝',
+                                        style: GoogleFonts.inter(
+                                          fontSize: context.responsiveFont(24),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -270,41 +321,64 @@ class _ScratchCardWidgetState extends State<ScratchCardWidget> {
                 // Action buttons
                 if (_isRevealed)
                   Obx(
-                    () => SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _viewModel.isSavingJournal.value ? null : _claimReward,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryRed,
-                          disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: context.responsiveSpacing(14),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _viewModel.isSavingJournal.value
-                            ? SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.white,
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                'Claim Your Reward',
-                                style: GoogleFonts.inter(
-                                  fontSize: context.responsiveFont(16),
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.white,
-                                ),
+                    () => Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _viewModel.isSavingJournal.value || _isClaimed
+                                ? null
+                                : _claimReward,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryRed,
+                              disabledBackgroundColor:
+                                  AppColors.primaryRed.withOpacity(0.6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                      ),
+                              padding: EdgeInsets.symmetric(
+                                vertical: context.responsiveSpacing(14),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _viewModel.isSavingJournal.value
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: LoadingAnimationWidget.horizontalRotatingDots(
+                                      color: AppColors.white,
+                                      size: 20,
+                                    ),
+                                  )
+                                : Text(
+                                    _isClaimed ? 'Claimed! 💝' : 'Claim Your Reward',
+                                    style: GoogleFonts.inter(
+                                      fontSize: context.responsiveFont(16),
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        if (!_isClaimed) ...[
+                          SizedBox(height: context.responsiveSpacing(12)),
+                          TextButton.icon(
+                            onPressed: _resetCard,
+                            icon: Icon(
+                              Icons.refresh_rounded,
+                              size: context.responsiveImage(18),
+                            ),
+                            label: Text(
+                              'Get Another Coupon',
+                              style: GoogleFonts.inter(
+                                fontSize: context.responsiveFont(14),
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primaryRed,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   )
                 else

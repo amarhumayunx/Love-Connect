@@ -30,6 +30,8 @@ class SurpriseViewModel extends GetxController {
   final RxBool isWheelSpinning = false.obs;
   final RxBool isSavingPlan = false.obs;
   final RxBool isSavingJournal = false.obs;
+  final RxBool isLoadingIdeas = false.obs;
+  final RxString errorMessage = ''.obs;
 
   // Love coupons for scratch card
   final List<String> loveCoupons = [
@@ -58,7 +60,22 @@ class SurpriseViewModel extends GetxController {
   }
 
   void loadIdeas() {
-    allIdeas.value = _quotesService.getAllIdeas();
+    isLoadingIdeas.value = true;
+    errorMessage.value = '';
+    
+    try {
+      final ideas = _quotesService.getAllIdeas();
+      allIdeas.value = ideas;
+      
+      if (ideas.isEmpty) {
+        errorMessage.value = 'No ideas available. Please try again later.';
+      }
+    } catch (e) {
+      errorMessage.value = 'Failed to load ideas. Please try again.';
+      allIdeas.clear();
+    } finally {
+      isLoadingIdeas.value = false;
+    }
   }
 
   IdeaModel? spinWheel() {
@@ -199,6 +216,7 @@ class SurpriseViewModel extends GetxController {
   }
 
   /// Schedule multiple notifications at different intervals before the plan
+  /// Dynamically determines which intervals to use based on time remaining until plan
   Future<void> _scheduleMultipleNotifications(
     PlanModel plan,
     DateTime planTime,
@@ -206,8 +224,11 @@ class SurpriseViewModel extends GetxController {
     final now = DateTime.now();
     final baseNotificationId = plan.id.hashCode & 0x7fffffff;
 
-    // Define notification intervals: 1 hour, 30 minutes, 15 minutes, 7 minutes, and on-time
-    final intervals = [
+    // Calculate time remaining until the plan
+    final timeRemaining = planTime.difference(now);
+
+    // Define all possible notification intervals and messages
+    final allIntervals = [
       const Duration(hours: 1),
       const Duration(minutes: 30),
       const Duration(minutes: 15),
@@ -215,7 +236,7 @@ class SurpriseViewModel extends GetxController {
       Duration.zero, // On time
     ];
 
-    final messages = [
+    final allMessages = [
       '${plan.title} at ${plan.place} in 1 hour',
       '${plan.title} at ${plan.place} in 30 minutes',
       '${plan.title} at ${plan.place} in 15 minutes',
@@ -223,28 +244,50 @@ class SurpriseViewModel extends GetxController {
       '${plan.title} at ${plan.place} is starting now!',
     ];
 
-    for (int i = 0; i < intervals.length; i++) {
-      final interval = intervals[i];
+    // Dynamically determine which intervals to schedule based on time remaining
+    final intervalsToSchedule = <int>[];
+    
+    if (timeRemaining >= const Duration(hours: 1)) {
+      // If 1 hour or more remaining, schedule all reminders
+      intervalsToSchedule.addAll([0, 1, 2, 3, 4]);
+    } else if (timeRemaining >= const Duration(minutes: 30)) {
+      // If 30 minutes or more remaining, schedule 30min, 15min, 7min, and on-time
+      intervalsToSchedule.addAll([1, 2, 3, 4]);
+    } else if (timeRemaining >= const Duration(minutes: 15)) {
+      // If 15 minutes or more remaining, schedule 15min, 7min, and on-time
+      intervalsToSchedule.addAll([2, 3, 4]);
+    } else if (timeRemaining >= const Duration(minutes: 7)) {
+      // If 7 minutes or more remaining, schedule 7min and on-time
+      intervalsToSchedule.addAll([3, 4]);
+    } else if (timeRemaining > Duration.zero) {
+      // If less than 7 minutes but still in future, schedule only on-time
+      intervalsToSchedule.add(4);
+    }
+
+    // Schedule notifications for selected intervals
+    for (int i = 0; i < intervalsToSchedule.length; i++) {
+      final intervalIndex = intervalsToSchedule[i];
+      final interval = allIntervals[intervalIndex];
       final notificationTime = planTime.subtract(interval);
 
-      // Only schedule if notification time is in the future
+      // Double-check that notification time is in the future
       if (notificationTime.isAfter(now)) {
         // Use different notification IDs for each interval
-        final notificationId = baseNotificationId + i;
+        final notificationId = baseNotificationId + intervalIndex;
 
         try {
           await _notificationService.schedulePlanNotification(
             id: notificationId,
             title: 'Upcoming Plan',
-            body: messages[i],
+            body: allMessages[intervalIndex],
             scheduledTime: notificationTime,
           );
           print(
-            '✅ SURPRISE: Scheduled notification ${i + 1} for plan ${plan.id} at ${notificationTime.toString()}',
+            '✅ SURPRISE: Scheduled notification for plan ${plan.id} at ${notificationTime.toString()} (${allMessages[intervalIndex]})',
           );
         } catch (e) {
           print(
-            '❌ SURPRISE: Error scheduling notification ${i + 1} for plan ${plan.id}: $e',
+            '❌ SURPRISE: Error scheduling notification for plan ${plan.id}: $e',
           );
         }
       }

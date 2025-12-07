@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/screens/auth/verification/view_model/verification_view_model.dart';
 
@@ -18,9 +19,9 @@ class VerificationResendButton extends StatelessWidget {
             ? SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+                child: LoadingAnimationWidget.horizontalRotatingDots(
+                  color: AppColors.primaryRed,
+                  size: 16,
                 ),
               )
             : Text(
