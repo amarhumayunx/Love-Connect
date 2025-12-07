@@ -18,7 +18,8 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, WidgetsBindingObserver {
+class _HomeViewState extends State<HomeView>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final HomeViewModel viewModel;
   late final AnimationController _fadeController;
   late final AnimationController _slideController;
@@ -30,7 +31,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   void initState() {
     super.initState();
     viewModel = Get.put(HomeViewModel());
-    
+
     // Add lifecycle observer to detect when app comes to foreground
     WidgetsBinding.instance.addObserver(this);
 
@@ -142,6 +143,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 () => HomeHeader(
                   userName: viewModel.userName.value,
                   userTagline: viewModel.userTagline.value,
+                  profilePictureUrl: viewModel.profilePictureUrl.value.isEmpty
+                      ? null
+                      : viewModel.profilePictureUrl.value,
                   onSearchTap: viewModel.onSearchTap,
                   onNotificationTap: viewModel.onNotificationTap,
                   onProfileTap: viewModel.onProfileTap,

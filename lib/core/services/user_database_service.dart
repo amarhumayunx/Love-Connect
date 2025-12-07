@@ -63,6 +63,56 @@ class UserDatabaseService {
     }
   }
 
+  /// Save user profile data (name, about, profilePictureUrl)
+  Future<bool> saveUserProfile({
+    required String userId,
+    required String name,
+    required String about,
+    String? profilePictureUrl,
+    String? email,
+  }) async {
+    try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final profileData = <String, dynamic>{
+        'name': name,
+        'about': about,
+        'updatedAt': now,
+      };
+
+      if (profilePictureUrl != null) {
+        profileData['profilePictureUrl'] = profilePictureUrl;
+      }
+
+      if (email != null) {
+        profileData['email'] = email.trim().toLowerCase();
+      }
+
+      await _usersRef.child(userId).child('profile').update(profileData);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get user profile data
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async {
+    try {
+      final snapshot = await _usersRef.child(userId).child('profile').get();
+
+      if (snapshot.exists && snapshot.value != null) {
+        final value = snapshot.value;
+        if (value is Map) {
+          final data = value as Map<Object?, Object?>;
+          return data.map((key, value) => MapEntry(key.toString(), value));
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<bool> updateEmailVerificationStatus({
     required String userId,
     required bool isVerified,

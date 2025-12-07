@@ -97,9 +97,7 @@ class _ProfileViewState extends State<ProfileView> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: metrics.cardPadding,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: metrics.cardPadding),
                 child: Obx(
                   () => Column(
                     children: [
@@ -108,23 +106,24 @@ class _ProfileViewState extends State<ProfileView> {
                         margin: EdgeInsets.only(bottom: metrics.sectionSpacing),
                         child: Column(
                           children: [
-                            Stack(
-                              children: [
-                                Container(
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey[200],
-                                  ),
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      'assets/images/profile.jpg',
-                                      fit: BoxFit.cover,
-                                    ),
+                            GestureDetector(
+                              onTap: viewModel.showEditProfileModal,
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey[200],
+                                ),
+                                child: ClipOval(
+                                  child: _buildProfileImage(
+                                    viewModel
+                                        .userProfile
+                                        .value
+                                        .profilePictureUrl,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                             SizedBox(height: metrics.sectionSpacing * 0.5),
                             Row(
@@ -162,142 +161,129 @@ class _ProfileViewState extends State<ProfileView> {
                       ),
 
                       // Account Section
-                      _buildSection(
-                        'Account',
-                        [
-                          _buildSettingTile(
-                            'Edit Profile',
-                            Icons.person_outline,
-                            onTap: () {
-                              viewModel.showEditProfileModal();
-                            },
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Change Password',
-                            Icons.lock_outline,
-                            onTap: () {
-                              settingsViewModel.navigateToChangePassword();
-                            },
-                            metrics: metrics,
-                            context: context,
-                          ),
-                        ],
-                        metrics,
-                      ),
+                      _buildSection('Account', [
+                        _buildSettingTile(
+                          'Edit Profile',
+                          Icons.person_outline,
+                          onTap: () {
+                            viewModel.showEditProfileModal();
+                          },
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Change Password',
+                          Icons.lock_outline,
+                          onTap: () {
+                            settingsViewModel.navigateToChangePassword();
+                          },
+                          metrics: metrics,
+                          context: context,
+                        ),
+                      ], metrics),
 
                       SizedBox(height: metrics.sectionSpacing),
 
                       // Notifications Section
-                      _buildSection(
-                        'Notifications',
-                        [
-                          _buildToggleTile(
-                            'Push Notifications',
-                            'notifications',
-                            Icons.notifications_outlined,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                          _buildDivider(),
-                          _buildToggleTile(
-                            'Plan Reminders',
-                            'planReminder',
-                            Icons.calendar_today_outlined,
-                            settingsViewModel,
-                            metrics,
-                            context,
-                          ),
-                        ],
-                        metrics,
-                      ),
+                      _buildSection('Notifications', [
+                        _buildToggleTile(
+                          'Push Notifications',
+                          'notifications',
+                          Icons.notifications_outlined,
+                          settingsViewModel,
+                          metrics,
+                          context,
+                        ),
+                        _buildDivider(),
+                        _buildToggleTile(
+                          'Plan Reminders',
+                          'planReminder',
+                          Icons.calendar_today_outlined,
+                          settingsViewModel,
+                          metrics,
+                          context,
+                        ),
+                      ], metrics),
 
                       SizedBox(height: metrics.sectionSpacing),
 
                       // Support & About Section
-                      _buildSection(
-                        'Support & About',
-                        [
-                          _buildSettingTile(
-                            'Help & Support',
-                            Icons.help_outline,
-                            onTap: settingsViewModel.contactSupport,
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Rate App',
-                            Icons.star_outline,
-                            onTap: settingsViewModel.rateApp,
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Share App',
-                            Icons.share_outlined,
-                            onTap: settingsViewModel.shareApp,
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Terms of Service',
-                            Icons.description_outlined,
-                            onTap: settingsViewModel.showTermsOfService,
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Privacy Policy',
-                            Icons.privacy_tip_outlined,
-                            onTap: settingsViewModel.showPrivacyPolicy,
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'About',
-                            Icons.info_outline,
-                            subtitle: 'Version ${settingsViewModel.appVersion.value}',
-                            onTap: () => settingsViewModel.showAbout(context),
-                            metrics: metrics,
-                            context: context,
-                          ),
-                        ],
-                        metrics,
-                      ),
+                      _buildSection('Support & About', [
+                        _buildSettingTile(
+                          'Help & Support',
+                          Icons.help_outline,
+                          onTap: settingsViewModel.contactSupport,
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Rate App',
+                          Icons.star_outline,
+                          onTap: settingsViewModel.rateApp,
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Share App',
+                          Icons.share_outlined,
+                          onTap: settingsViewModel.shareApp,
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Terms of Service',
+                          Icons.description_outlined,
+                          onTap: settingsViewModel.showTermsOfService,
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Privacy Policy',
+                          Icons.privacy_tip_outlined,
+                          onTap: settingsViewModel.showPrivacyPolicy,
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'About',
+                          Icons.info_outline,
+                          subtitle:
+                              'Version ${settingsViewModel.appVersion.value}',
+                          onTap: () => settingsViewModel.showAbout(context),
+                          metrics: metrics,
+                          context: context,
+                        ),
+                      ], metrics),
 
                       SizedBox(height: metrics.sectionSpacing),
 
                       // Data Management Section
-                      _buildSection(
-                        'Data Management',
-                        [
-                          _buildSettingTile(
-                            'Clear Cache',
-                            Icons.delete_outline,
-                            onTap: () => settingsViewModel.showClearCacheDialog(context),
-                            metrics: metrics,
-                            context: context,
-                          ),
-                          _buildDivider(),
-                          _buildSettingTile(
-                            'Clear All Data',
-                            Icons.delete_forever_outlined,
-                            onTap: () => settingsViewModel.showClearDataDialog(context),
-                            metrics: metrics,
-                            context: context,
-                            isDestructive: true,
-                          ),
-                        ],
-                        metrics,
-                      ),
+                      _buildSection('Data Management', [
+                        _buildSettingTile(
+                          'Clear Cache',
+                          Icons.delete_outline,
+                          onTap: () =>
+                              settingsViewModel.showClearCacheDialog(context),
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Clear All Data',
+                          Icons.delete_forever_outlined,
+                          onTap: () =>
+                              settingsViewModel.showClearDataDialog(context),
+                          metrics: metrics,
+                          context: context,
+                          isDestructive: true,
+                        ),
+                      ], metrics),
 
                       SizedBox(height: metrics.sectionSpacing),
 
@@ -308,7 +294,9 @@ class _ProfileViewState extends State<ProfileView> {
                           () => ElevatedButton(
                             onPressed: settingsViewModel.isLoading.value
                                 ? null
-                                : () => settingsViewModel.showLogoutDialog(context),
+                                : () => settingsViewModel.showLogoutDialog(
+                                    context,
+                                  ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryRed,
                               foregroundColor: AppColors.white,
@@ -320,8 +308,8 @@ class _ProfileViewState extends State<ProfileView> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              disabledBackgroundColor:
-                                  AppColors.primaryRed.withOpacity(0.6),
+                              disabledBackgroundColor: AppColors.primaryRed
+                                  .withOpacity(0.6),
                             ),
                             child: settingsViewModel.isLoading.value
                                 ? SizedBox(
@@ -371,7 +359,11 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children, HomeLayoutMetrics metrics) {
+  Widget _buildSection(
+    String title,
+    List<Widget> children,
+    HomeLayoutMetrics metrics,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -430,10 +422,7 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             )
           : null,
-      trailing: Icon(
-        Icons.chevron_right,
-        color: AppColors.textLightPink,
-      ),
+      trailing: Icon(Icons.chevron_right, color: AppColors.textLightPink),
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(
         horizontal: metrics.cardPadding,
@@ -450,51 +439,52 @@ class _ProfileViewState extends State<ProfileView> {
     HomeLayoutMetrics metrics,
     BuildContext context,
   ) {
-    return Obx(
-      () {
-        // Disable Plan Reminders if Push Notifications is disabled
-        final bool isPlanReminder = key == 'planReminder';
-        final bool notificationsEnabled = viewModel.settings['notifications'] ?? true;
-        final bool shouldEnable = isPlanReminder ? notificationsEnabled : true;
-        final bool currentValue = viewModel.settings[key] ?? false;
-        
-        return ListTile(
-          leading: Icon(
-            icon,
-            color: shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
-            size: 24,
+    return Obx(() {
+      // Disable Plan Reminders if Push Notifications is disabled
+      final bool isPlanReminder = key == 'planReminder';
+      final bool notificationsEnabled =
+          viewModel.settings['notifications'] ?? true;
+      final bool shouldEnable = isPlanReminder ? notificationsEnabled : true;
+      final bool currentValue = viewModel.settings[key] ?? false;
+
+      return ListTile(
+        leading: Icon(
+          icon,
+          color: shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
+          size: 24,
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: context.responsiveFont(16),
+            fontWeight: FontWeight.w500,
+            color: shouldEnable
+                ? AppColors.primaryDark
+                : AppColors.textLightPink,
           ),
-          title: Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: context.responsiveFont(16),
-              fontWeight: FontWeight.w500,
-              color: shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
-            ),
-          ),
-          subtitle: isPlanReminder && !notificationsEnabled
-              ? Text(
-                  'Enable Push Notifications first',
-                  style: GoogleFonts.inter(
-                    fontSize: context.responsiveFont(12),
-                    color: AppColors.textLightPink,
-                  ),
-                )
+        ),
+        subtitle: isPlanReminder && !notificationsEnabled
+            ? Text(
+                'Enable Push Notifications first',
+                style: GoogleFonts.inter(
+                  fontSize: context.responsiveFont(12),
+                  color: AppColors.textLightPink,
+                ),
+              )
+            : null,
+        trailing: Switch(
+          value: currentValue,
+          onChanged: shouldEnable
+              ? (value) => viewModel.updateSetting(key, value)
               : null,
-          trailing: Switch(
-            value: currentValue,
-            onChanged: shouldEnable
-                ? (value) => viewModel.updateSetting(key, value)
-                : null,
-            activeThumbColor: AppColors.primaryRed,
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: metrics.cardPadding,
-            vertical: 4,
-          ),
-        );
-      },
-    );
+          activeThumbColor: AppColors.primaryRed,
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: metrics.cardPadding,
+          vertical: 4,
+        ),
+      );
+    });
   }
 
   Widget _buildDivider() {
@@ -505,5 +495,29 @@ class _ProfileViewState extends State<ProfileView> {
       color: AppColors.textLightPink.withOpacity(0.2),
     );
   }
-}
 
+  Widget _buildProfileImage(String? profilePictureUrl) {
+    if (profilePictureUrl != null && profilePictureUrl.isNotEmpty) {
+      return Image.network(
+        profilePictureUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset('assets/images/profile.jpg', fit: BoxFit.cover);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                  : null,
+              color: AppColors.primaryRed,
+            ),
+          );
+        },
+      );
+    }
+    return Image.asset('assets/images/profile.jpg', fit: BoxFit.cover);
+  }
+}

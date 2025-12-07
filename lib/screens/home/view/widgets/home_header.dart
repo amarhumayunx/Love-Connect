@@ -7,6 +7,7 @@ import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart'
 class HomeHeader extends StatelessWidget {
   final String userName;
   final String userTagline;
+  final String? profilePictureUrl;
   final VoidCallback onSearchTap;
   final VoidCallback onNotificationTap;
   final VoidCallback? onProfileTap;
@@ -17,6 +18,7 @@ class HomeHeader extends StatelessWidget {
     super.key,
     required this.userName,
     required this.userTagline,
+    this.profilePictureUrl,
     required this.onSearchTap,
     required this.onNotificationTap,
     this.onProfileTap,
@@ -41,14 +43,7 @@ class HomeHeader extends StatelessWidget {
             child: SizedBox(
               width: metrics.profileImageSize,
               height: metrics.profileImageSize,
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/profile.jpg',
-                  width: metrics.profileImageSize,
-                  height: metrics.profileImageSize,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              child: ClipOval(child: _buildProfileImage(profilePictureUrl)),
             ),
           ),
           SizedBox(width: metrics.headerHorizontalPadding * 0.5),
@@ -117,19 +112,23 @@ class HomeHeader extends StatelessWidget {
                         horizontal: notificationCount > 9 ? 4 : 0,
                       ),
                       decoration: BoxDecoration(
-                        shape: notificationCount > 9 
-                            ? BoxShape.rectangle 
+                        shape: notificationCount > 9
+                            ? BoxShape.rectangle
                             : BoxShape.circle,
-                        borderRadius: notificationCount > 9 
-                            ? BorderRadius.circular(metrics.notificationBadgeSize / 2)
+                        borderRadius: notificationCount > 9
+                            ? BorderRadius.circular(
+                                metrics.notificationBadgeSize / 2,
+                              )
                             : null,
                         color: AppColors.primaryRed,
                       ),
                       child: Center(
                         child: Text(
-                          notificationCount > 99 ? '99+' : notificationCount.toString(),
+                          notificationCount > 99
+                              ? '99+'
+                              : notificationCount.toString(),
                           style: GoogleFonts.inter(
-                            fontSize: notificationCount > 9 
+                            fontSize: notificationCount > 9
                                 ? metrics.notificationBadgeSize * 0.45
                                 : metrics.notificationBadgeSize * 0.55,
                             fontWeight: FontWeight.w700,
@@ -146,5 +145,41 @@ class HomeHeader extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _buildProfileImage(String? profilePictureUrl) {
+    if (profilePictureUrl != null && profilePictureUrl.isNotEmpty) {
+      return Image.network(
+        profilePictureUrl,
+        width: metrics.profileImageSize,
+        height: metrics.profileImageSize,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/images/profile.jpg',
+            width: metrics.profileImageSize,
+            height: metrics.profileImageSize,
+            fit: BoxFit.cover,
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                  : null,
+              color: AppColors.primaryRed,
+            ),
+          );
+        },
+      );
+    }
+    return Image.asset(
+      'assets/images/profile.jpg',
+      width: metrics.profileImageSize,
+      height: metrics.profileImageSize,
+      fit: BoxFit.cover,
+    );
+  }
+}

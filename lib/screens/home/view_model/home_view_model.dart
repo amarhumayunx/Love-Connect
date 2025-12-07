@@ -6,6 +6,7 @@ import 'package:love_connect/core/strings/home_strings.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
 import 'package:love_connect/core/services/local_storage_service.dart';
+import 'package:love_connect/core/services/user_database_service.dart';
 import 'package:love_connect/core/services/plans_database_service.dart';
 import 'package:love_connect/core/models/plan_model.dart';
 import 'package:love_connect/core/widgets/quote_modal.dart';
@@ -26,6 +27,7 @@ class HomeViewModel extends GetxController {
   final RxInt notificationCount = 1.obs;
   final AuthService _authService = AuthService();
   final LocalStorageService _storageService = LocalStorageService();
+  final UserDatabaseService _userDbService = UserDatabaseService();
   final PlansDatabaseService _plansDbService = PlansDatabaseService();
   final RxBool isLoggingOut = false.obs;
   final RxBool isLoadingPlans = false.obs;
@@ -40,6 +42,7 @@ class HomeViewModel extends GetxController {
   // Reactive user name and tagline
   final RxString userName = HomeStrings.userName.obs;
   final RxString userTagline = HomeStrings.userTagline.obs;
+  final RxString profilePictureUrl = ''.obs;
 
   // Timer for periodic notification refresh
   Timer? _notificationRefreshTimer;
@@ -47,7 +50,7 @@ class HomeViewModel extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadUserInfo();
+    loadUserInfo();
     _initializeUserData();
     loadPlans();
     loadNotifications();
@@ -72,16 +75,18 @@ class HomeViewModel extends GetxController {
   /// Initialize user data - set current user ID and clear old user data
   Future<void> _initializeUserData() async {
     final currentUserId = _authService.currentUserId;
-    
+
     if (currentUserId != null) {
       // Get previous user ID (if any) BEFORE setting new one
       final previousUserId = await _storageService.getCurrentUserId();
-      
+
       // If this is a different user, clear previous user's local data
       if (previousUserId != null && previousUserId != currentUserId) {
         print('');
         print('═══════════════════════════════════════════════════════════');
-        print('🔄 HOME: Different user detected - clearing previous user data...');
+        print(
+          '🔄 HOME: Different user detected - clearing previous user data...',
+        );
         print('   Previous user: $previousUserId');
         print('   Current user: $currentUserId');
         await _storageService.clearUserData(previousUserId);
@@ -90,10 +95,10 @@ class HomeViewModel extends GetxController {
         print('═══════════════════════════════════════════════════════════');
         print('');
       }
-      
+
       // Clear anonymous data for any unauthenticated plans
       await _storageService.clearAnonymousData();
-      
+
       // Set current user ID in local storage
       await _storageService.setCurrentUserId(currentUserId);
       print('✅ HOME: Current user ID set: $currentUserId');
@@ -119,17 +124,19 @@ class HomeViewModel extends GetxController {
       if (userId != null) {
         // Set current user ID in storage
         await _storageService.setCurrentUserId(userId);
-        
+
         try {
           print('🔄 HOME: Loading plans from Firebase for user: $userId');
           loadedPlans = await _plansDbService.getPlans(userId);
 
           if (loadedPlans.isNotEmpty) {
             print('✅ HOME: Loaded ${loadedPlans.length} plan(s) from Firebase');
-            
+
             // Sync ALL plans to user-specific local storage for offline access (before filtering)
             try {
-              print('💾 HOME: Syncing Firebase plans to user-specific local storage...');
+              print(
+                '💾 HOME: Syncing Firebase plans to user-specific local storage...',
+              );
               for (var plan in loadedPlans) {
                 await _storageService.savePlan(plan, userId: userId);
               }
@@ -138,13 +145,18 @@ class HomeViewModel extends GetxController {
               print('⚠️ HOME: Failed to sync to local storage: $e');
               // Continue - this is not critical
             }
-            
+
             // Filter to show only future plans (date >= today) for home page display
             final now = DateTime.now();
             final today = DateTime(now.year, now.month, now.day);
             final futurePlans = loadedPlans.where((plan) {
-              final planDate = DateTime(plan.date.year, plan.date.month, plan.date.day);
-              return planDate.isAfter(today) || planDate.isAtSameMomentAs(today);
+              final planDate = DateTime(
+                plan.date.year,
+                plan.date.month,
+                plan.date.day,
+              );
+              return planDate.isAfter(today) ||
+                  planDate.isAtSameMomentAs(today);
             }).toList();
             // Sort by date, upcoming first
             futurePlans.sort((a, b) => a.date.compareTo(b.date));
@@ -157,7 +169,7 @@ class HomeViewModel extends GetxController {
             return;
           } else {
             print('📭 HOME: No plans found in Firebase for user: $userId');
-            
+
             // Check for user-specific local plans (only for this user)
             final localPlans = await _storageService.getPlans(userId: userId);
             if (localPlans.isNotEmpty) {
@@ -181,18 +193,23 @@ class HomeViewModel extends GetxController {
               // Reload from Firebase after migration
               loadedPlans = await _plansDbService.getPlans(userId);
             }
-            
+
             // Filter to show only future plans (date >= today)
             final now = DateTime.now();
             final today = DateTime(now.year, now.month, now.day);
             loadedPlans = loadedPlans.where((plan) {
-              final planDate = DateTime(plan.date.year, plan.date.month, plan.date.day);
-              return planDate.isAfter(today) || planDate.isAtSameMomentAs(today);
+              final planDate = DateTime(
+                plan.date.year,
+                plan.date.month,
+                plan.date.day,
+              );
+              return planDate.isAfter(today) ||
+                  planDate.isAtSameMomentAs(today);
             }).toList();
             // Sort by date, upcoming first
             loadedPlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = loadedPlans;
-            
+
             if (loadedPlans.isEmpty) {
               print('📭 HOME: No plans found for this user');
             }
@@ -208,8 +225,13 @@ class HomeViewModel extends GetxController {
             final now = DateTime.now();
             final today = DateTime(now.year, now.month, now.day);
             final filteredPlans = localPlans.where((plan) {
-              final planDate = DateTime(plan.date.year, plan.date.month, plan.date.day);
-              return planDate.isAfter(today) || planDate.isAtSameMomentAs(today);
+              final planDate = DateTime(
+                plan.date.year,
+                plan.date.month,
+                plan.date.day,
+              );
+              return planDate.isAfter(today) ||
+                  planDate.isAtSameMomentAs(today);
             }).toList();
             filteredPlans.sort((a, b) => a.date.compareTo(b.date));
             plans.value = filteredPlans;
@@ -247,7 +269,9 @@ class HomeViewModel extends GetxController {
   Future<void> loadNotifications() async {
     try {
       final userId = _authService.currentUserId;
-      final notifications = await _storageService.getNotifications(userId: userId);
+      final notifications = await _storageService.getNotifications(
+        userId: userId,
+      );
       final unreadCount = notifications.where((n) => !n.isRead).length;
       notificationCount.value = unreadCount;
     } catch (e) {
@@ -256,7 +280,7 @@ class HomeViewModel extends GetxController {
   }
 
   /// Load user information from Firebase Auth and user profile
-  Future<void> _loadUserInfo() async {
+  Future<void> loadUserInfo() async {
     final user = _authService.currentUser;
     if (user == null) return;
 
@@ -265,18 +289,39 @@ class HomeViewModel extends GetxController {
     final currentUser = _authService.currentUser;
     if (currentUser == null) return;
 
+    final userId = currentUser.uid;
     final name = _extractUserName(currentUser);
     userName.value = name.isNotEmpty ? name : HomeStrings.userName;
-    
-    // Load user profile to get the tagline (about field)
+
+    // Load user profile from Firebase first, then local storage
     try {
-      final profile = await _storageService.getUserProfile();
-      userTagline.value = profile.about.isNotEmpty 
-          ? profile.about 
-          : HomeStrings.userTagline;
+      final firebaseProfile = await _userDbService.getUserProfile(userId);
+
+      if (firebaseProfile != null) {
+        userTagline.value =
+            firebaseProfile['about'] as String? ?? HomeStrings.userTagline;
+        profilePictureUrl.value =
+            firebaseProfile['profilePictureUrl'] as String? ??
+            currentUser.photoURL ??
+            '';
+      } else {
+        // Fallback to local storage
+        final profile = await _storageService.getUserProfile();
+        userTagline.value = profile.about.isNotEmpty
+            ? profile.about
+            : HomeStrings.userTagline;
+        profilePictureUrl.value =
+            profile.profilePictureUrl ?? currentUser.photoURL ?? '';
+      }
+
+      // If still no profile picture, use Google photo URL
+      if (profilePictureUrl.value.isEmpty) {
+        profilePictureUrl.value = currentUser.photoURL ?? '';
+      }
     } catch (e) {
-      // If profile loading fails, use default tagline
+      // If profile loading fails, use default tagline and Google photo
       userTagline.value = HomeStrings.userTagline;
+      profilePictureUrl.value = currentUser.photoURL ?? '';
     }
   }
 
@@ -330,14 +375,14 @@ class HomeViewModel extends GetxController {
 
     try {
       final currentUserId = _authService.currentUserId;
-      
+
       // Clear current user ID and anonymous data from storage
       if (currentUserId != null) {
         await _storageService.clearUserData(currentUserId);
       }
       await _storageService.clearAnonymousData();
       await _storageService.setCurrentUserId(null);
-      
+
       // Sign out from Firebase and Google
       await _authService.signOut();
 
@@ -444,7 +489,10 @@ class HomeViewModel extends GetxController {
       final userId = _authService.currentUserId;
 
       if (userId == null) {
-        SnackbarHelper.showSafe(title: 'Error', message: 'User not authenticated');
+        SnackbarHelper.showSafe(
+          title: 'Error',
+          message: 'User not authenticated',
+        );
         return;
       }
 
@@ -515,7 +563,7 @@ class HomeViewModel extends GetxController {
         currentScreenIndex.value = 0;
         // Reload plans and user info when switching back to home
         loadPlans();
-        _loadUserInfo(); // Reload user info to get updated tagline
+        loadUserInfo(); // Reload user info to get updated tagline
         break;
       case 1:
         // Add Plan - show as overlay to keep bottom navbar visible

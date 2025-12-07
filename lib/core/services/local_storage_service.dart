@@ -38,7 +38,6 @@ class LocalStorageService {
     return '$_notificationsKeyPrefix$userId';
   }
 
-
   Future<void> setCurrentUserId(String? userId) async {
     final prefs = await SharedPreferences.getInstance();
     if (userId != null && userId.isNotEmpty) {
@@ -70,15 +69,17 @@ class LocalStorageService {
   Future<List<PlanModel>> getPlans({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       final effectiveUserId = userId ?? await getCurrentUserId();
       final plansKey = _getPlansKey(effectiveUserId);
-      
+
       final String? plansJson = prefs.getString(plansKey);
       if (plansJson == null) return [];
-      
+
       final List<dynamic> plansList = json.decode(plansJson);
-      return plansList.map((json) => PlanModel.fromJson(json as Map<String, dynamic>)).toList();
+      return plansList
+          .map((json) => PlanModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -88,16 +89,16 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final plansKey = _getPlansKey(effectiveUserId);
-    
+
     final plans = await getPlans(userId: effectiveUserId);
     final existingIndex = plans.indexWhere((p) => p.id == plan.id);
-    
+
     if (existingIndex >= 0) {
       plans[existingIndex] = plan;
     } else {
       plans.add(plan);
     }
-    
+
     await _savePlans(plans, plansKey);
   }
 
@@ -105,7 +106,7 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final plansKey = _getPlansKey(effectiveUserId);
-    
+
     final plans = await getPlans(userId: effectiveUserId);
     plans.removeWhere((p) => p.id == planId);
     await _savePlans(plans, plansKey);
@@ -120,34 +121,41 @@ class LocalStorageService {
   Future<List<JournalEntryModel>> getJournalEntries({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       final effectiveUserId = userId ?? await getCurrentUserId();
       final journalKey = _getJournalEntriesKey(effectiveUserId);
-      
+
       final String? entriesJson = prefs.getString(journalKey);
       if (entriesJson == null) return [];
-      
+
       final List<dynamic> entriesList = json.decode(entriesJson);
-      return entriesList.map((json) => JournalEntryModel.fromJson(json as Map<String, dynamic>)).toList();
+      return entriesList
+          .map(
+            (json) => JournalEntryModel.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
       return [];
     }
   }
 
-  Future<void> saveJournalEntry(JournalEntryModel entry, {String? userId}) async {
+  Future<void> saveJournalEntry(
+    JournalEntryModel entry, {
+    String? userId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final journalKey = _getJournalEntriesKey(effectiveUserId);
-    
+
     final entries = await getJournalEntries(userId: effectiveUserId);
     final existingIndex = entries.indexWhere((e) => e.id == entry.id);
-    
+
     if (existingIndex >= 0) {
       entries[existingIndex] = entry;
     } else {
       entries.add(entry);
     }
-    
+
     await _saveJournalEntries(entries, journalKey);
   }
 
@@ -155,13 +163,16 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final journalKey = _getJournalEntriesKey(effectiveUserId);
-    
+
     final entries = await getJournalEntries(userId: effectiveUserId);
     entries.removeWhere((e) => e.id == entryId);
     await _saveJournalEntries(entries, journalKey);
   }
 
-  Future<void> _saveJournalEntries(List<JournalEntryModel> entries, String journalKey) async {
+  Future<void> _saveJournalEntries(
+    List<JournalEntryModel> entries,
+    String journalKey,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final entriesJson = json.encode(entries.map((e) => e.toJson()).toList());
     await prefs.setString(journalKey, entriesJson);
@@ -177,7 +188,7 @@ class LocalStorageService {
           about: 'Keeping the love story alive.',
         );
       }
-      
+
       final Map<String, dynamic> profileMap = json.decode(profileJson);
       return UserProfileModel.fromJson(profileMap);
     } catch (e) {
@@ -227,42 +238,54 @@ class LocalStorageService {
   Future<List<NotificationModel>> getNotifications({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       final effectiveUserId = userId ?? await getCurrentUserId();
       final notificationsKey = _getNotificationsKey(effectiveUserId);
-      
+
       final String? notificationsJson = prefs.getString(notificationsKey);
       if (notificationsJson == null) return [];
-      
+
       final List<dynamic> notificationsList = json.decode(notificationsJson);
-      return notificationsList.map((json) => NotificationModel.fromJson(json as Map<String, dynamic>)).toList();
+      return notificationsList
+          .map(
+            (json) => NotificationModel.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
       return [];
     }
   }
 
-  Future<void> saveNotification(NotificationModel notification, {String? userId}) async {
+  Future<void> saveNotification(
+    NotificationModel notification, {
+    String? userId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final notificationsKey = _getNotificationsKey(effectiveUserId);
-    
+
     final notifications = await getNotifications(userId: effectiveUserId);
-    final existingIndex = notifications.indexWhere((n) => n.id == notification.id);
-    
+    final existingIndex = notifications.indexWhere(
+      (n) => n.id == notification.id,
+    );
+
     if (existingIndex >= 0) {
       notifications[existingIndex] = notification;
     } else {
       notifications.add(notification);
     }
-    
+
     await _saveNotifications(notifications, notificationsKey);
   }
 
-  Future<void> markNotificationAsRead(String notificationId, {String? userId}) async {
+  Future<void> markNotificationAsRead(
+    String notificationId, {
+    String? userId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final notificationsKey = _getNotificationsKey(effectiveUserId);
-    
+
     final notifications = await getNotifications(userId: effectiveUserId);
     final index = notifications.indexWhere((n) => n.id == notificationId);
     if (index >= 0) {
@@ -271,11 +294,14 @@ class LocalStorageService {
     }
   }
 
-  Future<void> deleteNotification(String notificationId, {String? userId}) async {
+  Future<void> deleteNotification(
+    String notificationId, {
+    String? userId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final notificationsKey = _getNotificationsKey(effectiveUserId);
-    
+
     final notifications = await getNotifications(userId: effectiveUserId);
     notifications.removeWhere((n) => n.id == notificationId);
     await _saveNotifications(notifications, notificationsKey);
@@ -285,28 +311,35 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
     final notificationsKey = _getNotificationsKey(effectiveUserId);
-    
+
     final notifications = await getNotifications(userId: effectiveUserId);
-    final updatedNotifications = notifications.map((n) => n.copyWith(isRead: true)).toList();
+    final updatedNotifications = notifications
+        .map((n) => n.copyWith(isRead: true))
+        .toList();
     await _saveNotifications(updatedNotifications, notificationsKey);
   }
 
-  Future<void> _saveNotifications(List<NotificationModel> notifications, String notificationsKey) async {
+  Future<void> _saveNotifications(
+    List<NotificationModel> notifications,
+    String notificationsKey,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final notificationsJson = json.encode(notifications.map((n) => n.toJson()).toList());
+    final notificationsJson = json.encode(
+      notifications.map((n) => n.toJson()).toList(),
+    );
     await prefs.setString(notificationsKey, notificationsJson);
   }
 
   Future<void> clearAllData({String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveUserId = userId ?? await getCurrentUserId();
-    
+
     if (effectiveUserId != null) {
       await clearUserData(effectiveUserId);
     }
-    
+
     await clearAnonymousData();
-    
+
     await prefs.remove(_userProfileKey);
     await prefs.remove(_settingsKey);
     await prefs.remove('notifications');
@@ -322,15 +355,15 @@ class LocalStorageService {
   Future<void> clearAllUsersData() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
-    
+
     for (final key in keys) {
-      if (key.startsWith(_plansKeyPrefix) || 
+      if (key.startsWith(_plansKeyPrefix) ||
           key.startsWith(_notificationsKeyPrefix) ||
           key.startsWith(_journalEntriesKeyPrefix)) {
         await prefs.remove(key);
       }
     }
-    
+
     await prefs.remove(_userProfileKey);
     await prefs.remove(_settingsKey);
     await prefs.remove('notifications');
@@ -347,33 +380,93 @@ class LocalStorageService {
     return [
       IdeaModel(
         id: '1',
-        title: 'Sunrise Walk',
-        category: 'Walk',
-        location: 'Beachfront',
+        title: 'Murree Hill Station Visit',
+        category: 'Trip',
+        location: 'Murree',
       ),
       IdeaModel(
         id: '2',
-        title: 'Picnic',
+        title: 'Dinner at DHA Food Street',
         category: 'Dinner',
-        location: 'Riverside Park',
+        location: 'DHA, Lahore',
       ),
       IdeaModel(
         id: '3',
-        title: 'Movie Marathon',
+        title: 'Biryani Date Night',
+        category: 'Dinner',
+        location: 'Favorite Restaurant',
+      ),
+      IdeaModel(
+        id: '4',
+        title: 'Evening Walk at Faisalabad Clock Tower',
+        category: 'Walk',
+        location: 'Faisalabad',
+      ),
+      IdeaModel(
+        id: '5',
+        title: 'Chai & Samosa Time',
+        category: 'Surprise',
+        location: 'Local Chai Dhaba',
+      ),
+      IdeaModel(
+        id: '6',
+        title: 'Visit Badshahi Mosque',
+        category: 'Trip',
+        location: 'Lahore',
+      ),
+      IdeaModel(
+        id: '7',
+        title: 'Pakistani Movie Night',
         category: 'Movie',
         location: 'Home',
       ),
       IdeaModel(
-        id: '4',
-        title: 'Stargazing',
+        id: '8',
+        title: 'Shopping at Anarkali Bazaar',
         category: 'Trip',
-        location: 'City Rooftop',
+        location: 'Lahore',
       ),
       IdeaModel(
-        id: '5',
-        title: 'Surprise Dessert',
+        id: '9',
+        title: 'Breakfast at Bundu Khan',
+        category: 'Dinner',
+        location: 'Karachi/Lahore',
+      ),
+      IdeaModel(
+        id: '10',
+        title: 'Sunset at Clifton Beach',
+        category: 'Trip',
+        location: 'Karachi',
+      ),
+      IdeaModel(
+        id: '11',
+        title: 'Desi Street Food Adventure',
+        category: 'Dinner',
+        location: 'Local Food Street',
+      ),
+      IdeaModel(
+        id: '12',
+        title: 'Visit Shalimar Gardens',
+        category: 'Trip',
+        location: 'Lahore',
+      ),
+      IdeaModel(
+        id: '13',
+        title: 'Pakistani Drama Marathon',
+        category: 'Movie',
+        location: 'Home',
+      ),
+      IdeaModel(
+        id: '14',
+        title: 'Evening at Lake View Park',
+        category: 'Trip',
+        location: 'Islamabad',
+      ),
+      IdeaModel(
+        id: '15',
+        title: 'Surprise Gulab Jamun',
         category: 'Surprise',
-        location: 'Favorite Bakery',
+        location: 'Favorite Sweet Shop',
       ),
     ];
   }

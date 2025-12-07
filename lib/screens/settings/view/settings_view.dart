@@ -7,6 +7,7 @@ import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/settings/view_model/settings_view_model.dart';
+import 'package:love_connect/screens/profile/view_model/profile_view_model.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -17,12 +18,14 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView> {
   late final SettingsViewModel viewModel;
+  late final ProfileViewModel profileViewModel;
   HomeViewModel? homeViewModel;
 
   @override
   void initState() {
     super.initState();
     viewModel = Get.put(SettingsViewModel());
+    profileViewModel = Get.put(ProfileViewModel());
     try {
       homeViewModel = Get.find<HomeViewModel>();
     } catch (e) {
@@ -33,6 +36,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void dispose() {
     Get.delete<SettingsViewModel>();
+    Get.delete<ProfileViewModel>();
     super.dispose();
   }
 
@@ -99,11 +103,7 @@ class _SettingsViewState extends State<SettingsView> {
                           'Edit Profile',
                           Icons.person_outline,
                           onTap: () {
-                            // Navigate to edit profile
-                            SnackbarHelper.showSafe(
-                              title: 'Edit Profile',
-                              message: 'Profile editing coming soon',
-                            );
+                            profileViewModel.showEditProfileModal();
                           },
                           metrics: metrics,
                           context: context,
@@ -331,8 +331,8 @@ class _SettingsViewState extends State<SettingsView> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              disabledBackgroundColor:
-                                  AppColors.primaryRed.withOpacity(0.6),
+                              disabledBackgroundColor: AppColors.primaryRed
+                                  .withOpacity(0.6),
                             ),
                             child: viewModel.isLoading.value
                                 ? SizedBox(
