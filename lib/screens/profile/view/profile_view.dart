@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
-import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/profile/view_model/profile_view_model.dart';
