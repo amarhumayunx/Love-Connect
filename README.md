@@ -30,11 +30,10 @@
 *   **Smart Alerts**: Automated reminders for upcoming dates.
 *   **Notification Center**: A dedicated screen to view current and past notifications.
 *   **Daily Quotes**: Receive random romantic quotes to brighten your day.
-*   **Custom Control**: Fine-tune push notifications, plan reminders, and email alerts in Settings.
+*   **Custom Control**: Fine-tune push notifications and plan reminders in Settings.
 
 ### ⚙️ Powerful Settings & Profile
 *   **Profile Customization**: View and edit your personal details and "About" section.
-*   **Privacy Controls**: Options for Private Journal, Location hiding, and App Lock.
 *   **Data Management**: Tools to clear cache or securely wipe all data if needed.
 *   **Support & Feedback**: Built-in options to rate, share, and contact support.
 
