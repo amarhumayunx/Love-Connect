@@ -41,25 +41,42 @@ class _IdeasViewState extends State<IdeasView> {
             // Header
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: metrics.headerHorizontalPadding,
-                vertical: metrics.sectionSpacing * 0.5,
+                horizontal: context.widthPct(5),
+                vertical: context.responsiveSpacing(16),
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios,
-                      color: AppColors.primaryDark,
-                      size: metrics.iconSize,
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryRed.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: AppColors.primaryDark,
+                        size: context.responsiveImage(20),
+                      ),
                     ),
-                    onPressed: () => Get.back(),
                   ),
-                  Text(
-                    'Ideas',
-                    style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(24),
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryDark,
+                  SizedBox(width: context.responsiveSpacing(16)),
+                  Expanded(
+                    child: Text(
+                      'Ideas',
+                      style: GoogleFonts.inter(
+                        fontSize: context.responsiveFont(24),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
                 ],

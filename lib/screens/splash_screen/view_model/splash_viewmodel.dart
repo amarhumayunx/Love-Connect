@@ -6,6 +6,7 @@ import '../../get_started/view/get_started_screen.dart';
 import '../../auth/login/view/login_view.dart';
 import '../../auth/verification/view/verification_view.dart';
 import '../../home/view/main_navigation_view.dart';
+import '../../loading_screen/view/loading_view.dart';
 
 class SplashViewModel extends GetxController {
   final RxBool isLoading = true.obs;
@@ -21,67 +22,105 @@ class SplashViewModel extends GetxController {
 
   // Navigate to next screen after delay with smooth transition
   Future<void> navigateToNextScreen() async {
-    // Wait for logo animation to complete (2.5 seconds)
-    await Future.delayed(const Duration(milliseconds: 2500));
+    try {
+      // Wait for logo animation to complete (2.5 seconds)
+      await Future.delayed(const Duration(milliseconds: 2500));
 
-    isLoading.value = false;
+      isLoading.value = false;
 
-    // Start fade-out animation
-    await Future.delayed(const Duration(milliseconds: 200));
-    isFadingOut.value = true;
+      // Start fade-out animation
+      await Future.delayed(const Duration(milliseconds: 200));
+      isFadingOut.value = true;
 
-    // Wait for fade-out animation to complete
-    await Future.delayed(const Duration(milliseconds: 500));
+      // Wait for fade-out animation to complete
+      await Future.delayed(const Duration(milliseconds: 500));
 
-    // Check authentication state and route accordingly
-    final isAuthenticated = _authService.isAuthenticated;
-    final isFirstTime = await _prefsService.isFirstTime();
-    final hasSeenGetStarted = await _prefsService.hasSeenGetStarted();
+      // Check authentication state and route accordingly
+      bool isAuthenticated = false;
+      bool isFirstTime = true;
+      bool hasSeenGetStarted = false;
 
-    if (isAuthenticated) {
-      // User is logged in, check if email is verified
-      // Reload user data (handles network errors gracefully)
       try {
-        await _authService.reloadUser();
+        isAuthenticated = _authService.isAuthenticated;
+        isFirstTime = await _prefsService.isFirstTime();
+        hasSeenGetStarted = await _prefsService.hasSeenGetStarted();
       } catch (e) {
-        // If reload fails, continue with cached user data
-        // The _safeReloadUser method already handles most errors gracefully
+        // If preference check fails, default to first time flow
+        isFirstTime = true;
+        hasSeenGetStarted = false;
       }
-      
-      final isVerified = _authService.isEmailVerified;
-      final userEmail = _authService.currentUser?.email;
 
-      if (!isVerified) {
-        // Account exists but not verified, navigate to verification screen
+      if (isAuthenticated && !isFirstTime) {
+        // User is logged in AND it's not first run - navigate to loading screen
+        // Loading screen will handle authentication checks and data loading
+        // This only happens after first run (not on first run)
         SmoothNavigator.offAll(
-          () => VerificationView(email: userEmail),
+          () => const LoadingView(),
           transition: Transition.fadeIn,
           duration: SmoothNavigator.slowDuration,
         );
+      } else if (isAuthenticated && isFirstTime) {
+        // User is authenticated but it's still first run
+        // Skip loading screen and go directly to home (first run flow)
+        try {
+          await _authService.reloadUser();
+        } catch (e) {
+          // If reload fails, continue with cached user data
+        }
+        
+        final isVerified = _authService.isEmailVerified;
+        final userEmail = _authService.currentUser?.email;
+
+        if (!isVerified) {
+          SmoothNavigator.offAll(
+            () => VerificationView(email: userEmail),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        } else {
+          SmoothNavigator.offAll(
+            () => const MainNavigationView(),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        }
       } else {
-        // User is logged in and verified, go directly to home with navbar
-        SmoothNavigator.offAll(
-          () => const MainNavigationView(),
-          transition: Transition.fadeIn,
-          duration: SmoothNavigator.slowDuration,
-        );
+        // User is not logged in
+        if (isFirstTime || !hasSeenGetStarted) {
+          // First time or haven't seen get started, show get started screen
+          SmoothNavigator.off(
+            () => const GetStartedScreen(),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        } else {
+          // Not first time, go directly to login
+          SmoothNavigator.off(
+            () => const LoginView(),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        }
       }
-    } else {
-      // User is not logged in
-      if (isFirstTime || !hasSeenGetStarted) {
-        // First time or haven't seen get started, show get started screen
-        SmoothNavigator.off(
-          () => const GetStartedScreen(),
-          transition: Transition.fadeIn,
-          duration: SmoothNavigator.slowDuration,
-        );
-      } else {
-        // Not first time, go directly to login
-        SmoothNavigator.off(
+    } catch (e, stackTrace) {
+      // If navigation fails, default to login screen
+      try {
+        SmoothNavigator.offAll(
           () => const LoginView(),
           transition: Transition.fadeIn,
           duration: SmoothNavigator.slowDuration,
         );
+      } catch (_) {
+        // If navigation itself fails, try get started screen
+        try {
+          SmoothNavigator.offAll(
+            () => const GetStartedScreen(),
+            transition: Transition.fadeIn,
+            duration: SmoothNavigator.slowDuration,
+          );
+        } catch (_) {
+          // Last resort: do nothing and let user see splash screen
+        }
       }
     }
   }

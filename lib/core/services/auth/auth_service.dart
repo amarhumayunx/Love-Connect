@@ -603,6 +603,33 @@ class AuthService {
     await _safeReloadUser(_auth.currentUser);
   }
 
+  Future<AuthResult> deleteUser() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return AuthResult.failure(
+          errorMessage: 'No user is currently signed in',
+          errorCode: 'no-user',
+        );
+      }
+
+      await user.delete();
+      await signOut();
+
+      return AuthResult.success();
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.failure(
+        errorMessage: _getErrorMessage(e.code),
+        errorCode: e.code,
+      );
+    } catch (e) {
+      return AuthResult.failure(
+        errorMessage: 'Failed to delete account. Please try again.',
+        errorCode: 'unknown-error',
+      );
+    }
+  }
+
   Future<AuthResult> changePassword({
     required String currentPassword,
     required String newPassword,

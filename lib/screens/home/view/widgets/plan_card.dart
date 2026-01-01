@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
@@ -55,6 +56,20 @@ class PlanCard extends StatelessWidget {
       return baseHeight * 1.05;
     } else {
       return baseHeight * 1.1;
+    }
+  }
+
+  /// Calculate responsive horizontal spacing based on screen width
+  double _responsiveHorizontalSpacing(BuildContext context, double baseSpacing) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth < 360) {
+      return baseSpacing * 0.85;
+    } else if (screenWidth < 414) {
+      return baseSpacing;
+    } else if (screenWidth < 768) {
+      return baseSpacing * 1.05;
+    } else {
+      return baseSpacing * 1.2;
     }
   }
 
@@ -198,7 +213,10 @@ class PlanCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+                    padding: EdgeInsets.symmetric(
+                      vertical: context.responsiveSpacing(3),
+                      horizontal: _responsiveHorizontalSpacing(context, 8),
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -206,25 +224,32 @@ class PlanCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.edit,
-                        size: 14,
-                        color: AppColors.white,
+                      SvgPicture.asset(
+                        'assets/svg/new_svg/pencil.svg',
+                        width: context.responsiveImage(14),
+                        height: context.responsiveImage(14),
+                        colorFilter: ColorFilter.mode(
+                          AppColors.white,
+                          BlendMode.srcIn,
+                        ),
                       ),
-                      SizedBox(width: 2),
-                      Text(
-                        'Edit',
-                        style: GoogleFonts.inter(
-                          fontSize: context.responsiveFont(12),
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.white,
+                      SizedBox(width: _responsiveHorizontalSpacing(context, 2)),
+                      Flexible(
+                        child: Text(
+                          'Edit',
+                          style: GoogleFonts.inter(
+                            fontSize: context.responsiveFont(12),
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              SizedBox(width: 6),
+              SizedBox(width: _responsiveHorizontalSpacing(context, 6)),
               Expanded(
                 child: OutlinedButton(
                   onPressed: onDelete,
@@ -233,7 +258,10 @@ class PlanCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+                    padding: EdgeInsets.symmetric(
+                      vertical: context.responsiveSpacing(3),
+                      horizontal: _responsiveHorizontalSpacing(context, 8),
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -241,18 +269,25 @@ class PlanCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.delete,
-                        size: 14,
-                        color: AppColors.primaryRed,
+                      SvgPicture.asset(
+                        'assets/svg/new_svg/delete.svg',
+                        width: context.responsiveImage(14),
+                        height: context.responsiveImage(14),
+                        colorFilter: ColorFilter.mode(
+                          AppColors.primaryRed,
+                          BlendMode.srcIn,
+                        ),
                       ),
-                      SizedBox(width: 1),
-                      Text(
-                        'Delete',
-                        style: GoogleFonts.inter(
-                          fontSize: context.responsiveFont(12),
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryRed,
+                      SizedBox(width: _responsiveHorizontalSpacing(context, 1)),
+                      Flexible(
+                        child: Text(
+                          'Delete',
+                          style: GoogleFonts.inter(
+                            fontSize: context.responsiveFont(12),
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryRed,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

@@ -22,6 +22,7 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
   late int _selectedMinute;
   late bool _isAM;
   bool _isSelectingHour = true;
+  final GlobalKey _circularPickerKey = GlobalKey();
 
   @override
   void initState() {
@@ -73,80 +74,89 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxWidth: MediaQuery.of(context).size.width,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Title
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Select time',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
-                ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Digital Time Display with AM/PM
-            _buildDigitalDisplay(),
-            const SizedBox(height: 32),
-
-            // Circular Time Picker
-            _buildCircularPicker(),
-            const SizedBox(height: 32),
-
-            // Controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            ],
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextButton(
-                  onPressed: _cancelSelection,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
+                // Title
+                Align(
+                  alignment: Alignment.centerLeft,
                   child: Text(
-                    'Cancel',
+                    'Select time',
                     style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primaryDark.withOpacity(0.7),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryDark,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: _confirmSelection,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  child: Text(
-                    'OK',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryRed,
+                const SizedBox(height: 24),
+
+                // Digital Time Display with AM/PM
+                _buildDigitalDisplay(),
+                const SizedBox(height: 32),
+
+                // Circular Time Picker
+                _buildCircularPicker(),
+                const SizedBox(height: 32),
+
+                // Controls
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: _cancelSelection,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primaryDark.withOpacity(0.7),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: _confirmSelection,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      child: Text(
+                        'OK',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryRed,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -156,253 +166,275 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
     final hourStr = _selectedHour.toString().padLeft(2, '0');
     final minuteStr = _selectedMinute.toString().padLeft(2, '0');
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Hour
-        GestureDetector(
-          onTap: () => setState(() => _isSelectingHour = true),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: _isSelectingHour
-                  ? AppColors.primaryRed.withOpacity(0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Hour
+          GestureDetector(
+            onTap: () => setState(() => _isSelectingHour = true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
                 color: _isSelectingHour
-                    ? AppColors.primaryRed
+                    ? AppColors.primaryRed.withOpacity(0.15)
                     : Colors.transparent,
-                width: 2,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isSelectingHour
+                      ? AppColors.primaryRed
+                      : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Text(
+                hourStr,
+                style: GoogleFonts.inter(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w600,
+                  color: _isSelectingHour
+                      ? AppColors.primaryRed
+                      : AppColors.primaryDark.withOpacity(0.5),
+                ),
               ),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              hourStr,
+              ':',
               style: GoogleFonts.inter(
                 fontSize: 32,
                 fontWeight: FontWeight.w600,
-                color: _isSelectingHour
-                    ? AppColors.primaryRed
-                    : AppColors.primaryDark.withOpacity(0.5),
+                color: AppColors.primaryDark,
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            ':',
-            style: GoogleFonts.inter(
-              fontSize: 32,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ),
-          ),
-        ),
-        // Minute
-        GestureDetector(
-          onTap: () => setState(() => _isSelectingHour = false),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: !_isSelectingHour
-                  ? AppColors.primaryRed.withOpacity(0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
+          // Minute
+          GestureDetector(
+            onTap: () => setState(() => _isSelectingHour = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
                 color: !_isSelectingHour
-                    ? AppColors.primaryRed
+                    ? AppColors.primaryRed.withOpacity(0.15)
                     : Colors.transparent,
-                width: 2,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: !_isSelectingHour
+                      ? AppColors.primaryRed
+                      : Colors.transparent,
+                  width: 2,
+                ),
               ),
-            ),
-            child: Text(
-              minuteStr,
-              style: GoogleFonts.inter(
-                fontSize: 32,
-                fontWeight: FontWeight.w600,
-                color: !_isSelectingHour
-                    ? AppColors.primaryRed
-                    : AppColors.primaryDark.withOpacity(0.5),
+              child: Text(
+                minuteStr,
+                style: GoogleFonts.inter(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w600,
+                  color: !_isSelectingHour
+                      ? AppColors.primaryRed
+                      : AppColors.primaryDark.withOpacity(0.5),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-        // AM/PM Toggle
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.backgroundPink,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: () => setState(() => _isAM = true),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _isAM ? AppColors.primaryRed : Colors.transparent,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  ),
-                  child: Text(
-                    'AM',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: _isAM ? AppColors.white : AppColors.primaryDark.withOpacity(0.5),
+          const SizedBox(width: 16),
+          // AM/PM Toggle
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.backgroundPink,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: () => setState(() => _isAM = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _isAM ? AppColors.primaryRed : Colors.transparent,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    ),
+                    child: Text(
+                      'AM',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: _isAM ? AppColors.white : AppColors.primaryDark.withOpacity(0.5),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              GestureDetector(
-                onTap: () => setState(() => _isAM = false),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: !_isAM ? AppColors.primaryRed : Colors.transparent,
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-                  ),
-                  child: Text(
-                    'PM',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: !_isAM ? AppColors.white : AppColors.primaryDark.withOpacity(0.5),
+                GestureDetector(
+                  onTap: () => setState(() => _isAM = false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: !_isAM ? AppColors.primaryRed : Colors.transparent,
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                    ),
+                    child: Text(
+                      'PM',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: !_isAM ? AppColors.white : AppColors.primaryDark.withOpacity(0.5),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildCircularPicker() {
-    return GestureDetector(
-      onPanUpdate: (details) {
-        final RenderBox box = context.findRenderObject() as RenderBox;
-        final localPosition = box.globalToLocal(details.globalPosition);
-
-        if (_isSelectingHour) {
-          _handleHourPan(localPosition);
-        } else {
-          _handleMinutePan(localPosition);
-        }
-      },
-      onTapDown: (details) {
-        if (_isSelectingHour) {
-          _handleHourPan(details.localPosition);
-        } else {
-          _handleMinutePan(details.localPosition);
-        }
-      },
-      child: SizedBox(
-        width: 280,
-        height: 280,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Clock face background
-            Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.backgroundPink,
-              ),
+    return Center(
+      child: GestureDetector(
+        onPanUpdate: _handlePanUpdate,
+        onPanStart: _handlePanStart,
+        onTapDown: _handleTapDown,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          key: _circularPickerKey,
+          width: 280,
+          height: 280,
+          child: ClipRect(
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              alignment: Alignment.center,
+              children: [
+                _buildClockFace(),
+                if (_isSelectingHour) ..._buildHourNumbers(),
+                if (!_isSelectingHour) ..._buildMinuteMarkers(),
+                if (_isSelectingHour) _buildHourHand(),
+                if (!_isSelectingHour) _buildMinuteHand(),
+                _buildCenterDot(),
+              ],
             ),
-
-            // Hour numbers (1-12)
-            if (_isSelectingHour)
-              ...List.generate(12, (index) {
-                final hour = index == 0 ? 12 : index;
-                final angle = (index * 30 - 90) * math.pi / 180;
-                final radius = 100.0;
-                final x = math.cos(angle) * radius;
-                final y = math.sin(angle) * radius;
-
-                final isSelected = _selectedHour == hour;
-
-                return Positioned(
-                  left: 140 + x - 20,
-                  top: 140 + y - 20,
-                  child: GestureDetector(
-                    onTap: () => _selectHour(hour),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected
-                            ? AppColors.primaryRed
-                            : Colors.transparent,
-                      ),
-                      child: Center(
-                        child: Text(
-                          hour.toString(),
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? AppColors.white
-                                : AppColors.primaryDark.withOpacity(0.7),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-            // Minute markers (every 5 minutes)
-            if (!_isSelectingHour)
-              ...List.generate(12, (index) {
-                final minute = index * 5;
-                final angle = (minute * 6 - 90) * math.pi / 180;
-                final radius = 100.0;
-                final x = math.cos(angle) * radius;
-                final y = math.sin(angle) * radius;
-
-                return Positioned(
-                  left: 140 + x - 15,
-                  top: 140 + y - 15,
-                  child: GestureDetector(
-                    onTap: () => _selectMinute(minute),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      alignment: Alignment.center,
-                      child: Text(
-                        minute.toString().padLeft(2, '0'),
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primaryDark.withOpacity(0.6),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-            // Selection hand/line
-            if (!_isSelectingHour) _buildMinuteHand(),
-            if (_isSelectingHour) _buildHourHand(),
-
-            // Center dot
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryRed,
-              ),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    _processGesture(details.globalPosition);
+  }
+
+  void _handlePanStart(DragStartDetails details) {
+    _processGesture(details.globalPosition);
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details) {
+    _processGesture(details.globalPosition);
+  }
+
+  void _processGesture(Offset globalPosition) {
+    final RenderBox? box = _circularPickerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final localPosition = box.globalToLocal(globalPosition);
+    if (_isSelectingHour) {
+      _handleHourPan(localPosition, box.size);
+    } else {
+      _handleMinutePan(localPosition, box.size);
+    }
+  }
+
+  Widget _buildClockFace() {
+    return Container(
+      width: 280,
+      height: 280,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.backgroundPink,
+      ),
+    );
+  }
+
+  List<Widget> _buildHourNumbers() {
+    return List.generate(12, (index) {
+      final hour = index == 0 ? 12 : index;
+      final angle = (index * 30 - 90) * math.pi / 180;
+      final radius = 100.0;
+      final x = math.cos(angle) * radius;
+      final y = math.sin(angle) * radius;
+      final isSelected = _selectedHour == hour;
+
+      return Positioned(
+        left: 140 + x - 20,
+        top: 140 + y - 20,
+        child: GestureDetector(
+          onTap: () => _selectHour(hour),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected ? AppColors.primaryRed : Colors.transparent,
+            ),
+            child: Center(
+              child: Text(
+                hour.toString(),
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected
+                      ? AppColors.white
+                      : AppColors.primaryDark.withOpacity(0.7),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  List<Widget> _buildMinuteMarkers() {
+    return List.generate(12, (index) {
+      final minute = index * 5;
+      final angle = (minute * 6 - 90) * math.pi / 180;
+      final radius = 100.0;
+      final x = math.cos(angle) * radius;
+      final y = math.sin(angle) * radius;
+
+      return Positioned(
+        left: 140 + x - 15,
+        top: 140 + y - 15,
+        child: GestureDetector(
+          onTap: () => _selectMinute(minute),
+          child: Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            child: Text(
+              minute.toString().padLeft(2, '0'),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primaryDark.withOpacity(0.6),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildCenterDot() {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.primaryRed,
       ),
     );
   }
@@ -438,8 +470,8 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
     );
   }
 
-  void _handleHourPan(Offset localPosition) {
-    final center = const Offset(140, 140);
+  void _handleHourPan(Offset localPosition, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
     final offset = localPosition - center;
     final angle = math.atan2(offset.dy, offset.dx);
     final degrees = (angle * 180 / math.pi + 90 + 360) % 360;
@@ -453,14 +485,16 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
     });
   }
 
-  void _handleMinutePan(Offset localPosition) {
-    final center = const Offset(140, 140);
+  void _handleMinutePan(Offset localPosition, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
     final offset = localPosition - center;
     final angle = math.atan2(offset.dy, offset.dx);
     final degrees = (angle * 180 / math.pi + 90 + 360) % 360;
 
-    // Convert angle to minutes (0-59)
-    int minute = ((degrees / 6).round()) % 60;
+    // Convert angle to minutes and snap to 5-minute intervals
+    int rawMinute = ((degrees / 6).round()) % 60;
+    int minute = (rawMinute / 5).round() * 5;
+    if (minute == 60) minute = 0;
 
     setState(() {
       _selectedMinute = minute;

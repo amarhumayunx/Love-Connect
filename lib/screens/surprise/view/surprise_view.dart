@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/decision_maker_widget.dart';
 import 'package:love_connect/screens/surprise/view/widgets/date_wheel_widget.dart';
 import 'package:love_connect/screens/surprise/view/widgets/scratch_card_widget.dart';
 import 'package:love_connect/screens/surprise/view_model/surprise_view_model.dart';
@@ -106,7 +108,7 @@ class _SurpriseViewState extends State<SurpriseView>
                     SizedBox(width: context.responsiveSpacing(16)),
                     Expanded(
                       child: Text(
-                        'Surprise Hub',
+                        'Surprises',
                         style: GoogleFonts.inter(
                           fontSize: context.responsiveFont(24),
                           fontWeight: FontWeight.w700,
@@ -164,7 +166,7 @@ class _SurpriseViewState extends State<SurpriseView>
                               // Option Cards
                               _buildOptionCard(
                                 context,
-                                title: '🎡 Spin for a Plan',
+                                title: 'Spin for a Plan',
                                 subtitle: 'Can\'t decide? Let the wheel pick your next date!',
                                 gradient: const LinearGradient(
                                   colors: [
@@ -174,7 +176,7 @@ class _SurpriseViewState extends State<SurpriseView>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                icon: Icons.casino_rounded,
+                                svgPath: 'assets/svg/new_svg/spin.svg',
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   if (viewModel.allIdeas.isNotEmpty) {
@@ -189,7 +191,7 @@ class _SurpriseViewState extends State<SurpriseView>
                               SizedBox(height: context.responsiveSpacing(24)),
                               _buildOptionCard(
                                 context,
-                                title: '💌 Lucky Love Coupon',
+                                title: 'Lucky Love Coupon',
                                 subtitle: 'Feeling lucky? Scratch to reveal a treat!',
                                 gradient: const LinearGradient(
                                   colors: [
@@ -199,10 +201,29 @@ class _SurpriseViewState extends State<SurpriseView>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                icon: Icons.card_giftcard_rounded,
+                                svgPath: 'assets/svg/new_svg/coupon.svg',
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   ScratchCardWidget.show(context);
+                                },
+                              ),
+                              SizedBox(height: context.responsiveSpacing(24)),
+                              _buildOptionCard(
+                                context,
+                                title: 'Decision Maker',
+                                subtitle: 'Can\'t decide what to eat or watch? Let the dice decide!',
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFBBDEFB), // Light Blue
+                                    Color(0xFF90CAF9), // Blue
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                svgPath: 'assets/svg/new_svg/dice.svg',
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  _showDecisionMaker(context);
                                 },
                               ),
                             ],
@@ -221,13 +242,22 @@ class _SurpriseViewState extends State<SurpriseView>
   }
 
   Widget _buildOptionCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required Gradient gradient,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String subtitle,
+        required Gradient gradient,
+        required String svgPath, // 👈 SVG path or icon name
+        required VoidCallback onTap,
+      }) {
+    // Check if svgPath is an icon name (starts with 'Icons.')
+    final bool isIcon = svgPath.startsWith('Icons.');
+    IconData? iconData;
+    if (isIcon) {
+      // Extract icon name and get the icon data
+      final iconName = svgPath.replaceFirst('Icons.', '');
+      iconData = _getIconData(iconName);
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -247,55 +277,64 @@ class _SurpriseViewState extends State<SurpriseView>
         ),
         child: Padding(
           padding: EdgeInsets.all(context.responsiveSpacing(24)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(context.responsiveSpacing(12)),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      icon,
-                      color: AppColors.white,
-                      size: context.responsiveImage(32),
-                    ),
-                  ),
-                  SizedBox(width: context.responsiveSpacing(16)),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.inter(
-                            fontSize: context.responsiveFont(20),
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.white,
-                          ),
+              Container(
+                padding: EdgeInsets.all(context.responsiveSpacing(12)),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: isIcon && iconData != null
+                    ? Icon(
+                        iconData,
+                        size: context.responsiveImage(32),
+                        color: AppColors.white,
+                      )
+                    : SvgPicture.asset(
+                        svgPath,
+                        width: context.responsiveImage(32),
+                        height: context.responsiveImage(32),
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.primaryDark,
+                          BlendMode.srcIn,
                         ),
-                        SizedBox(height: context.responsiveSpacing(4)),
-                        Text(
-                          subtitle,
-                          style: GoogleFonts.inter(
-                            fontSize: context.responsiveFont(13),
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.white.withOpacity(0.9),
-                          ),
+                        placeholderBuilder: (BuildContext context) => Icon(
+                          Icons.image_not_supported,
+                          size: context.responsiveImage(32),
+                          color: AppColors.white,
                         ),
-                      ],
+                      ),
+              ),
+              SizedBox(width: context.responsiveSpacing(16)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: context.responsiveFont(20),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
                     ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: AppColors.white,
-                    size: context.responsiveImage(20),
-                  ),
-                ],
+                    SizedBox(height: context.responsiveSpacing(4)),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: context.responsiveFont(13),
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: AppColors.white,
+                size: context.responsiveImage(20),
               ),
             ],
           ),
@@ -303,7 +342,6 @@ class _SurpriseViewState extends State<SurpriseView>
       ),
     );
   }
-
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
@@ -378,6 +416,36 @@ class _SurpriseViewState extends State<SurpriseView>
       borderRadius: 12,
       duration: const Duration(seconds: 3),
     );
+  }
+
+  IconData? _getIconData(String iconName) {
+    // Map icon names to IconData
+    switch (iconName) {
+      case 'casino_rounded':
+        return Icons.casino_rounded;
+      case 'casino':
+        return Icons.casino;
+      case 'dice':
+        return Icons.casino_rounded;
+      default:
+        return Icons.casino_rounded; // Default fallback
+    }
+  }
+
+  void _showDecisionMaker(BuildContext context) {
+    // Common decision options
+    final defaultOptions = [
+      'Pizza',
+      'Sushi',
+      'Italian',
+      'Mexican',
+      'Chinese',
+      'Burgers',
+      'Thai',
+      'Indian',
+    ];
+
+    DecisionMakerWidget.show(context, defaultOptions);
   }
 }
 

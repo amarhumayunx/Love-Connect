@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -149,29 +150,50 @@ class HomeHeader extends StatelessWidget {
 
   Widget _buildProfileImage(String? profilePictureUrl) {
     if (profilePictureUrl != null && profilePictureUrl.isNotEmpty) {
-      return Image.network(
-        profilePictureUrl,
-        width: metrics.profileImageSize,
-        height: metrics.profileImageSize,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.asset(
-            'assets/images/profile.jpg',
-            width: metrics.profileImageSize,
-            height: metrics.profileImageSize,
-            fit: BoxFit.cover,
-          );
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: LoadingAnimationWidget.horizontalRotatingDots(
-              color: AppColors.primaryRed,
-              size: 50,
-            ),
-          );
-        },
-      );
+      // Check if it's a local file path (starts with "file://")
+      if (profilePictureUrl.startsWith('file://')) {
+        // Remove "file://" prefix to get the actual file path
+        final String filePath = profilePictureUrl.substring(7);
+        return Image.file(
+          File(filePath),
+          width: metrics.profileImageSize,
+          height: metrics.profileImageSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset(
+              'assets/images/profile.jpg',
+              width: metrics.profileImageSize,
+              height: metrics.profileImageSize,
+              fit: BoxFit.cover,
+            );
+          },
+        );
+      } else {
+        // It's a network URL (Firebase)
+        return Image.network(
+          profilePictureUrl,
+          width: metrics.profileImageSize,
+          height: metrics.profileImageSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset(
+              'assets/images/profile.jpg',
+              width: metrics.profileImageSize,
+              height: metrics.profileImageSize,
+              fit: BoxFit.cover,
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: LoadingAnimationWidget.horizontalRotatingDots(
+                color: AppColors.primaryRed,
+                size: 50,
+              ),
+            );
+          },
+        );
+      }
     }
     return Image.asset(
       'assets/images/profile.jpg',

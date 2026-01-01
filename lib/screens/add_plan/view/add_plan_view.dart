@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
+import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/add_plan_layout_metrics.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/custom_date_picker.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/custom_time_picker.dart';
@@ -163,51 +164,82 @@ class _AddPlanViewState extends State<AddPlanView> {
               // Header
               Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: metrics.cardPadding,
-                  vertical: metrics.sectionSpacing,
+                  horizontal: context.widthPct(5),
+                  vertical: context.responsiveSpacing(16),
                 ),
                 child: Row(
                   children: [
                     // Show back arrow only if NOT navigated from navbar
                     homeViewModel != null
                         ? Obx(
-                            () => homeViewModel!.isFromNavbar('addPlan')
-                                ? const SizedBox.shrink() // Hide back arrow if from navbar
-                                : IconButton(
-                                    icon: Icon(
-                                      Icons.arrow_back_ios,
-                                      color: AppColors.primaryDark,
-                                      size: metrics.iconSize,
-                                    ),
-                                    onPressed: () {
-                                      if (widget.onClose != null) {
-                                        widget.onClose!();
-                                      } else {
-                                        Get.back();
-                                      }
-                                    },
-                                  ),
-                          )
-                        : IconButton(
-                            icon: Icon(
-                              Icons.arrow_back_ios,
-                              color: AppColors.primaryDark,
-                              size: metrics.iconSize,
-                            ),
-                            onPressed: () {
-                              if (widget.onClose != null) {
-                                widget.onClose!();
-                              } else {
-                                Get.back();
-                              }
-                            },
+                          () => homeViewModel!.isFromNavbar('addPlan')
+                          ? const SizedBox.shrink() // Hide back arrow if from navbar
+                          : GestureDetector(
+                        onTap: () {
+                          if (widget.onClose != null) {
+                            widget.onClose!();
+                          } else {
+                            Get.back();
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryRed.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                    Text(
-                      'Add Plan',
-                      style: GoogleFonts.inter(
-                        fontSize: metrics.headerFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryDark,
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: AppColors.primaryDark,
+                            size: context.responsiveImage(20),
+                          ),
+                        ),
+                      ),
+                    )
+                        : GestureDetector(
+                      onTap: () {
+                        if (widget.onClose != null) {
+                          widget.onClose!();
+                        } else {
+                          Get.back();
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryRed.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.arrow_back_ios_new,
+                          color: AppColors.primaryDark,
+                          size: context.responsiveImage(20),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: context.responsiveSpacing(16)),
+                    Expanded(
+                      child: Text(
+                        'Add Plan',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(24),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                   ],
@@ -372,7 +404,7 @@ class _AddPlanViewState extends State<AddPlanView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Obx(
-              () => Text(
+                  () => Text(
                 DateFormat('dd/MM/yyyy').format(viewModel.model.value.date),
                 style: GoogleFonts.inter(
                   fontSize: metrics.inputFieldFontSize,
@@ -406,7 +438,7 @@ class _AddPlanViewState extends State<AddPlanView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Obx(
-              () => Text(
+                  () => Text(
                 viewModel.model.value.time != null
                     ? DateFormat('hh:mm a').format(viewModel.model.value.time!)
                     : '--:--',
@@ -444,7 +476,7 @@ class _AddPlanViewState extends State<AddPlanView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Obx(
-              () => Text(
+                  () => Text(
                 viewModel.model.value.type,
                 style: GoogleFonts.inter(
                   fontSize: metrics.inputFieldFontSize,
@@ -491,7 +523,7 @@ class _AddPlanViewState extends State<AddPlanView> {
 
   Widget _buildSaveButton(AddPlanLayoutMetrics metrics) {
     return Obx(
-      () => ElevatedButton(
+          () => ElevatedButton(
         onPressed: viewModel.isSaving.value ? null : viewModel.savePlan,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryRed,
@@ -502,21 +534,21 @@ class _AddPlanViewState extends State<AddPlanView> {
         ),
         child: viewModel.isSaving.value
             ? SizedBox(
-                width: 20,
-                height: 20,
-                child: LoadingAnimationWidget.horizontalRotatingDots(
-                  color: AppColors.white,
-                  size: 20,
-                ),
-              )
+          width: 20,
+          height: 20,
+          child: LoadingAnimationWidget.horizontalRotatingDots(
+            color: AppColors.white,
+            size: 20,
+          ),
+        )
             : Text(
-                'Save Plan',
-                style: GoogleFonts.inter(
-                  fontSize: metrics.buttonFontSize,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.white,
-                ),
-              ),
+          'Save Plan',
+          style: GoogleFonts.inter(
+            fontSize: metrics.buttonFontSize,
+            fontWeight: FontWeight.w600,
+            color: AppColors.white,
+          ),
+        ),
       ),
     );
   }

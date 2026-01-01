@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:love_connect/core/strings/home_strings.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/core/services/auth/auth_service.dart';
@@ -20,6 +22,7 @@ import 'package:love_connect/screens/journal/view/journal_view.dart';
 import 'package:love_connect/screens/ideas/view/ideas_view.dart';
 import 'package:love_connect/screens/notifications/view/notifications_view.dart';
 import 'package:love_connect/screens/surprise/view/surprise_view.dart';
+import 'package:love_connect/screens/profile/view/profile_view.dart';
 import 'package:love_connect/screens/home/model/home_model.dart';
 import 'package:uuid/uuid.dart';
 
@@ -488,23 +491,52 @@ class HomeViewModel extends GetxController {
 
     // Load user profile from Firebase first, then local storage
     try {
+      // First check for local profile image
+      String? localImagePath;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        localImagePath = prefs.getString('local_profile_image_path_$userId');
+        if (localImagePath != null) {
+          // Check if file still exists
+          final File file = File(localImagePath);
+          if (!await file.exists()) {
+            localImagePath = null;
+            await prefs.remove('local_profile_image_path_$userId');
+          }
+        }
+      } catch (e) {
+        // Ignore errors when checking for local image
+      }
+
       final firebaseProfile = await _userDbService.getUserProfile(userId);
 
       if (firebaseProfile != null) {
         userTagline.value =
             firebaseProfile['about'] as String? ?? HomeStrings.userTagline;
-        profilePictureUrl.value =
-            firebaseProfile['profilePictureUrl'] as String? ??
-            currentUser.photoURL ??
-            '';
+        
+        // Use local image if available, otherwise use Firebase URL
+        if (localImagePath != null) {
+          profilePictureUrl.value = 'file://$localImagePath';
+        } else {
+          profilePictureUrl.value =
+              firebaseProfile['profilePictureUrl'] as String? ??
+              currentUser.photoURL ??
+              '';
+        }
       } else {
         // Fallback to local storage
         final profile = await _storageService.getUserProfile();
         userTagline.value = profile.about.isNotEmpty
             ? profile.about
             : HomeStrings.userTagline;
-        profilePictureUrl.value =
-            profile.profilePictureUrl ?? currentUser.photoURL ?? '';
+        
+        // Use local image if available, otherwise use profile URL
+        if (localImagePath != null) {
+          profilePictureUrl.value = 'file://$localImagePath';
+        } else {
+          profilePictureUrl.value =
+              profile.profilePictureUrl ?? currentUser.photoURL ?? '';
+        }
       }
 
       // If still no profile picture, use Google photo URL
@@ -602,7 +634,12 @@ class HomeViewModel extends GetxController {
       case HomeStrings.newPlan:
         // Navigate with Get.to() to show back arrow and hide bottom navbar
         navigationSource['addPlan'] = false; // from quick actions
-        Get.to(() => const AddPlanView())?.then((result) {
+        Get.to(
+          () => const AddPlanView(),
+          fullscreenDialog: false,
+          preventDuplicates: true,
+          opaque: true, // Ensure route is fully opaque to hide underlying UI
+        )?.then((result) {
           if (result == true) {
             loadPlans();
           }
@@ -611,7 +648,12 @@ class HomeViewModel extends GetxController {
       case HomeStrings.journal:
         // Navigate with Get.to() to show back arrow and hide bottom navbar
         navigationSource['journal'] = false; // from quick actions
-        Get.to(() => const JournalView());
+        Get.to(
+          () => const JournalView(),
+          fullscreenDialog: false,
+          preventDuplicates: true,
+          opaque: true, // Ensure route is fully opaque to hide underlying UI
+        );
         break;
       case HomeStrings.ideas:
         Get.to(() => const IdeasView());
@@ -651,7 +693,10 @@ class HomeViewModel extends GetxController {
     } else {
       // From quick actions or other places: normal navigation
       navigationSource['addPlan'] = false;
-      Get.to(() => const AddPlanView())?.then((result) {
+      Get.to(
+        () => const AddPlanView(),
+        opaque: true, // Ensure route is fully opaque to hide underlying UI
+      )?.then((result) {
         if (result == true) {
           loadPlans();
         }
@@ -729,10 +774,14 @@ class HomeViewModel extends GetxController {
 
   void onProfileTap() {
     HapticFeedback.lightImpact();
-    // Navigate to profile screen via navbar
-    navigationSource['profile'] = true;
-    selectedBottomNavIndex.value = 3;
-    currentScreenIndex.value = 2; // Profile is index 2 in IndexedStack
+    // Navigate with Get.to() to show back arrow and hide bottom navbar
+    navigationSource['profile'] = false; // from profile pic tap (like quick actions)
+    Get.to(
+      () => const ProfileView(),
+      fullscreenDialog: false,
+      preventDuplicates: true,
+      opaque: true, // Ensure route is fully opaque to hide underlying UI
+    );
   }
 
   void onBottomNavTap(int index) {

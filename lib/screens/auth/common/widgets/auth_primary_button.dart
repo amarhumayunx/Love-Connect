@@ -40,7 +40,7 @@ class AuthPrimaryButton extends StatelessWidget {
         ),
         child: isLoading
             ? LoadingAnimationWidget.dotsTriangle(
-          color: Colors.white,
+          color: AppColors.primaryDark,
           size: 35,
         )
             : Text(

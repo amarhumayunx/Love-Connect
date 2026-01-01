@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/journal_entry_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/empty_state_widget.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/journal/view_model/journal_view_model.dart';
@@ -66,11 +68,10 @@ class _JournalViewState extends State<JournalView> {
         child: Column(
           children: [
             // Header
-            Container(
-              color: AppColors.backgroundPink,
+            Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: metrics.headerHorizontalPadding,
-                vertical: metrics.sectionSpacing * 0.5,
+                horizontal: context.widthPct(5),
+                vertical: context.responsiveSpacing(16),
               ),
               child: Row(
                 children: [
@@ -78,29 +79,60 @@ class _JournalViewState extends State<JournalView> {
                       ? Obx(
                         () => homeViewModel!.isFromNavbar('journal')
                         ? const SizedBox.shrink()
-                        : IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: AppColors.primaryRed,
-                        size: metrics.iconSize,
+                        : GestureDetector(
+                      onTap: () => Get.back(),
+                      child: Container(
+                        padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryRed.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.arrow_back_ios_new,
+                          color: AppColors.primaryDark,
+                          size: context.responsiveImage(20),
+                        ),
                       ),
-                      onPressed: () => Get.back(),
                     ),
                   )
-                      : IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios,
-                      color: AppColors.primaryRed,
-                      size: metrics.iconSize,
+                      : GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryRed.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: AppColors.primaryDark,
+                        size: context.responsiveImage(20),
+                      ),
                     ),
-                    onPressed: () => Get.back(),
                   ),
-                  Text(
-                    viewModel.model.title,
-                    style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(20),
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryDark,
+                  SizedBox(width: context.responsiveSpacing(16)),
+                  Expanded(
+                    child: Text(
+                      viewModel.model.title,
+                      style: GoogleFonts.inter(
+                        fontSize: context.responsiveFont(24),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
                 ],
@@ -121,21 +153,8 @@ class _JournalViewState extends State<JournalView> {
                   }
 
                   if (viewModel.entries.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: metrics.cardPadding * 2,
-                        ),
-                        child: Text(
-                          'No memories yet, add your first love note.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: context.responsiveFont(14),
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textLightPink,
-                          ),
-                        ),
-                      ),
+                    return JournalEmptyState(
+                      onAddEntry: () => viewModel.showAddEntryModal(),
                     );
                   }
 
@@ -231,8 +250,8 @@ class _JournalViewState extends State<JournalView> {
       JournalEntryModel entry,
       DateFormat dateFormat,
       BuildContext context, {
-      bool isRewardEntry = false,
-      String? rewardText,
+        bool isRewardEntry = false,
+        String? rewardText,
       }) {
     return SizedBox(
       height: isRewardEntry ? null : 44,
@@ -255,10 +274,14 @@ class _JournalViewState extends State<JournalView> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.card_giftcard,
-                    size: 16,
-                    color: AppColors.primaryRed,
+                  SvgPicture.asset(
+                    'assets/svg/new_svg/reward.svg',
+                    width: 16,
+                    height: 16,
+                    colorFilter: ColorFilter.mode(
+                      AppColors.primaryRed,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   SizedBox(width: 6),
                   Text(
@@ -312,19 +335,27 @@ class _JournalViewState extends State<JournalView> {
                   SizedBox(width: 12),
                   InkWell(
                     onTap: () => viewModel.showAddEntryModal(entry: entry),
-                    child: Icon(
-                      Icons.edit_outlined,
-                      color: AppColors.primaryRed,
-                      size: 20,
+                    child: SvgPicture.asset(
+                      'assets/svg/new_svg/pencil.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        AppColors.primaryRed,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                   SizedBox(width: 16),
                   InkWell(
                     onTap: () => viewModel.deleteEntry(entry.id),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: AppColors.primaryRed,
-                      size: 22,
+                    child: SvgPicture.asset(
+                      'assets/svg/new_svg/delete.svg',
+                      width: 22,
+                      height: 22,
+                      colorFilter: ColorFilter.mode(
+                        AppColors.primaryRed,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                 ],
@@ -341,8 +372,8 @@ class _JournalViewState extends State<JournalView> {
       JournalEntryModel entry,
       DateFormat dateFormat,
       BuildContext context, {
-      bool isRewardEntry = false,
-      String? rewardText,
+        bool isRewardEntry = false,
+        String? rewardText,
       }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -363,10 +394,14 @@ class _JournalViewState extends State<JournalView> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.card_giftcard,
-                  size: 16,
-                  color: AppColors.primaryRed,
+                SvgPicture.asset(
+                  'assets/svg/new_svg/reward.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.primaryRed,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 SizedBox(width: 6),
                 Text(
@@ -400,19 +435,27 @@ class _JournalViewState extends State<JournalView> {
               children: [
                 InkWell(
                   onTap: () => viewModel.showAddEntryModal(entry: entry),
-                  child: Icon(
-                    Icons.edit_outlined,
-                    color: AppColors.primaryRed,
-                    size: 20,
+                  child: SvgPicture.asset(
+                    'assets/svg/new_svg/pencil.svg',
+                    width: 20,
+                    height: 20,
+                    colorFilter: ColorFilter.mode(
+                      AppColors.primaryRed,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
                 SizedBox(width: 16),
                 InkWell(
                   onTap: () => viewModel.deleteEntry(entry.id),
-                  child: Icon(
-                    Icons.delete_outline,
-                    color: AppColors.primaryRed,
-                    size: 22,
+                  child: SvgPicture.asset(
+                    'assets/svg/new_svg/delete.svg',
+                    width: 22,
+                    height: 22,
+                    colorFilter: ColorFilter.mode(
+                      AppColors.primaryRed,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ],

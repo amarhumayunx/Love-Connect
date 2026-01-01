@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -54,42 +55,57 @@ class _NotificationsViewState extends State<NotificationsView> {
             // Header
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: metrics.headerHorizontalPadding,
-                vertical: metrics.sectionSpacing * 0.5,
+                horizontal: context.widthPct(5),
+                vertical: context.responsiveSpacing(16),
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios,
-                      color: AppColors.primaryDark,
-                      size: metrics.iconSize,
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryRed.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: AppColors.primaryDark,
+                        size: context.responsiveImage(20),
+                      ),
                     ),
-                    onPressed: () => Get.back(),
                   ),
+                  SizedBox(width: context.responsiveSpacing(16)),
                   Expanded(
                     child: Text(
                       viewModel.model.title,
                       style: GoogleFonts.inter(
-                        fontSize: context.responsiveFont(20),
-                        fontWeight: FontWeight.w600,
+                        fontSize: context.responsiveFont(24),
+                        fontWeight: FontWeight.w700,
                         color: AppColors.primaryDark,
                       ),
                     ),
                   ),
                   Obx(
-                    () => viewModel.unreadCount > 0
+                        () => viewModel.unreadCount > 0
                         ? TextButton(
-                            onPressed: viewModel.markAllAsRead,
-                            child: Text(
-                              'Mark all read',
-                              style: GoogleFonts.inter(
-                                fontSize: context.responsiveFont(12),
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primaryRed,
-                              ),
-                            ),
-                          )
+                      onPressed: viewModel.markAllAsRead,
+                      child: Text(
+                        'Mark all read',
+                        style: GoogleFonts.inter(
+                          fontSize: context.responsiveFont(12),
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primaryRed,
+                        ),
+                      ),
+                    )
                         : const SizedBox.shrink(),
                   ),
                 ],
@@ -113,24 +129,24 @@ class _NotificationsViewState extends State<NotificationsView> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Column(
-                          children: [
-                            Icon(
-                              Icons.notifications_none,
-                              size: 48,
-                              color: AppColors.textLightPink,
-                            ),
-                            SizedBox(height: metrics.sectionSpacing),
-                            Text(
-                              'No notifications yet',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: context.responsiveFont(14),
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textLightPink,
-                              ),
-                            ),
-                          ],
+                        SvgPicture.asset(
+                          'assets/svg/new_svg/notification_svg.svg',
+                          width: context.responsiveImage(100),
+                          height: context.responsiveImage(100),
+                          colorFilter: ColorFilter.mode(
+                            AppColors.textLightPink.withOpacity(0.5),
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        SizedBox(height: metrics.sectionSpacing),
+                        Text(
+                          'No notifications yet',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: context.responsiveFont(14),
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textLightPink,
+                          ),
                         ),
                       ],
                     ),
@@ -161,10 +177,10 @@ class _NotificationsViewState extends State<NotificationsView> {
   }
 
   Widget _buildNotificationCard(
-    NotificationModel notification,
-    HomeLayoutMetrics metrics,
-    BuildContext context,
-  ) {
+      NotificationModel notification,
+      HomeLayoutMetrics metrics,
+      BuildContext context,
+      ) {
     final dateFormat = DateFormat('MMM dd, yyyy • hh:mm a');
     final isUnread = !notification.isRead;
 
@@ -189,9 +205,9 @@ class _NotificationsViewState extends State<NotificationsView> {
           ],
           border: isUnread
               ? Border.all(
-                  color: AppColors.primaryRed.withOpacity(0.3),
-                  width: 1.5,
-                )
+            color: AppColors.primaryRed.withOpacity(0.3),
+            width: 1.5,
+          )
               : null,
         ),
         child: Row(
@@ -211,12 +227,18 @@ class _NotificationsViewState extends State<NotificationsView> {
                           : AppColors.textLightPink.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.notifications_outlined,
-                      color: isUnread
-                          ? AppColors.primaryRed
-                          : AppColors.textLightPink,
-                      size: 20,
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'assets/svg/new_svg/notification_svg.svg',
+                        width: 20,
+                        height: 20,
+                        colorFilter: ColorFilter.mode(
+                          isUnread
+                              ? AppColors.primaryRed
+                              : AppColors.textLightPink,
+                          BlendMode.srcIn,
+                        ),
+                      ),
                     ),
                   ),
                   if (isUnread)
@@ -293,15 +315,20 @@ class _NotificationsViewState extends State<NotificationsView> {
               ),
             ),
             // Delete button
-            IconButton(
-              icon: Icon(
-                Icons.delete_outline,
-                color: AppColors.primaryRed.withOpacity(0.7),
-                size: 22,
+            GestureDetector(
+              onTap: () => viewModel.deleteNotification(notification.id),
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: SvgPicture.asset(
+                  'assets/svg/new_svg/delete.svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.primaryRed.withOpacity(0.7),
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
-              onPressed: () => viewModel.deleteNotification(notification.id),
-              padding: EdgeInsets.zero,
-              constraints: BoxConstraints(),
             ),
           ],
         ),

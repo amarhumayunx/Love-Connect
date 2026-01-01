@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
 import 'package:love_connect/screens/home/view/widgets/home_header.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view/widgets/quick_action_card.dart';
@@ -153,7 +154,7 @@ class _HomeViewState extends State<HomeView>
                   metrics: metrics,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
 
               Center(
                 child: Container(
@@ -175,7 +176,8 @@ class _HomeViewState extends State<HomeView>
                 ),
               ),
 
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
+
 
               // Content
               Expanded(
@@ -216,6 +218,13 @@ class _HomeViewState extends State<HomeView>
                             plans: viewModel.plans.toList(),
                             metrics: metrics,
                             isLoading: viewModel.isLoadingPlans.value,
+                          ),
+                        ),
+
+                        // Banner Ad
+                        Center(
+                          child: const BannerAdWidget(
+                            margin: EdgeInsets.symmetric(vertical: 8),
                           ),
                         ),
 

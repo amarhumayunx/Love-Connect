@@ -1,9 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
+import 'package:flutter/foundation.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/profile/view_model/profile_view_model.dart';
@@ -57,34 +62,65 @@ class _ProfileViewState extends State<ProfileView> {
               ),
               child: Row(
                 children: [
-                  // Show back arrow only if navigated from quick actions
+                  // Show back arrow only if navigated from quick actions or profile pic tap
                   homeViewModel != null
                       ? Obx(
                           () => homeViewModel!.isFromNavbar('profile')
                               ? const SizedBox.shrink() // Hide back arrow if from navbar
-                              : IconButton(
-                                  icon: Icon(
-                                    Icons.arrow_back_ios,
-                                    color: AppColors.primaryDark,
-                                    size: metrics.iconSize,
+                              : GestureDetector(
+                                  onTap: () => Get.back(),
+                                  child: Container(
+                                    padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primaryRed.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.arrow_back_ios_new,
+                                      color: AppColors.primaryDark,
+                                      size: context.responsiveImage(20),
+                                    ),
                                   ),
-                                  onPressed: () => Get.back(),
                                 ),
                         )
-                      : IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios,
-                            color: AppColors.primaryDark,
-                            size: metrics.iconSize,
+                      : GestureDetector(
+                          onTap: () => Get.back(),
+                          child: Container(
+                            padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryRed.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_ios_new,
+                              color: AppColors.primaryDark,
+                              size: context.responsiveImage(20),
+                            ),
                           ),
-                          onPressed: () => Get.back(),
                         ),
-                  Text(
-                    viewModel.model.title,
-                    style: GoogleFonts.inter(
-                      fontSize: context.responsiveFont(20),
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryDark,
+                  SizedBox(width: context.responsiveSpacing(16)),
+                  Expanded(
+                    child: Text(
+                      viewModel.model.title,
+                      style: GoogleFonts.inter(
+                        fontSize: context.responsiveFont(20),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
                 ],
@@ -144,11 +180,31 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                       ),
 
+                      // Banner Ad
+                      Builder(
+                        builder: (context) {
+                          final adUnitId = AdMobService.instance.settingsBannerAdUnitId;
+                          if (kDebugMode) {
+                            print('📱 PROFILE: Using banner ad unit ID: $adUnitId');
+                          }
+                          return Center(
+                            child: BannerAdWidget(
+                              adUnitId: adUnitId,
+                              margin: EdgeInsets.symmetric(
+                                vertical: metrics.sectionSpacing * 0.5,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      SizedBox(height: metrics.sectionSpacing),
+
                       // Account Section
                       _buildSection('Account', [
                         _buildSettingTile(
                           'Edit Profile',
-                          Icons.person_outline,
+                          'assets/svg/new_svg/pencil.svg',
                           onTap: () {
                             viewModel.showEditProfileModal();
                           },
@@ -158,7 +214,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'Change Password',
-                          Icons.lock_outline,
+                          'assets/svg/new_svg/password.svg',
                           onTap: () {
                             viewModel.navigateToChangePassword();
                           },
@@ -174,7 +230,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildToggleTile(
                           'Push Notifications',
                           'notifications',
-                          Icons.notifications_outlined,
+                          'assets/svg/new_svg/notification_svg.svg',
                           viewModel,
                           metrics,
                           context,
@@ -183,7 +239,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildToggleTile(
                           'Plan Reminders',
                           'planReminder',
-                          Icons.calendar_today_outlined,
+                          'assets/svg/new_svg/reminder.svg',
                           viewModel,
                           metrics,
                           context,
@@ -192,39 +248,11 @@ class _ProfileViewState extends State<ProfileView> {
 
                       SizedBox(height: metrics.sectionSpacing),
 
-                      // App Preferences Section
-                      // // _buildSection('App Preferences', [
-                      // //   _buildToggleTile(
-                      // //     'Romantic Theme',
-                      // //     'romanticTheme',
-                      // //     Icons.favorite_outline,
-                      // //     viewModel,
-                      // //     metrics,
-                      // //     context,
-                      // //   ),
-                      // //   _buildDivider(),
-                      // //   _buildSettingTile(
-                      // //     'Language',
-                      // //     Icons.language_outlined,
-                      // //     subtitle: 'English',
-                      // //     onTap: () {
-                      // //       SnackbarHelper.showSafe(
-                      // //         title: 'Language',
-                      // //         message: 'Language selection coming soon',
-                      // //       );
-                      // //     },
-                      // //     metrics: metrics,
-                      // //     context: context,
-                      // //   ),
-                      // // ], metrics),
-                      //
-                      // SizedBox(height: metrics.sectionSpacing),
-
                       // Support & About Section
                       _buildSection('Support & About', [
                         _buildSettingTile(
                           'Help & Support',
-                          Icons.help_outline,
+                          'assets/svg/new_svg/help.svg',
                           onTap: viewModel.contactSupport,
                           metrics: metrics,
                           context: context,
@@ -232,7 +260,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'Rate App',
-                          Icons.star_outline,
+                          'assets/svg/new_svg/rate.svg',
                           onTap: viewModel.rateApp,
                           metrics: metrics,
                           context: context,
@@ -240,7 +268,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'Share App',
-                          Icons.share_outlined,
+                          'assets/svg/new_svg/share.svg',
                           onTap: viewModel.shareApp,
                           metrics: metrics,
                           context: context,
@@ -248,7 +276,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'Terms of Service',
-                          Icons.description_outlined,
+                          'assets/svg/new_svg/license.svg',
                           onTap: viewModel.showTermsOfService,
                           metrics: metrics,
                           context: context,
@@ -256,7 +284,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'Privacy Policy',
-                          Icons.privacy_tip_outlined,
+                          'assets/svg/new_svg/privacy.svg',
                           onTap: viewModel.showPrivacyPolicy,
                           metrics: metrics,
                           context: context,
@@ -264,7 +292,7 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'About',
-                          Icons.info_outline,
+                          'assets/svg/new_svg/about.svg',
                           subtitle: 'Version ${viewModel.appVersion.value}',
                           onTap: () => viewModel.showAbout(context),
                           metrics: metrics,
@@ -277,8 +305,16 @@ class _ProfileViewState extends State<ProfileView> {
                       // Data Management Section
                       _buildSection('Data Management', [
                         _buildSettingTile(
+                          'Export Data to PDF',
+                          'assets/svg/new_svg/pdf.svg',
+                          onTap: () => viewModel.showExportDataDialog(context),
+                          metrics: metrics,
+                          context: context,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
                           'Clear Cache',
-                          Icons.delete_outline,
+                          'assets/svg/new_svg/cache.svg',
                           onTap: () => viewModel.showClearCacheDialog(context),
                           metrics: metrics,
                           context: context,
@@ -286,8 +322,17 @@ class _ProfileViewState extends State<ProfileView> {
                         _buildDivider(),
                         _buildSettingTile(
                           'Clear All Data',
-                          Icons.delete_forever_outlined,
+                          'assets/svg/new_svg/data.svg',
                           onTap: () => viewModel.showClearDataDialog(context),
+                          metrics: metrics,
+                          context: context,
+                          isDestructive: true,
+                        ),
+                        _buildDivider(),
+                        _buildSettingTile(
+                          'Delete Account',
+                          'assets/svg/new_svg/delete_user.svg',
+                          onTap: () => viewModel.showDeleteAccountDialog(context),
                           metrics: metrics,
                           context: context,
                           isDestructive: true,
@@ -313,7 +358,7 @@ class _ProfileViewState extends State<ProfileView> {
                                 horizontal: metrics.cardPadding,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(32),
                               ),
                               disabledBackgroundColor: AppColors.primaryRed
                                   .withOpacity(0.6),
@@ -330,10 +375,14 @@ class _ProfileViewState extends State<ProfileView> {
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        Icons.logout_rounded,
-                                        size: 20,
-                                        color: AppColors.white,
+                                      SvgPicture.asset(
+                                        'assets/svg/new_svg/logout.svg',
+                                        width: 20,
+                                        height: 20,
+                                        colorFilter: const ColorFilter.mode(
+                                          AppColors.white,
+                                          BlendMode.srcIn,
+                                        ),
                                       ),
                                       SizedBox(
                                         width: context.responsiveSpacing(8),
@@ -397,7 +446,7 @@ class _ProfileViewState extends State<ProfileView> {
 
   Widget _buildSettingTile(
     String title,
-    IconData icon, {
+    String iconPath, {
     String? subtitle,
     required VoidCallback? onTap,
     required HomeLayoutMetrics metrics,
@@ -405,10 +454,14 @@ class _ProfileViewState extends State<ProfileView> {
     bool isDestructive = false,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: isDestructive ? AppColors.primaryRed : AppColors.primaryDark,
-        size: 24,
+      leading: SvgPicture.asset(
+        iconPath,
+        width: 24,
+        height: 24,
+        colorFilter: ColorFilter.mode(
+          isDestructive ? AppColors.primaryRed : AppColors.primaryDark,
+          BlendMode.srcIn,
+        ),
       ),
       title: Text(
         title,
@@ -439,7 +492,7 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _buildToggleTile(
     String title,
     String key,
-    IconData icon,
+    String iconPath,
     ProfileViewModel viewModel,
     HomeLayoutMetrics metrics,
     BuildContext context,
@@ -453,10 +506,14 @@ class _ProfileViewState extends State<ProfileView> {
       final bool currentValue = viewModel.settings[key] ?? false;
 
       return ListTile(
-        leading: Icon(
-          icon,
-          color: shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
-          size: 24,
+        leading: SvgPicture.asset(
+          iconPath,
+          width: 24,
+          height: 24,
+          colorFilter: ColorFilter.mode(
+            shouldEnable ? AppColors.primaryDark : AppColors.textLightPink,
+            BlendMode.srcIn,
+          ),
         ),
         title: Text(
           title,
@@ -504,22 +561,39 @@ class _ProfileViewState extends State<ProfileView> {
 
   Widget _buildProfileImage(String? profilePictureUrl) {
     if (profilePictureUrl != null && profilePictureUrl.isNotEmpty) {
-      return Image.network(
-        profilePictureUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.asset('assets/images/profile.jpg', fit: BoxFit.cover);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-              child: LoadingAnimationWidget.horizontalRotatingDots(
-                color: AppColors.primaryRed,
-                size: 20, // jitna chaho set kar lo
-              ),
-          );
-        },
-      );
+      // Check if it's a local file path (starts with "file://")
+      if (profilePictureUrl.startsWith('file://')) {
+        // Remove "file://" prefix to get the actual file path
+        final String filePath = profilePictureUrl.substring(7);
+        // Use ValueKey to force rebuild when path changes
+        return Image.file(
+          File(filePath),
+          key: ValueKey(filePath), // Force rebuild when path changes
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset('assets/images/profile.jpg', fit: BoxFit.cover);
+          },
+        );
+      } else {
+        // It's a network URL (Firebase)
+        return Image.network(
+          profilePictureUrl,
+          key: ValueKey(profilePictureUrl), // Force rebuild when URL changes
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset('assets/images/profile.jpg', fit: BoxFit.cover);
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+                child: LoadingAnimationWidget.horizontalRotatingDots(
+                  color: AppColors.primaryRed,
+                  size: 20, // jitna chaho set kar lo
+                ),
+            );
+          },
+        );
+      }
     }
     return Image.asset('assets/images/profile.jpg', fit: BoxFit.cover);
   }
