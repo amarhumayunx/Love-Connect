@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://github.com/amarhumayunx/Love-Connect">
+    <img src="assets/images/poster/love_connect.png" width="900"/>
+  </a>
+</p>
+
 # Love Connect 💑
 
 **Love Connect** is a feature-rich Flutter application designed to bring couples closer together. It provides a dedicated space for couples to plan dates, share memories, and stay connected, all wrapped in a beautiful and intuitive user interface.
