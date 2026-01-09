@@ -138,6 +138,65 @@ class _JournalViewState extends State<JournalView> {
                 ],
               ),
             ),
+            // Search Bar
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: context.widthPct(5),
+                vertical: context.responsiveSpacing(8),
+              ),
+              child: TextField(
+                onChanged: viewModel.updateSearchQuery,
+                decoration: InputDecoration(
+                  hintText: 'Search journal entries...',
+                  hintStyle: GoogleFonts.inter(
+                    color: AppColors.textLightPink,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: AppColors.primaryRed,
+                  ),
+                  suffixIcon: Obx(() => viewModel.searchQuery.value.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: AppColors.primaryRed,
+                          ),
+                          onPressed: () => viewModel.updateSearchQuery(''),
+                        )
+                      : const SizedBox.shrink()),
+                  filled: true,
+                  fillColor: AppColors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.primaryRed.withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.primaryRed.withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.primaryRed,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ),
 
             // Content
             Expanded(
@@ -152,25 +211,70 @@ class _JournalViewState extends State<JournalView> {
                     );
                   }
 
-                  if (viewModel.entries.isEmpty) {
+                  // Show empty state if no entries at all (not filtered)
+                  if (viewModel.entries.isEmpty && !viewModel.isLoading.value) {
                     return JournalEmptyState(
                       onAddEntry: () => viewModel.showAddEntryModal(),
                     );
                   }
 
-                  return ListView.builder(
-                    shrinkWrap: false,
-                    padding: EdgeInsets.only(
-                      left: metrics.cardPadding,
-                      right: metrics.cardPadding,
-                      top: metrics.sectionSpacing * 0.5,
-                      bottom: 80, // Extra padding for FAB
+                  // Show no search results if search is active but no filtered results
+                  if (viewModel.filteredEntries.isEmpty && 
+                      viewModel.searchQuery.value.isNotEmpty && 
+                      !viewModel.isLoading.value) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: AppColors.textLightPink,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No entries found',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDarkPink,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Try a different search term',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textLightPink,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    color: AppColors.primaryRed,
+                    onRefresh: viewModel.refreshEntries,
+                    child: ListView.builder(
+                      shrinkWrap: false,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        left: metrics.cardPadding,
+                        right: metrics.cardPadding,
+                        top: metrics.sectionSpacing * 0.5,
+                        bottom: 80, // Extra padding for FAB
+                      ),
+                      itemCount: viewModel.filteredEntries.length,
+                      itemBuilder: (context, index) {
+                        final entry = viewModel.filteredEntries[index];
+                        return _buildEntryCard(entry, metrics, context);
+                      },
                     ),
-                    itemCount: viewModel.entries.length,
-                    itemBuilder: (context, index) {
-                      final entry = viewModel.entries[index];
-                      return _buildEntryCard(entry, metrics, context);
-                    },
                   );
                 },
               ),

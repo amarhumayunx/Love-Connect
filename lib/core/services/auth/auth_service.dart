@@ -305,15 +305,15 @@ class AuthService {
   Future<OAuthCredential> _createFirebaseCredential(
     GoogleSignInAccount googleUser,
   ) async {
-    final googleAuth = googleUser.authentication;
+    final googleAuth = await googleUser.authentication;
     final idToken = googleAuth.idToken;
 
     if (idToken == null || idToken.isEmpty) {
       throw Exception('Failed to get authentication token. Please try again.');
     }
 
+    // Firebase Auth can work with just idToken, accessToken is optional
     return GoogleAuthProvider.credential(
-      accessToken: null,
       idToken: idToken,
     );
   }

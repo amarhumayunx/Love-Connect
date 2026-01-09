@@ -15,11 +15,15 @@ class JournalViewModel extends GetxController {
   final AuthService _authService = AuthService();
   final JournalModel model = const JournalModel();
   final RxList<JournalEntryModel> entries = <JournalEntryModel>[].obs;
+  final RxList<JournalEntryModel> filteredEntries = <JournalEntryModel>[].obs;
   final RxBool isLoading = false.obs;
+  final RxBool isRefreshing = false.obs;
+  final RxString searchQuery = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    filteredEntries.value = [];
     loadEntries();
   }
 
@@ -43,6 +47,7 @@ class JournalViewModel extends GetxController {
             for (var entry in loadedEntries) {
               await _storageService.saveJournalEntry(entry, userId: userId);
             }
+            _applySearchFilter();
             return;
           }
         } catch (e) {
@@ -63,9 +68,11 @@ class JournalViewModel extends GetxController {
       // Sort by date, newest first
       loadedEntries.sort((a, b) => b.date.compareTo(a.date));
       entries.value = loadedEntries;
+      _applySearchFilter();
     } catch (e) {
       print('Error loading journal entries: $e');
       entries.value = [];
+      _applySearchFilter();
     } finally {
       isLoading.value = false;
     }
@@ -131,6 +138,7 @@ class JournalViewModel extends GetxController {
   void _initiateBackgroundSave(JournalEntryModel entry, String userId) {
     _journalDbService.saveJournalEntry(userId: userId, entry: entry).catchError((_) {
       // Background save errors are handled silently
+      return false;
     });
   }
 
@@ -186,6 +194,7 @@ class JournalViewModel extends GetxController {
         entryId: entryId,
       ).catchError((_) {
         // Background delete errors are handled silently
+        return false;
       });
 
       await loadEntries();
@@ -198,6 +207,42 @@ class JournalViewModel extends GetxController {
         title: 'Error',
         message: 'Failed to delete journal entry',
       );
+    }
+  }
+
+  Future<void> refreshEntries() async {
+    isRefreshing.value = true;
+    try {
+      await loadEntries();
+    } catch (e) {
+      SnackbarHelper.showSafe(
+        title: 'Error',
+        message: 'Failed to refresh entries',
+      );
+    } finally {
+      isRefreshing.value = false;
+    }
+  }
+
+  void updateSearchQuery(String query) {
+    searchQuery.value = query;
+    _applySearchFilter();
+  }
+
+  void _applySearchFilter() {
+    try {
+      if (searchQuery.value.isEmpty) {
+        filteredEntries.value = List.from(entries);
+        return;
+      }
+
+      final query = searchQuery.value.toLowerCase();
+      filteredEntries.value = entries.where((entry) {
+        return entry.note.toLowerCase().contains(query);
+      }).toList();
+    } catch (e) {
+      // If filtering fails, show all entries
+      filteredEntries.value = List.from(entries);
     }
   }
 

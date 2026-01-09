@@ -278,6 +278,7 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
                 final date = days[index];
                 final isCurrentMonth = _isCurrentMonth(date);
                 final isSelected = _isSelected(date);
+                final isToday = _isToday(date);
                 // Normalize dates for comparison
                 final normalizedDate = DateTime(
                   date.year,
@@ -301,18 +302,33 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
                 return GestureDetector(
                   onTap: isDisabled ? null : () => _selectDate(date),
                   child: Center(
-                    child: Text(
-                      '${date.day}',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: isDisabled
-                            ? Colors.grey.shade300
-                            : isCurrentMonth
-                            ? AppColors.primaryRed
-                            : Colors.grey.shade400,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: isToday
+                          ? BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primaryRed,
+                                width: 2,
+                              ),
+                            )
+                          : null,
+                      child: Center(
+                        child: Text(
+                          '${date.day}',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            color: isDisabled
+                                ? Colors.grey.shade300
+                                : isCurrentMonth
+                                ? AppColors.primaryRed
+                                : Colors.grey.shade400,
+                          ),
+                        ),
                       ),
                     ),
                   ),

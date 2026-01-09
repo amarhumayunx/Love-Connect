@@ -86,7 +86,7 @@ class LoadingViewModel extends GetxController {
           duration: SmoothNavigator.slowDuration,
         );
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // If anything fails, navigate to login screen as fallback
       try {
         SmoothNavigator.offAll(
@@ -101,4 +101,3 @@ class LoadingViewModel extends GetxController {
     }
   }
 }
-

@@ -412,7 +412,7 @@ class _SurpriseViewState extends State<SurpriseView>
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColors.primaryRed.withOpacity(0.9),
       colorText: AppColors.white,
-      margin: EdgeInsets.all(context.responsiveSpacing(16)),
+      margin: const EdgeInsets.all(16),
       borderRadius: 12,
       duration: const Duration(seconds: 3),
     );
@@ -433,16 +433,44 @@ class _SurpriseViewState extends State<SurpriseView>
   }
 
   void _showDecisionMaker(BuildContext context) {
-    // Common decision options
+    // Pakistan-specific decision options
     final defaultOptions = [
+      'Biryani',
+      'Karahi',
+      'Nihari',
+      'Haleem',
+      'BBQ',
+      'Chapli Kebab',
+      'Seekh Kebab',
+      'Chicken Tikka',
+      'Mutton Karahi',
+      'Fish Fry',
+      'Daal Chawal',
+      'Chana Chaat',
+      'Samosa',
+      'Pakora',
+      'Gol Gappay',
+      'Dahi Bhallay',
+      'Chicken Roll',
+      'Shawarma',
+      'Pulao',
+      'Qorma',
+      'Haleem',
+      'Paye',
+      'Nihari',
+      'Chicken Handi',
+      'Mutton Pulao',
+      'Chicken Biryani',
+      'Beef Biryani',
+      'Mutton Biryani',
+      'Zinger Burger',
+      'Club Sandwich',
+      'Chicken Wings',
+      'Pasta',
       'Pizza',
-      'Sushi',
-      'Italian',
-      'Mexican',
       'Chinese',
-      'Burgers',
       'Thai',
-      'Indian',
+      'Italian',
     ];
 
     DecisionMakerWidget.show(context, defaultOptions);

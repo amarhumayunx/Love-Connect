@@ -13,12 +13,19 @@ class AllPlansViewModel extends GetxController {
   final PlansDatabaseService _plansDbService = PlansDatabaseService();
 
   final RxList<PlanModel> plans = <PlanModel>[].obs;
+  final RxList<PlanModel> filteredPlans = <PlanModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
+  
+  // Search and filter
+  final RxString searchQuery = ''.obs;
+  final Rx<PlanType?> selectedTypeFilter = Rx<PlanType?>(null);
+  final Rx<DateTime?> selectedDateFilter = Rx<DateTime?>(null);
 
   @override
   void onInit() {
     super.onInit();
+    filteredPlans.value = [];
     loadPlans();
   }
 
@@ -42,6 +49,7 @@ class AllPlansViewModel extends GetxController {
             for (var plan in loadedPlans) {
               await _storageService.savePlan(plan, userId: userId);
             }
+            _applyFilters();
             return;
           }
         } catch (e) {
@@ -62,9 +70,11 @@ class AllPlansViewModel extends GetxController {
       // Sort by date, upcoming first
       loadedPlans.sort((a, b) => a.date.compareTo(b.date));
       plans.value = loadedPlans;
+      _applyFilters();
     } catch (e) {
       print('Error loading plans: $e');
       plans.value = [];
+      _applyFilters();
     } finally {
       isLoading.value = false;
     }
@@ -123,6 +133,66 @@ class AllPlansViewModel extends GetxController {
       );
     } catch (e) {
       SnackbarHelper.showSafe(title: 'Error', message: 'Failed to delete plan');
+    }
+  }
+
+  void updateSearchQuery(String query) {
+    searchQuery.value = query;
+    _applyFilters();
+  }
+
+  void updateTypeFilter(PlanType? type) {
+    selectedTypeFilter.value = type;
+    _applyFilters();
+  }
+
+  void updateDateFilter(DateTime? date) {
+    selectedDateFilter.value = date;
+    _applyFilters();
+  }
+
+  void clearFilters() {
+    searchQuery.value = '';
+    selectedTypeFilter.value = null;
+    selectedDateFilter.value = null;
+    _applyFilters();
+  }
+
+  void _applyFilters() {
+    try {
+      List<PlanModel> filtered = List.from(plans);
+
+      // Apply search filter
+      if (searchQuery.value.isNotEmpty) {
+        final query = searchQuery.value.toLowerCase();
+        filtered = filtered.where((plan) {
+          return plan.title.toLowerCase().contains(query) ||
+              plan.place.toLowerCase().contains(query) ||
+              plan.type.displayName.toLowerCase().contains(query);
+        }).toList();
+      }
+
+      // Apply type filter
+      if (selectedTypeFilter.value != null) {
+        filtered = filtered.where((plan) {
+          return plan.type == selectedTypeFilter.value;
+        }).toList();
+      }
+
+      // Apply date filter
+      if (selectedDateFilter.value != null) {
+        final filterDate = selectedDateFilter.value!;
+        filtered = filtered.where((plan) {
+          return plan.date.year == filterDate.year &&
+              plan.date.month == filterDate.month &&
+              plan.date.day == filterDate.day;
+        }).toList();
+      }
+
+      filteredPlans.value = filtered;
+    } catch (e) {
+      // If filtering fails, show all plans
+      filteredPlans.value = List.from(plans);
     }
   }
 }

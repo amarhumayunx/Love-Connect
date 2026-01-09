@@ -67,7 +67,7 @@ class SplashViewModel extends GetxController {
         } catch (e) {
           // If reload fails, continue with cached user data
         }
-        
+
         final isVerified = _authService.isEmailVerified;
         final userEmail = _authService.currentUser?.email;
 
@@ -102,7 +102,7 @@ class SplashViewModel extends GetxController {
           );
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // If navigation fails, default to login screen
       try {
         SmoothNavigator.offAll(

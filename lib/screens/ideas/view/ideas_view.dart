@@ -44,39 +44,97 @@ class _IdeasViewState extends State<IdeasView> {
                 horizontal: context.widthPct(5),
                 vertical: context.responsiveSpacing(16),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Container(
-                      padding: EdgeInsets.all(context.responsiveSpacing(8)),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryRed.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Container(
+                          padding: EdgeInsets.all(context.responsiveSpacing(8)),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryRed.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: AppColors.primaryDark,
+                            size: context.responsiveImage(20),
+                          ),
+                        ),
                       ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new,
-                        color: AppColors.primaryDark,
-                        size: context.responsiveImage(20),
+                      SizedBox(width: context.responsiveSpacing(16)),
+                      Expanded(
+                        child: Text(
+                          'Ideas',
+                          style: GoogleFonts.inter(
+                            fontSize: context.responsiveFont(24),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: context.responsiveSpacing(16)),
+                  // Search Bar
+                  TextField(
+                    onChanged: viewModel.updateSearchQuery,
+                    decoration: InputDecoration(
+                      hintText: 'Search ideas...',
+                      hintStyle: GoogleFonts.inter(
+                        color: AppColors.textLightPink,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: AppColors.primaryRed,
+                      ),
+                      suffixIcon: Obx(() => viewModel.searchQuery.value.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: AppColors.primaryRed,
+                              ),
+                              onPressed: () => viewModel.updateSearchQuery(''),
+                            )
+                          : const SizedBox.shrink()),
+                      filled: true,
+                      fillColor: AppColors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryRed.withOpacity(0.3),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryRed.withOpacity(0.3),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryRed,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                     ),
-                  ),
-                  SizedBox(width: context.responsiveSpacing(16)),
-                  Expanded(
-                    child: Text(
-                      'Ideas',
-                      style: GoogleFonts.inter(
-                        fontSize: context.responsiveFont(24),
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryDark,
-                      ),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.primaryDark,
                     ),
                   ),
                 ],
@@ -86,17 +144,79 @@ class _IdeasViewState extends State<IdeasView> {
             // Content
             Expanded(
               child: Obx(
-                    () => ListView.builder(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: metrics.cardPadding,
-                    vertical: metrics.sectionSpacing * 0.5,
-                  ),
-                  itemCount: viewModel.ideas.length,
-                  itemBuilder: (context, index) {
-                    final idea = viewModel.ideas[index];
-                    return _buildIdeaCard(idea, metrics, context);
-                  },
-                ),
+                () {
+                  // Show empty state if no ideas at all
+                  if (viewModel.ideas.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.lightbulb_outline,
+                            size: 80,
+                            color: AppColors.textLightPink,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No ideas available',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDarkPink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Show no search results if search is active but no filtered results
+                  if (viewModel.filteredIdeas.isEmpty && 
+                      viewModel.searchQuery.value.isNotEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: AppColors.textLightPink,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No ideas found',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDarkPink,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Try a different search term',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textLightPink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: metrics.cardPadding,
+                      vertical: metrics.sectionSpacing * 0.5,
+                    ),
+                    itemCount: viewModel.filteredIdeas.length,
+                    itemBuilder: (context, index) {
+                      final idea = viewModel.filteredIdeas[index];
+                      return _buildIdeaCard(idea, metrics, context);
+                    },
+                  );
+                },
               ),
             ),
           ],
