@@ -5,6 +5,8 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/plan_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/all_plans/view_model/all_plans_view_model.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view/widgets/plan_card.dart';
@@ -147,7 +149,7 @@ class _AllPlansViewState extends State<AllPlansView> {
                     children: [
                       Expanded(
                         child: Obx(() => DropdownButtonFormField<PlanType?>(
-                          value: viewModel.selectedTypeFilter.value,
+                          initialValue: viewModel.selectedTypeFilter.value,
                           decoration: InputDecoration(
                             hintText: 'Filter by Type',
                             hintStyle: GoogleFonts.inter(
@@ -273,7 +275,7 @@ class _AllPlansViewState extends State<AllPlansView> {
 
                 // Show no search results if search/filter is active but no filtered results
                 if (viewModel.filteredPlans.isEmpty && 
-                    !viewModel.plans.isEmpty &&
+                    viewModel.plans.isNotEmpty &&
                     !viewModel.isLoading.value &&
                     (viewModel.searchQuery.value.isNotEmpty || 
                      viewModel.selectedTypeFilter.value != null ||
@@ -369,6 +371,18 @@ class _AllPlansViewState extends State<AllPlansView> {
                   ),
                 );
               }),
+            ),
+            
+            // Banner Ad at the bottom
+            SafeArea(
+              top: false,
+              child: BannerAdWidget(
+                adUnitId: AdMobService.instance.allPlansBannerAdUnitId,
+                useAnchoredAdaptive: true,
+                margin: EdgeInsets.symmetric(
+                  vertical: context.responsiveSpacing(8),
+                ),
+              ),
             ),
           ],
         ),

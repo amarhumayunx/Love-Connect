@@ -86,7 +86,7 @@
 		<string>We need access to your camera to take photos for your profile picture.</string>
 		<!-- AdMob App ID -->
 		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-3425673808153409~4397564445</string>
+		<string>ca-app-pub-3425673808153409~7824554006</string>
 		<key>UIStatusBarHidden</key>
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>

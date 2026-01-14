@@ -7,6 +7,8 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/notification_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/notifications/view_model/notifications_view_model.dart';
 
@@ -169,6 +171,18 @@ class _NotificationsViewState extends State<NotificationsView> {
                   },
                 );
               }),
+            ),
+            
+            // Banner Ad at the bottom
+            SafeArea(
+              top: false,
+              child: BannerAdWidget(
+                adUnitId: AdMobService.instance.notificationBannerAdUnitId,
+                useAnchoredAdaptive: true,
+                margin: EdgeInsets.symmetric(
+                  vertical: context.responsiveSpacing(8),
+                ),
+              ),
             ),
           ],
         ),

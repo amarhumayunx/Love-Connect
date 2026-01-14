@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/idea_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/ideas/view_model/ideas_view_model.dart';
 
@@ -217,6 +219,18 @@ class _IdeasViewState extends State<IdeasView> {
                     },
                   );
                 },
+              ),
+            ),
+            
+            // Banner Ad at the bottom
+            SafeArea(
+              top: false,
+              child: BannerAdWidget(
+                adUnitId: AdMobService.instance.ideasBannerAdUnitId,
+                useAnchoredAdaptive: true,
+                margin: EdgeInsets.symmetric(
+                  vertical: context.responsiveSpacing(8),
+                ),
               ),
             ),
           ],

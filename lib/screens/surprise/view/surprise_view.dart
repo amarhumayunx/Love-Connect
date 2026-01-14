@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/core/widgets/decision_maker_widget.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/surprise/view/widgets/date_wheel_widget.dart';
 import 'package:love_connect/screens/surprise/view/widgets/scratch_card_widget.dart';
 import 'package:love_connect/screens/surprise/view_model/surprise_view_model.dart';
@@ -231,6 +233,18 @@ class _SurpriseViewState extends State<SurpriseView>
                         ),
                       );
                     },
+                  ),
+                ),
+              ),
+              
+              // Banner Ad at the bottom
+              SafeArea(
+                top: false,
+                child: BannerAdWidget(
+                  adUnitId: AdMobService.instance.surpriseBannerAdUnitId,
+                  useAnchoredAdaptive: true,
+                  margin: EdgeInsets.symmetric(
+                    vertical: context.responsiveSpacing(8),
                   ),
                 ),
               ),

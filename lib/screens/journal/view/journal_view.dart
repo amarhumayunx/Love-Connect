@@ -9,6 +9,8 @@ import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/models/journal_entry_model.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
 import 'package:love_connect/core/widgets/empty_state_widget.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/home/view/widgets/home_layout_metrics.dart';
 import 'package:love_connect/screens/home/view_model/home_view_model.dart';
 import 'package:love_connect/screens/journal/view_model/journal_view_model.dart';
@@ -277,6 +279,18 @@ class _JournalViewState extends State<JournalView> {
                     ),
                   );
                 },
+              ),
+            ),
+            
+            // Banner Ad at the bottom
+            SafeArea(
+              top: false,
+              child: BannerAdWidget(
+                adUnitId: AdMobService.instance.journalBannerAdUnitId,
+                useAnchoredAdaptive: true,
+                margin: EdgeInsets.symmetric(
+                  vertical: context.responsiveSpacing(8),
+                ),
               ),
             ),
           ],

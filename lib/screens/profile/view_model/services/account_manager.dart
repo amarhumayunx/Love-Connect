@@ -9,7 +9,6 @@ import 'package:love_connect/core/services/user_database_service.dart';
 import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/core/utils/snackbar_helper.dart';
 import 'package:love_connect/screens/auth/login/view/login_view.dart';
-import 'package:get/get.dart' as getx;
 
 class AccountManager {
   final AuthService _authService = AuthService();

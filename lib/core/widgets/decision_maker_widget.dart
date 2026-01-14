@@ -514,7 +514,7 @@ class _DecisionMakerWidgetState extends State<DecisionMakerWidget>
                               ],
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),

@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:love_connect/core/colors/app_colors.dart';
 import 'package:love_connect/core/utils/media_query_extensions.dart';
+import 'package:love_connect/core/widgets/banner_ad_widget.dart';
+import 'package:love_connect/core/services/admob_service.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/add_plan_layout_metrics.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/custom_date_picker.dart';
 import 'package:love_connect/screens/add_plan/view/widgets/custom_time_picker.dart';
@@ -319,8 +321,20 @@ class _AddPlanViewState extends State<AddPlanView> {
                           Expanded(child: _buildSaveButton(metrics)),
                         ],
                       ),
-                      SizedBox(height: metrics.sectionSpacing * 4),
+                      SizedBox(height: metrics.sectionSpacing * 2),
                     ],
+                  ),
+                ),
+              ),
+              
+              // Banner Ad at the bottom
+              SafeArea(
+                top: false,
+                child: BannerAdWidget(
+                  adUnitId: AdMobService.instance.addPlanBannerAdUnitId,
+                  useAnchoredAdaptive: true,
+                  margin: EdgeInsets.symmetric(
+                    vertical: context.responsiveSpacing(8),
                   ),
                 ),
               ),

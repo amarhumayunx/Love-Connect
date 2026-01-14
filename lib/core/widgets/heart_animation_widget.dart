@@ -99,7 +99,6 @@ void showHeartAnimation(
       Color color = Colors.red,
     }) {
   final overlay = Overlay.of(context);
-  if (overlay == null) return;
 
   OverlayEntry? overlayEntry;
 

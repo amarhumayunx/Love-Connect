@@ -25,7 +25,6 @@ import 'package:love_connect/screens/profile/view_model/services/account_manager
 import 'package:love_connect/screens/profile/view_model/services/support_manager.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 

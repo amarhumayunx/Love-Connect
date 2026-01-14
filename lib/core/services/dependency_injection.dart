@@ -6,7 +6,6 @@ import 'package:love_connect/core/services/plans_database_service.dart';
 import 'package:love_connect/core/services/journal_database_service.dart';
 import 'package:love_connect/core/services/notification_service.dart';
 import 'package:love_connect/core/services/quotes_service.dart';
-import 'package:love_connect/core/services/theme_service.dart';
 import 'package:love_connect/core/services/error_handling_service.dart';
 import 'package:love_connect/core/services/app_preferences_service.dart';
 

@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 class AdMobService {
   static AdMobService? _instance;
   static AdMobService get instance => _instance ??= AdMobService._();
-  
+
   AdMobService._();
 
   InterstitialAd? _interstitialAd;
@@ -15,11 +15,18 @@ class AdMobService {
   bool _isInterstitialAdShowing = false;
   DateTime? _adShowStartTime;
 
+  // App Open Ad variables
+  AppOpenAd? _appOpenAd;
+  bool _isAppOpenAdLoading = false;
+  bool _isAppOpenAdShowing = false;
+  DateTime? _appOpenAdLoadTime;
+  Completer<void>? _appOpenAdCompleter;
+
   // Test Ad Unit IDs - Replace these with your actual Ad Unit IDs from AdMob console
   // For testing, you can use these Google test ad unit IDs:
   // Android Banner: ca-app-pub-3940256099942544/6300978111
   // iOS Banner: ca-app-pub-3940256099942544/2934735716
-  
+
   // TODO: Replace with your actual Ad Unit IDs from AdMob console
   String get bannerAdUnitId {
     if (kDebugMode) {
@@ -51,6 +58,96 @@ class AdMobService {
     }
   }
 
+  /// All Plans Screen Banner Ad Unit ID
+  String get allPlansBannerAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode to see ads immediately
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android Banner Test ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS Banner Test ID
+    } else {
+      // Use your actual ad unit IDs in release mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3425673808153409/7642383309' // Android All Plans Screen Banner ad unit ID
+          : 'ca-app-pub-3425673808153409/7642383309'; // iOS All Plans Screen Banner ad unit ID
+    }
+  }
+
+  /// Ideas Screen Banner Ad Unit ID
+  String get ideasBannerAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode to see ads immediately
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android Banner Test ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS Banner Test ID
+    } else {
+      // Use your actual ad unit IDs in release mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3425673808153409/1742161690' // Android Ideas Screen Banner ad unit ID
+          : 'ca-app-pub-3425673808153409/1742161690'; // iOS Ideas Screen Banner ad unit ID
+    }
+  }
+
+  /// Journal Screen Banner Ad Unit ID
+  String get journalBannerAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode to see ads immediately
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android Banner Test ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS Banner Test ID
+    } else {
+      // Use your actual ad unit IDs in release mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3425673808153409/6802916684' // Android Journal Screen Banner ad unit ID
+          : 'ca-app-pub-3425673808153409/6802916684'; // iOS Journal Screen Banner ad unit ID
+    }
+  }
+
+  /// Surprise Screen Banner Ad Unit ID
+  String get surpriseBannerAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode to see ads immediately
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android Banner Test ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS Banner Test ID
+    } else {
+      // Use your actual ad unit IDs in release mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3425673808153409/2863671670' // Android Surprise Screen Banner ad unit ID
+          : 'ca-app-pub-3425673808153409/2863671670'; // iOS Surprise Screen Banner ad unit ID
+    }
+  }
+
+  /// Notification Screen Banner Ad Unit ID
+  String get notificationBannerAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode to see ads immediately
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android Banner Test ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS Banner Test ID
+    } else {
+      // Use your actual ad unit IDs in release mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3425673808153409/9829562947' // Android Notification Screen Banner ad unit ID
+          : 'ca-app-pub-3425673808153409/9829562947'; // iOS Notification Screen Banner ad unit ID
+    }
+  }
+
+  /// Add Plan Screen Banner Ad Unit ID
+  String get addPlanBannerAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode to see ads immediately
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android Banner Test ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS Banner Test ID
+    } else {
+      // Use your actual ad unit IDs in release mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3425673808153409/3264154590' // Android Add Plan Screen Banner ad unit ID
+          : 'ca-app-pub-3425673808153409/3264154590'; // iOS Add Plan Screen Banner ad unit ID
+    }
+  }
+
   /// Full Screen Interstitial Ad Unit ID
   String get interstitialAdUnitId {
     if (kDebugMode) {
@@ -64,6 +161,19 @@ class AdMobService {
     }
   }
 
+  /// App Open Ad Unit ID
+  String get appOpenAdUnitId {
+    if (kDebugMode) {
+      // Use test ad unit IDs in debug mode
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/9257395921' // Android App Open Test ID
+          : 'ca-app-pub-3940256099942544/5574492063'; // iOS App Open Test ID
+    } else {
+      // Use your actual ad unit ID in release mode
+      return 'ca-app-pub-3425673808153409/9014162962'; // App Open Ad Unit ID
+    }
+  }
+
   /// Initialize AdMob SDK
   Future<void> initialize() async {
     try {
@@ -71,8 +181,9 @@ class AdMobService {
       if (kDebugMode) {
         print('AdMob initialized successfully');
       }
-      // Preload interstitial ad
+      // Preload ads
       loadInterstitialAd();
+      loadAppOpenAd();
     } catch (e) {
       if (kDebugMode) {
         print('Error initializing AdMob: $e');
@@ -101,58 +212,70 @@ class AdMobService {
             _isInterstitialAdLoading = false;
 
             // Set up ad event callbacks
-            _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+            _interstitialAd!
+                .fullScreenContentCallback = FullScreenContentCallback(
               onAdDismissedFullScreenContent: (InterstitialAd ad) {
                 // Calculate and log ad display duration
                 if (_adShowStartTime != null) {
                   final duration = DateTime.now().difference(_adShowStartTime!);
                   final seconds = duration.inSeconds;
                   final milliseconds = duration.inMilliseconds;
-                  
+
                   if (kDebugMode) {
-                    print('⏱️  FULL SCREEN AD: Dismissed after ${seconds}s ${milliseconds % 1000}ms (Total: ${milliseconds}ms)');
+                    print(
+                      '⏱️  FULL SCREEN AD: Dismissed after ${seconds}s ${milliseconds % 1000}ms (Total: ${milliseconds}ms)',
+                    );
                   }
-                  
+
                   // Log in a more readable format
                   if (seconds >= 60) {
                     final minutes = seconds ~/ 60;
                     final remainingSeconds = seconds % 60;
                     if (kDebugMode) {
-                      print('⏱️  FULL SCREEN AD: Display time = ${minutes}m ${remainingSeconds}s');
+                      print(
+                        '⏱️  FULL SCREEN AD: Display time = ${minutes}m ${remainingSeconds}s',
+                      );
                     }
                   } else {
                     if (kDebugMode) {
-                      print('⏱️  FULL SCREEN AD: Display time = ${seconds}.${(milliseconds % 1000).toString().padLeft(3, '0')}s');
+                      print(
+                        '⏱️  FULL SCREEN AD: Display time = $seconds.${(milliseconds % 1000).toString().padLeft(3, '0')}s',
+                      );
                     }
                   }
-                  
+
                   _adShowStartTime = null;
                 } else {
                   if (kDebugMode) {
-                    print('Interstitial ad dismissed by user (time not tracked)');
+                    print(
+                      'Interstitial ad dismissed by user (time not tracked)',
+                    );
                   }
                 }
-                
+
                 ad.dispose();
                 _interstitialAd = null;
                 _isInterstitialAdShowing = false;
                 // Load next ad
                 loadInterstitialAd();
               },
-              onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-                if (kDebugMode) {
-                  print('Interstitial ad failed to show: $error');
-                }
-                _adShowStartTime = null;
-                ad.dispose();
-                _interstitialAd = null;
-                _isInterstitialAdLoading = false;
-                _isInterstitialAdShowing = false;
-              },
+              onAdFailedToShowFullScreenContent:
+                  (InterstitialAd ad, AdError error) {
+                    if (kDebugMode) {
+                      print('Interstitial ad failed to show: $error');
+                    }
+                    _adShowStartTime = null;
+                    ad.dispose();
+                    _interstitialAd = null;
+                    _isInterstitialAdLoading = false;
+                    _isInterstitialAdShowing = false;
+                  },
               onAdShowedFullScreenContent: (InterstitialAd ad) {
                 _adShowStartTime = DateTime.now();
                 if (kDebugMode) {
-                  print('⏱️  FULL SCREEN AD: Started showing at ${_adShowStartTime!.toIso8601String()}');
+                  print(
+                    '⏱️  FULL SCREEN AD: Started showing at ${_adShowStartTime!.toIso8601String()}',
+                  );
                 }
                 _isInterstitialAdShowing = true;
               },
@@ -204,6 +327,161 @@ class AdMobService {
     }
   }
 
+  /// Load App Open Ad
+  Future<void> loadAppOpenAd() async {
+    if (_isAppOpenAdLoading || _appOpenAd != null) {
+      return;
+    }
+
+    _isAppOpenAdLoading = true;
+
+    try {
+      await AppOpenAd.load(
+        adUnitId: appOpenAdUnitId,
+        request: const AdRequest(),
+        adLoadCallback: AppOpenAdLoadCallback(
+          onAdLoaded: (AppOpenAd ad) {
+            if (kDebugMode) {
+              print('✅ App Open ad loaded successfully');
+            }
+            _appOpenAd = ad;
+            _isAppOpenAdLoading = false;
+            _appOpenAdLoadTime = DateTime.now();
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            if (kDebugMode) {
+              print('❌ App Open ad failed to load: $error');
+            }
+            _isAppOpenAdLoading = false;
+            _appOpenAd = null;
+          },
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading App Open ad: $e');
+      }
+      _isAppOpenAdLoading = false;
+    }
+  }
+
+  /// Check if ad was loaded less than n hours ago
+  bool _wasLoadTimeLessThanNHoursAgo(DateTime? loadTime, int numHours) {
+    if (loadTime == null) return false;
+    final dateDifference = DateTime.now().difference(loadTime);
+    final numMillisecondsPerHour = const Duration(hours: 1).inMilliseconds;
+    return dateDifference.inMilliseconds < (numMillisecondsPerHour * numHours);
+  }
+
+  /// Check if App Open ad exists and can be shown
+  bool isAppOpenAdAvailable() {
+    // App open ads expire after 4 hours
+    return _appOpenAd != null &&
+        _wasLoadTimeLessThanNHoursAgo(_appOpenAdLoadTime, 4);
+  }
+
+  /// Show App Open Ad if available
+  /// Returns a Future that completes when the ad is dismissed or fails to show
+  /// Returns true if ad was shown, false otherwise
+  Future<bool> showAppOpenAdIfAvailable() async {
+    // If the app open ad is already showing, do not show the ad again
+    if (_isAppOpenAdShowing) {
+      if (kDebugMode) {
+        print('App Open ad is already showing');
+      }
+      return false;
+    }
+
+    // If the app open ad is not available yet, return false
+    if (!isAppOpenAdAvailable()) {
+      if (kDebugMode) {
+        print('App Open ad is not ready yet');
+      }
+      // Try to load a new ad
+      loadAppOpenAd();
+      return false;
+    }
+
+    try {
+      _isAppOpenAdShowing = true;
+      _appOpenAdCompleter = Completer<void>();
+
+      // Set up full screen content callback
+      _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (AppOpenAd ad) {
+          if (kDebugMode) {
+            print('App Open ad dismissed fullscreen content');
+          }
+          ad.dispose();
+          _appOpenAd = null;
+          _isAppOpenAdShowing = false;
+          _appOpenAdLoadTime = null;
+          // Complete the completer to signal ad dismissal
+          if (!_appOpenAdCompleter!.isCompleted) {
+            _appOpenAdCompleter!.complete();
+          }
+          _appOpenAdCompleter = null;
+          // Load next ad
+          loadAppOpenAd();
+        },
+        onAdFailedToShowFullScreenContent: (AppOpenAd ad, AdError error) {
+          if (kDebugMode) {
+            print('App Open ad failed to show: $error');
+          }
+          ad.dispose();
+          _appOpenAd = null;
+          _isAppOpenAdShowing = false;
+          _appOpenAdLoadTime = null;
+          // Complete the completer to signal ad failure
+          if (!_appOpenAdCompleter!.isCompleted) {
+            _appOpenAdCompleter!.complete();
+          }
+          _appOpenAdCompleter = null;
+          // Load next ad
+          loadAppOpenAd();
+        },
+        onAdShowedFullScreenContent: (AppOpenAd ad) {
+          if (kDebugMode) {
+            print('App Open ad showed fullscreen content');
+          }
+        },
+        onAdImpression: (AppOpenAd ad) {
+          if (kDebugMode) {
+            print('App Open ad recorded an impression');
+          }
+        },
+        onAdClicked: (AppOpenAd ad) {
+          if (kDebugMode) {
+            print('App Open ad was clicked');
+          }
+        },
+      );
+
+      // Show the ad
+      await _appOpenAd!.show();
+      if (kDebugMode) {
+        print('✅ App Open ad displayed');
+      }
+
+      // Wait for the ad to be dismissed
+      await _appOpenAdCompleter?.future;
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error showing App Open ad: $e');
+      }
+      _isAppOpenAdShowing = false;
+      _appOpenAd = null;
+      _appOpenAdLoadTime = null;
+      if (_appOpenAdCompleter != null && !_appOpenAdCompleter!.isCompleted) {
+        _appOpenAdCompleter!.complete();
+      }
+      _appOpenAdCompleter = null;
+      return false;
+    }
+  }
+
   /// Dispose resources
   void dispose() {
     _interstitialAd?.dispose();
@@ -211,8 +489,18 @@ class AdMobService {
     _isInterstitialAdLoading = false;
     _isInterstitialAdShowing = false;
     _adShowStartTime = null;
+
+    _appOpenAd?.dispose();
+    _appOpenAd = null;
+    _isAppOpenAdLoading = false;
+    _isAppOpenAdShowing = false;
+    _appOpenAdLoadTime = null;
+    if (_appOpenAdCompleter != null && !_appOpenAdCompleter!.isCompleted) {
+      _appOpenAdCompleter!.complete();
+    }
+    _appOpenAdCompleter = null;
   }
-  
+
   /// Get last ad display duration (for debugging/analytics)
   Duration? getLastAdDuration() {
     if (_adShowStartTime != null) {
@@ -221,4 +509,3 @@ class AdMobService {
     return null;
   }
 }
-
