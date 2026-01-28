@@ -373,37 +373,48 @@ class _AllPlansViewState extends State<AllPlansView> {
               }),
             ),
             
-            // Banner Ad at the bottom
+            // FAB and Banner Ad at the bottom
             SafeArea(
               top: false,
-              child: BannerAdWidget(
-                adUnitId: AdMobService.instance.allPlansBannerAdUnitId,
-                useAnchoredAdaptive: true,
-                margin: EdgeInsets.symmetric(
-                  vertical: context.responsiveSpacing(8),
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // FAB positioned above banner
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: context.responsiveSpacing(8),
+                    ),
+                    child: FloatingActionButton.extended(
+                      onPressed: viewModel.onAddPlanTap,
+                      backgroundColor: AppColors.primaryRed,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(34),
+                      ),
+                      icon: Icon(Icons.add, color: Colors.white, size: 24),
+                      label: Text(
+                        'Add Plan',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Banner Ad below FAB
+                  BannerAdWidget(
+                    adUnitId: AdMobService.instance.allPlansBannerAdUnitId,
+                    useAnchoredAdaptive: true,
+                    margin: EdgeInsets.only(
+                      bottom: context.responsiveSpacing(8),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: viewModel.onAddPlanTap,
-        backgroundColor: AppColors.primaryRed,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(34),
-        ),
-        icon: Icon(Icons.add, color: Colors.white, size: 24),
-        label: Text(
-          'Add Plan',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 

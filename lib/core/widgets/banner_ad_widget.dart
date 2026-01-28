@@ -39,17 +39,17 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   Future<void> _loadAd() async {
     if (_isLoading) return;
-    
+
     final adUnitId = widget.adUnitId ?? AdMobService.instance.bannerAdUnitId;
-    
+
     if (kDebugMode) {
       print('📱 BANNER AD: Loading ad with unit ID: $adUnitId');
     }
-    
+
     AdSize adSize;
-    
-    // Use anchored adaptive banner if requested and no explicit size provided
-    if (widget.useAnchoredAdaptive && widget.adSize == null) {
+
+    // Use anchored adaptive banner if requested, or by default for wider banners
+    if (widget.useAnchoredAdaptive || widget.adSize == null) {
       _isLoading = true;
       try {
         // Ensure context is mounted and available
@@ -57,34 +57,42 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
           _isLoading = false;
           return;
         }
-        
+
+        // Use full screen width for wider banner
         final width = MediaQuery.sizeOf(context).width.truncate();
-        final adaptiveSize = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
-        
+        final adaptiveSize =
+            await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
+              width,
+            );
+
         if (adaptiveSize == null) {
           if (kDebugMode) {
             print('❌ BANNER AD: Unable to get anchored adaptive banner size');
           }
           _isLoading = false;
-          return;
-        }
-        
-        adSize = adaptiveSize;
-        if (kDebugMode) {
-          print('✅ BANNER AD: Got anchored adaptive size: ${adSize.width}x${adSize.height}');
+          // Fallback to large banner if adaptive fails
+          adSize = AdSize.largeBanner;
+        } else {
+          adSize = adaptiveSize;
+          if (kDebugMode) {
+            print(
+              '✅ BANNER AD: Got anchored adaptive size: ${adSize.width}x${adSize.height}',
+            );
+          }
         }
       } catch (e) {
         if (kDebugMode) {
           print('❌ BANNER AD: Error getting adaptive size: $e');
         }
-        _isLoading = false;
-        return;
+        // Fallback to large banner on error
+        adSize = AdSize.largeBanner;
       }
       _isLoading = false;
     } else {
-      adSize = widget.adSize ?? AdSize.banner;
+      // Use provided ad size
+      adSize = widget.adSize!;
     }
-    
+
     _bannerAd = BannerAd(
       adUnitId: adUnitId,
       size: adSize,
@@ -164,13 +172,13 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       return const SizedBox.shrink();
     }
 
+    // Use full width container for wider banner display
     return Container(
       margin: widget.margin ?? EdgeInsets.zero,
       alignment: Alignment.center,
-      width: _bannerAd!.size.width.toDouble(),
+      width: double.infinity, // Full width for wider banner
       height: _bannerAd!.size.height.toDouble(),
-      child: AdWidget(ad: _bannerAd!),
+      child: Center(child: AdWidget(ad: _bannerAd!)),
     );
   }
 }
-

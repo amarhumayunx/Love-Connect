@@ -57,6 +57,9 @@ dependencies:
   # PDF Generation
   pdf: ^3.11.1
   printing: ^5.13.2
+  
+  # WebView
+  webview_flutter: ^4.9.0
 
 
 

@@ -1,58 +1,35 @@
 {
   "project_info": {
-    "project_number": "960358609510",
-    "firebase_url": "https://love-connect-e79a5-default-rtdb.firebaseio.com",
-    "project_id": "love-connect-e79a5",
-    "storage_bucket": "love-connect-e79a5.firebasestorage.app"
+    "project_number": "1047344298062",
+    "firebase_url": "https://loveconnect-app-live-4d22a-default-rtdb.firebaseio.com",
+    "project_id": "loveconnect-app-live-4d22a",
+    "storage_bucket": "loveconnect-app-live-4d22a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:960358609510:android:96025917c0a2431aeef3a7",
+        "mobilesdk_app_id": "1:1047344298062:android:9cb004e1dbac0d4830ab1f",
         "android_client_info": {
-          "package_name": "com.example.love_connect"
+          "package_name": "com.loveconnect.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "960358609510-554gar81q63hr1i8ictnlm8qmauh6ng8.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.love_connect",
-            "certificate_hash": "e57e17f64e2e75a8444dd7e091810f6277853731"
-          }
-        },
-        {
-          "client_id": "960358609510-gs472kp30piv6lanuj7j80ufugile3uv.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.love_connect",
-            "certificate_hash": "79411e9ab2b274538c24902050fb3e422d05ed49"
-          }
-        },
-        {
-          "client_id": "960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com",
+          "client_id": "1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC7aZX1j6dnMNHTZ11BckD4d0KKZYzwnmQ"
+          "current_key": "AIzaSyBaDQlcAoQV_MwNyH6We4y3Kfdy9UjO-xA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com",
+              "client_id": "1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.loveConnect"
-              }
             }
           ]
         }

@@ -178,7 +178,6 @@ class _HomeViewState extends State<HomeView>
 
               const SizedBox(height: 4),
 
-
               // Content
               Expanded(
                 child: SingleChildScrollView(
@@ -221,11 +220,10 @@ class _HomeViewState extends State<HomeView>
                           ),
                         ),
 
-                        // Banner Ad
-                        Center(
-                          child: const BannerAdWidget(
-                            margin: EdgeInsets.symmetric(vertical: 8),
-                          ),
+                        // Banner Ad - Full width
+                        const BannerAdWidget(
+                          useAnchoredAdaptive: true,
+                          margin: EdgeInsets.symmetric(vertical: 8),
                         ),
 
                         // Quick Actions Section

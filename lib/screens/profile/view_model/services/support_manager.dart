@@ -38,7 +38,7 @@ class SupportManager {
   Future<void> rateApp() async {
     try {
       // Play Store package name
-      const String packageName = 'com.example.love_connect';
+      const String packageName = 'com.loveconnect.app';
 
       // Try to open Play Store
       final Uri playStoreUri = Uri.parse(
@@ -64,7 +64,7 @@ class SupportManager {
 
   Future<void> shareApp() async {
     try {
-      const String packageName = 'com.example.love_connect';
+      const String packageName = 'com.loveconnect.app';
       const String playStoreLink =
           'https://play.google.com/store/apps/details?id=$packageName';
       const String shareText =
@@ -73,7 +73,7 @@ class SupportManager {
       await Share.share(shareText, subject: 'Love Connect - App for Couples');
     } catch (e) {
       // Fallback: Copy to clipboard
-      const String packageName = 'com.example.love_connect';
+      const String packageName = 'com.loveconnect.app';
       const String playStoreLink =
           'https://play.google.com/store/apps/details?id=$packageName';
       const String shareText =

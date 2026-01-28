@@ -5,7 +5,8 @@ import 'package:crypto/crypto.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:love_connect/core/models/auth/auth_result.dart';
 import 'package:love_connect/core/services/user_database_service.dart';
 
@@ -20,17 +21,17 @@ class AuthService {
 
   Future<void> _initializeGoogleSignIn() async {
     const String androidWebClientId =
-        '960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com';
+        '1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com';
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _googleSignIn.initialize(
-        clientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com',
-        serverClientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com',
+        clientId:
+            '1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com',
+        serverClientId:
+            '1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com',
       );
     } else {
-      await _googleSignIn.initialize(
-        serverClientId: androidWebClientId,
-      );
+      await _googleSignIn.initialize(serverClientId: androidWebClientId);
     }
   }
 
@@ -76,11 +77,11 @@ class AuthService {
         );
       }
 
-      final UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password,
+          );
 
       if (displayName != null && displayName.isNotEmpty) {
         await userCredential.user?.updateDisplayName(displayName.trim());
@@ -138,11 +139,8 @@ class AuthService {
         );
       }
 
-      final UserCredential userCredential =
-          await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email.trim(), password: password);
 
       final userId = userCredential.user?.uid;
       final userEmail = userCredential.user?.email;
@@ -166,7 +164,8 @@ class AuthService {
 
       if (userCredential.user == null) {
         return AuthResult.failure(
-          errorMessage: 'Login failed. Please check your credentials and try again.',
+          errorMessage:
+              'Login failed. Please check your credentials and try again.',
           errorCode: 'login-failed',
         );
       }
@@ -192,7 +191,7 @@ class AuthService {
   Future<AuthResult> signInWithGoogle({bool skipFirestoreSave = false}) async {
     try {
       await _setupGoogleSignIn();
-      
+
       final googleUser = await _authenticateWithGoogle();
       if (googleUser == null) {
         return AuthResult.failure(
@@ -202,7 +201,10 @@ class AuthService {
       }
 
       final credential = await _createFirebaseCredential(googleUser);
-      return await _signInToFirebase(credential, saveToFirestore: !skipFirestoreSave);
+      return await _signInToFirebase(
+        credential,
+        saveToFirestore: !skipFirestoreSave,
+      );
     } on FirebaseAuthException catch (e) {
       return AuthResult.failure(
         errorMessage: _getErrorMessage(e.code),
@@ -246,7 +248,8 @@ class AuthService {
     return googleUser;
   }
 
-  StreamSubscription<GoogleSignInAuthenticationEvent> _setupAuthenticationEventListener(
+  StreamSubscription<GoogleSignInAuthenticationEvent>
+  _setupAuthenticationEventListener(
     GoogleSignIn googleSignIn,
     Completer<void> completer,
     void Function(GoogleSignInAccount) onSignIn,
@@ -274,7 +277,8 @@ class AuthService {
       await googleSignIn.authenticate(scopeHint: ['email', 'profile']);
     } catch (e) {
       subscription.cancel();
-      if (e.toString().contains('canceled') || e.toString().contains('cancelled')) {
+      if (e.toString().contains('canceled') ||
+          e.toString().contains('cancelled')) {
         throw Exception('Sign in was canceled');
       }
       throw Exception('Google sign in failed: ${e.toString()}');
@@ -313,14 +317,15 @@ class AuthService {
     }
 
     // Firebase Auth can work with just idToken, accessToken is optional
-    return GoogleAuthProvider.credential(
-      idToken: idToken,
-    );
+    return GoogleAuthProvider.credential(idToken: idToken);
   }
 
-  Future<AuthResult> _signInToFirebase(OAuthCredential credential, {bool saveToFirestore = true}) async {
+  Future<AuthResult> _signInToFirebase(
+    OAuthCredential credential, {
+    bool saveToFirestore = true,
+  }) async {
     final userCredential = await _auth.signInWithCredential(credential);
-    
+
     if (saveToFirestore) {
       final userId = userCredential.user?.uid;
       final userEmail = userCredential.user?.email;
@@ -334,7 +339,7 @@ class AuthService {
         );
       }
     }
-    
+
     return AuthResult.success(
       userId: userCredential.user?.uid,
       email: userCredential.user?.email,
@@ -344,11 +349,11 @@ class AuthService {
 
   AuthResult _handleGoogleSignInError(dynamic e) {
     String errorMessage = 'Google sign in failed. Please try again.';
-    
+
     if (e.toString().contains('network')) {
       errorMessage = 'Network error. Please check your internet connection.';
-    } else if (e.toString().contains('sign_in_canceled') || 
-               e.toString().contains('canceled')) {
+    } else if (e.toString().contains('sign_in_canceled') ||
+        e.toString().contains('canceled')) {
       return AuthResult.failure(
         errorMessage: 'Sign in was canceled',
         errorCode: 'sign-in-canceled',
@@ -356,7 +361,7 @@ class AuthService {
     } else if (e.toString().isNotEmpty) {
       errorMessage = e.toString().replaceFirst('Exception: ', '');
     }
-    
+
     return AuthResult.failure(
       errorMessage: errorMessage,
       errorCode: 'google-sign-in-failed',
@@ -421,10 +426,9 @@ class AuthService {
     AuthorizationCredentialAppleID appleCredential,
     String rawNonce,
   ) {
-    return OAuthProvider("apple.com").credential(
-      idToken: appleCredential.identityToken,
-      rawNonce: rawNonce,
-    );
+    return OAuthProvider(
+      "apple.com",
+    ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
   }
 
   Future<void> _updateAppleDisplayName(
@@ -433,8 +437,8 @@ class AuthService {
   ) async {
     if (user == null) return;
 
-    final hasName = appleCredential.givenName != null ||
-        appleCredential.familyName != null;
+    final hasName =
+        appleCredential.givenName != null || appleCredential.familyName != null;
     if (!hasName) return;
 
     final displayName =
@@ -485,10 +489,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await Future.wait([
-      _auth.signOut(),
-      _googleSignIn.signOut(),
-    ]);
+    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
   }
 
   Future<AuthResult> sendPasswordResetEmail(String email) async {
@@ -544,7 +545,7 @@ class AuthService {
 
   Future<void> _safeReloadUser(User? user) async {
     if (user == null) return;
-    
+
     try {
       await user.reload();
     } on FirebaseAuthException catch (e) {
@@ -561,42 +562,41 @@ class AuthService {
       await _signOutSafely();
       return;
     }
-    
+
     if (_isNetworkErrorCode(e.code) && _isNetworkError(e.message ?? '')) {
       return;
     }
-    
+
     throw e;
   }
 
   bool _requiresSignOut(String code) {
     return code == 'user-not-found' ||
-           code == 'user-disabled' ||
-           code == 'invalid-user-token';
+        code == 'user-disabled' ||
+        code == 'invalid-user-token';
   }
 
   bool _isNetworkErrorCode(String code) {
     return code == 'network-request-failed' ||
-           code == 'unknown' ||
-           code == 'internal-error';
+        code == 'unknown' ||
+        code == 'internal-error';
   }
 
   bool _isNetworkError(String errorMessage) {
     final lowerMessage = errorMessage.toLowerCase();
     return lowerMessage.contains('connection') ||
-           lowerMessage.contains('reset') ||
-           lowerMessage.contains('network') ||
-           lowerMessage.contains('timeout') ||
-           lowerMessage.contains('unreachable') ||
-           lowerMessage.contains('interrupted') ||
-           lowerMessage.contains('internal error');
+        lowerMessage.contains('reset') ||
+        lowerMessage.contains('network') ||
+        lowerMessage.contains('timeout') ||
+        lowerMessage.contains('unreachable') ||
+        lowerMessage.contains('interrupted') ||
+        lowerMessage.contains('internal error');
   }
 
   Future<void> _signOutSafely() async {
     try {
       await signOut();
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> reloadUser() async {
@@ -766,8 +766,10 @@ class AuthService {
     const charset =
         '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
-        .join();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
   }
 
   String _sha256ofString(String input) {
@@ -781,9 +783,5 @@ class _PasswordValidation {
   final bool isValid;
   final String errorMessage;
 
-  _PasswordValidation({
-    required this.isValid,
-    this.errorMessage = '',
-  });
+  _PasswordValidation({required this.isValid, this.errorMessage = ''});
 }
-

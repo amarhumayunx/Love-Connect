@@ -34,7 +34,9 @@ class _JournalViewState extends State<JournalView> {
     try {
       homeViewModel = Get.find<HomeViewModel>();
       // Listen to screen index changes to reload entries when journal becomes visible
-      _screenIndexSubscription = homeViewModel!.currentScreenIndex.listen((index) {
+      _screenIndexSubscription = homeViewModel!.currentScreenIndex.listen((
+        index,
+      ) {
         // When journal screen (index 1) becomes visible, reload entries
         if (index == 1 && mounted) {
           viewModel.loadEntries();
@@ -79,53 +81,58 @@ class _JournalViewState extends State<JournalView> {
                 children: [
                   homeViewModel != null
                       ? Obx(
-                        () => homeViewModel!.isFromNavbar('journal')
-                        ? const SizedBox.shrink()
-                        : GestureDetector(
-                      onTap: () => Get.back(),
-                      child: Container(
-                        padding: EdgeInsets.all(context.responsiveSpacing(8)),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryRed.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.arrow_back_ios_new,
-                          color: AppColors.primaryDark,
-                          size: context.responsiveImage(20),
-                        ),
-                      ),
-                    ),
-                  )
+                          () => homeViewModel!.isFromNavbar('journal')
+                              ? const SizedBox.shrink()
+                              : GestureDetector(
+                                  onTap: () => Get.back(),
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      context.responsiveSpacing(8),
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primaryRed
+                                              .withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.arrow_back_ios_new,
+                                      color: AppColors.primaryDark,
+                                      size: context.responsiveImage(20),
+                                    ),
+                                  ),
+                                ),
+                        )
                       : GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Container(
-                      padding: EdgeInsets.all(context.responsiveSpacing(8)),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryRed.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                          onTap: () => Get.back(),
+                          child: Container(
+                            padding: EdgeInsets.all(
+                              context.responsiveSpacing(8),
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryRed.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_ios_new,
+                              color: AppColors.primaryDark,
+                              size: context.responsiveImage(20),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new,
-                        color: AppColors.primaryDark,
-                        size: context.responsiveImage(20),
-                      ),
-                    ),
-                  ),
+                        ),
                   SizedBox(width: context.responsiveSpacing(16)),
                   Expanded(
                     child: Text(
@@ -154,19 +161,18 @@ class _JournalViewState extends State<JournalView> {
                     color: AppColors.textLightPink,
                     fontSize: 14,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.primaryRed,
+                  prefixIcon: Icon(Icons.search, color: AppColors.primaryRed),
+                  suffixIcon: Obx(
+                    () => viewModel.searchQuery.value.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: AppColors.primaryRed,
+                            ),
+                            onPressed: () => viewModel.updateSearchQuery(''),
+                          )
+                        : const SizedBox.shrink(),
                   ),
-                  suffixIcon: Obx(() => viewModel.searchQuery.value.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: AppColors.primaryRed,
-                          ),
-                          onPressed: () => viewModel.updateSearchQuery(''),
-                        )
-                      : const SizedBox.shrink()),
                   filled: true,
                   fillColor: AppColors.white,
                   border: OutlineInputBorder(
@@ -202,86 +208,84 @@ class _JournalViewState extends State<JournalView> {
 
             // Content
             Expanded(
-              child: Obx(
-                    () {
-                  if (viewModel.isLoading.value) {
-                    return Center(
-                      child: LoadingAnimationWidget.horizontalRotatingDots(
-                        color: AppColors.primaryRed,
-                        size: 50,
-                      ),
-                    );
-                  }
-
-                  // Show empty state if no entries at all (not filtered)
-                  if (viewModel.entries.isEmpty && !viewModel.isLoading.value) {
-                    return JournalEmptyState(
-                      onAddEntry: () => viewModel.showAddEntryModal(),
-                    );
-                  }
-
-                  // Show no search results if search is active but no filtered results
-                  if (viewModel.filteredEntries.isEmpty && 
-                      viewModel.searchQuery.value.isNotEmpty && 
-                      !viewModel.isLoading.value) {
-                    return Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: AppColors.textLightPink,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No entries found',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textDarkPink,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Try a different search term',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textLightPink,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    color: AppColors.primaryRed,
-                    onRefresh: viewModel.refreshEntries,
-                    child: ListView.builder(
-                      shrinkWrap: false,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.only(
-                        left: metrics.cardPadding,
-                        right: metrics.cardPadding,
-                        top: metrics.sectionSpacing * 0.5,
-                        bottom: 80, // Extra padding for FAB
-                      ),
-                      itemCount: viewModel.filteredEntries.length,
-                      itemBuilder: (context, index) {
-                        final entry = viewModel.filteredEntries[index];
-                        return _buildEntryCard(entry, metrics, context);
-                      },
+              child: Obx(() {
+                if (viewModel.isLoading.value) {
+                  return Center(
+                    child: LoadingAnimationWidget.horizontalRotatingDots(
+                      color: AppColors.primaryRed,
+                      size: 50,
                     ),
                   );
-                },
-              ),
+                }
+
+                // Show empty state if no entries at all (not filtered)
+                if (viewModel.entries.isEmpty && !viewModel.isLoading.value) {
+                  return JournalEmptyState(
+                    onAddEntry: () => viewModel.showAddEntryModal(),
+                  );
+                }
+
+                // Show no search results if search is active but no filtered results
+                if (viewModel.filteredEntries.isEmpty &&
+                    viewModel.searchQuery.value.isNotEmpty &&
+                    !viewModel.isLoading.value) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: AppColors.textLightPink,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No entries found',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDarkPink,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Try a different search term',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textLightPink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  color: AppColors.primaryRed,
+                  onRefresh: viewModel.refreshEntries,
+                  child: ListView.builder(
+                    shrinkWrap: false,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: metrics.cardPadding,
+                      right: metrics.cardPadding,
+                      top: metrics.sectionSpacing * 0.5,
+                      bottom: metrics.sectionSpacing * 0.5,
+                    ),
+                    itemCount: viewModel.filteredEntries.length,
+                    itemBuilder: (context, index) {
+                      final entry = viewModel.filteredEntries[index];
+                      return _buildEntryCard(entry, metrics, context);
+                    },
+                  ),
+                );
+              }),
             ),
-            
+
             // Banner Ad at the bottom
             SafeArea(
               top: false,
@@ -296,40 +300,14 @@ class _JournalViewState extends State<JournalView> {
           ],
         ),
       ),
-      // Floating Action Button
-      floatingActionButton: SizedBox(
-        height: 48,
-        child: FloatingActionButton.extended(
-          onPressed: () => viewModel.showAddEntryModal(),
-          backgroundColor: AppColors.primaryRed,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(34),
-          ),
-          icon: Icon(
-            Icons.add,
-            color: AppColors.white,
-            size: 20,
-          ),
-          label: Text(
-            'Add Entry',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.white,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
   Widget _buildEntryCard(
-      JournalEntryModel entry,
-      HomeLayoutMetrics metrics,
-      BuildContext context,
-      ) {
+    JournalEntryModel entry,
+    HomeLayoutMetrics metrics,
+    BuildContext context,
+  ) {
     final dateFormat = DateFormat('dd/MM/yyyy');
 
     // Check if this is a reward entry
@@ -352,25 +330,34 @@ class _JournalViewState extends State<JournalView> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.IdeaColorText,
-          width: 1.0,
-        ),
+        border: Border.all(color: AppColors.IdeaColorText, width: 1.0),
       ),
       child: isShortEntry
-          ? _buildShortEntry(entry, dateFormat, context, isRewardEntry: isRewardEntry, rewardText: rewardText)
-          : _buildLongEntry(entry, dateFormat, context, isRewardEntry: isRewardEntry, rewardText: rewardText),
+          ? _buildShortEntry(
+              entry,
+              dateFormat,
+              context,
+              isRewardEntry: isRewardEntry,
+              rewardText: rewardText,
+            )
+          : _buildLongEntry(
+              entry,
+              dateFormat,
+              context,
+              isRewardEntry: isRewardEntry,
+              rewardText: rewardText,
+            ),
     );
   }
 
   // Short entry: Date aur text same line par (height: 44)
   Widget _buildShortEntry(
-      JournalEntryModel entry,
-      DateFormat dateFormat,
-      BuildContext context, {
-        bool isRewardEntry = false,
-        String? rewardText,
-      }) {
+    JournalEntryModel entry,
+    DateFormat dateFormat,
+    BuildContext context, {
+    bool isRewardEntry = false,
+    String? rewardText,
+  }) {
     return SizedBox(
       height: isRewardEntry ? null : 44,
       child: Column(
@@ -384,10 +371,7 @@ class _JournalViewState extends State<JournalView> {
               decoration: BoxDecoration(
                 color: AppColors.primaryRed.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.IdeaColorText,
-                  width: 1.0,
-                ),
+                border: Border.all(color: AppColors.IdeaColorText, width: 1.0),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -433,10 +417,14 @@ class _JournalViewState extends State<JournalView> {
                         ),
                       ),
                       TextSpan(
-                        text: isRewardEntry && rewardText != null ? rewardText : entry.note,
+                        text: isRewardEntry && rewardText != null
+                            ? rewardText
+                            : entry.note,
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          fontWeight: isRewardEntry ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isRewardEntry
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                           color: AppColors.IdeaColorText,
                         ),
                       ),
@@ -487,12 +475,12 @@ class _JournalViewState extends State<JournalView> {
 
   // Long entry: Date pehli line, content neeche (dynamic height)
   Widget _buildLongEntry(
-      JournalEntryModel entry,
-      DateFormat dateFormat,
-      BuildContext context, {
-        bool isRewardEntry = false,
-        String? rewardText,
-      }) {
+    JournalEntryModel entry,
+    DateFormat dateFormat,
+    BuildContext context, {
+    bool isRewardEntry = false,
+    String? rewardText,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,10 +492,7 @@ class _JournalViewState extends State<JournalView> {
             decoration: BoxDecoration(
               color: AppColors.primaryRed.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.primaryRed,
-                width: 1.0,
-              ),
+              border: Border.all(color: AppColors.primaryRed, width: 1.0),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

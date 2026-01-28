@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com</string>
+	<string>1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u</string>
+	<string>com.googleusercontent.apps.1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAu0C-rJ6RJheVPEA6b3SeFsUuP02VLxdU</string>
+	<string>AIzaSyD-UauxoaFgOSYI_CuSCwxXKY45iyYI0vI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>960358609510</string>
+	<string>1047344298062</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.loveConnect</string>
+	<string>com.loveconnect.app</string>
 	<key>PROJECT_ID</key>
-	<string>love-connect-e79a5</string>
+	<string>loveconnect-app-live-4d22a</string>
 	<key>STORAGE_BUCKET</key>
-	<string>love-connect-e79a5.firebasestorage.app</string>
+	<string>loveconnect-app-live-4d22a.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:960358609510:ios:841207d084a83a3deef3a7</string>
+	<string>1:1047344298062:ios:e0edea80bfe9570b30ab1f</string>
+	<key>DATABASE_URL</key>
+	<string>https://loveconnect-app-live-4d22a-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

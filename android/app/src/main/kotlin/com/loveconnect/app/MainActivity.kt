@@ -1,4 +1,4 @@
-package com.example.love_connect
+package com.loveconnect.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

@@ -16,8 +16,7 @@ import 'package:love_connect/core/navigation/smooth_transitions.dart';
 import 'package:love_connect/screens/profile/model/profile_model.dart';
 import 'package:love_connect/screens/profile/view/widgets/edit_profile_modal.dart';
 import 'package:love_connect/screens/profile/change_password/view/change_password_view.dart';
-import 'package:love_connect/screens/profile/terms_privacy/view/terms_of_service_view.dart';
-import 'package:love_connect/screens/profile/terms_privacy/view/privacy_policy_view.dart';
+import 'package:love_connect/screens/profile/terms_privacy/view/webview_screen.dart';
 import 'package:love_connect/screens/profile/view_model/services/profile_service.dart';
 import 'package:love_connect/screens/profile/view_model/services/settings_manager.dart';
 import 'package:love_connect/screens/profile/view_model/services/notification_manager.dart';
@@ -203,14 +202,20 @@ class ProfileViewModel extends GetxController {
 
   void showTermsOfService() {
     SmoothNavigator.to(
-      () => const TermsOfServiceView(),
+      () => const WebViewScreen(
+        url: 'https://v0-love-connect.vercel.app/terms',
+        title: 'Terms of Service',
+      ),
       transition: Transition.rightToLeft,
     );
   }
 
   void showPrivacyPolicy() {
     SmoothNavigator.to(
-      () => const PrivacyPolicyView(),
+      () => const WebViewScreen(
+        url: 'https://v0-love-connect.vercel.app/privacy',
+        title: 'Privacy Policy',
+      ),
       transition: Transition.rightToLeft,
     );
   }

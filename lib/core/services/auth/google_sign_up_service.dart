@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:love_connect/core/models/auth/auth_result.dart';
 import 'package:love_connect/core/services/user_database_service.dart';
 
@@ -19,18 +20,18 @@ class GoogleSignUpService {
   Future<void> _initializeGoogleSignIn() async {
     // Web client ID from `android/app/google-services.json` (client_type: 3)
     const String androidWebClientId =
-        '960358609510-s6k0ntus13ijjq1e4r5eua6s7redc0js.apps.googleusercontent.com';
+        '1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com';
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _googleSignIn.initialize(
-        clientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com',
-        serverClientId: '960358609510-uielc1r0poq2as3grlkdm32gpnvfk40u.apps.googleusercontent.com',
+        clientId:
+            '1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com',
+        serverClientId:
+            '1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com',
       );
     } else {
       // Android configuration: use Web client ID as serverClientId for Firebase Auth
-      await _googleSignIn.initialize(
-        serverClientId: androidWebClientId,
-      );
+      await _googleSignIn.initialize(serverClientId: androidWebClientId);
     }
   }
 
@@ -39,7 +40,7 @@ class GoogleSignUpService {
   Future<AuthResult> signUp({bool skipDatabaseSave = false}) async {
     try {
       await _setupGoogleSignIn();
-      
+
       final googleUser = await _authenticateWithGoogle();
       if (googleUser == null) {
         return AuthResult.failure(
@@ -49,7 +50,10 @@ class GoogleSignUpService {
       }
 
       final credential = await _createFirebaseCredential(googleUser);
-      return await _signUpToFirebase(credential, saveToDatabase: !skipDatabaseSave);
+      return await _signUpToFirebase(
+        credential,
+        saveToDatabase: !skipDatabaseSave,
+      );
     } on FirebaseAuthException catch (e) {
       return AuthResult.failure(
         errorMessage: _getErrorMessage(e.code),
@@ -96,7 +100,8 @@ class GoogleSignUpService {
   }
 
   /// Setup authentication event listener
-  StreamSubscription<GoogleSignInAuthenticationEvent> _setupAuthenticationEventListener(
+  StreamSubscription<GoogleSignInAuthenticationEvent>
+  _setupAuthenticationEventListener(
     GoogleSignIn googleSignIn,
     Completer<void> completer,
     void Function(GoogleSignInAccount) onSignIn,
@@ -125,7 +130,8 @@ class GoogleSignUpService {
       await googleSignIn.authenticate(scopeHint: ['email', 'profile']);
     } catch (e) {
       subscription.cancel();
-      if (e.toString().contains('canceled') || e.toString().contains('cancelled')) {
+      if (e.toString().contains('canceled') ||
+          e.toString().contains('cancelled')) {
         throw Exception('Sign up was canceled');
       }
       throw Exception('Google sign up failed: ${e.toString()}');
@@ -166,9 +172,7 @@ class GoogleSignUpService {
     }
 
     // Firebase Auth can work with just idToken, accessToken is optional
-    return GoogleAuthProvider.credential(
-      idToken: idToken,
-    );
+    return GoogleAuthProvider.credential(idToken: idToken);
   }
 
   /// Sign up to Firebase with Google credential
@@ -177,7 +181,7 @@ class GoogleSignUpService {
     bool saveToDatabase = true,
   }) async {
     final userCredential = await _auth.signInWithCredential(credential);
-    
+
     // Save user data to database for Google sign-up (if enabled)
     if (saveToDatabase) {
       final userId = userCredential.user?.uid;
@@ -192,7 +196,7 @@ class GoogleSignUpService {
         );
       }
     }
-    
+
     return AuthResult.success(
       userId: userCredential.user?.uid,
       email: userCredential.user?.email,
@@ -203,11 +207,11 @@ class GoogleSignUpService {
   /// Handle Google Sign-Up errors
   AuthResult _handleGoogleSignUpError(dynamic e) {
     String errorMessage = 'Google sign up failed. Please try again.';
-    
+
     if (e.toString().contains('network')) {
       errorMessage = 'Network error. Please check your internet connection.';
-    } else if (e.toString().contains('sign_up_canceled') || 
-               e.toString().contains('canceled')) {
+    } else if (e.toString().contains('sign_up_canceled') ||
+        e.toString().contains('canceled')) {
       return AuthResult.failure(
         errorMessage: 'Sign up was canceled',
         errorCode: 'sign-up-canceled',
@@ -215,7 +219,7 @@ class GoogleSignUpService {
     } else if (e.toString().isNotEmpty) {
       errorMessage = e.toString().replaceFirst('Exception: ', '');
     }
-    
+
     return AuthResult.failure(
       errorMessage: errorMessage,
       errorCode: 'google-sign-up-failed',
@@ -243,4 +247,3 @@ class GoogleSignUpService {
     }
   }
 }
-
