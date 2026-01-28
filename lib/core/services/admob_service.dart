@@ -22,6 +22,15 @@ class AdMobService {
   DateTime? _appOpenAdLoadTime;
   Completer<void>? _appOpenAdCompleter;
 
+  // Initialization state
+  bool _isInitialized = false;
+  bool _isInitializing = false;
+  int _interstitialRetryCount = 0;
+  int _appOpenRetryCount = 0;
+  int _initRetryCount = 0;
+  static const int _maxRetries = 3;
+  static const int _maxInitRetries = 3;
+
   // Test Ad Unit IDs - Replace these with your actual Ad Unit IDs from AdMob console
   // For testing, you can use these Google test ad unit IDs:
   // Android Banner: ca-app-pub-3940256099942544/6300978111
@@ -174,19 +183,66 @@ class AdMobService {
     }
   }
 
+  /// Check if AdMob is initialized
+  bool get isInitialized => _isInitialized;
+
   /// Initialize AdMob SDK
   Future<void> initialize() async {
+    if (_isInitialized || _isInitializing) {
+      return;
+    }
+
+    _isInitializing = true;
+
     try {
-      await MobileAds.instance.initialize();
       if (kDebugMode) {
-        print('AdMob initialized successfully');
+        print('🔄 AdMob: Starting initialization...');
       }
-      // Preload ads
+
+      final initResponse = await MobileAds.instance.initialize();
+      _isInitialized = true;
+      _isInitializing = false;
+      _initRetryCount = 0; // Reset retry count on success
+
+      if (kDebugMode) {
+        print('✅ AdMob initialized successfully');
+        print('AdMob initialization status: ${initResponse.adapterStatuses}');
+      }
+
+      // Wait a bit for SDK to be fully ready before loading ads
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Preload ads with retry logic
       loadInterstitialAd();
       loadAppOpenAd();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _isInitialized = false;
+      _isInitializing = false;
+
       if (kDebugMode) {
-        print('Error initializing AdMob: $e');
+        print('❌ Error initializing AdMob: $e');
+        print('Stack trace: $stackTrace');
+      }
+
+      // Retry initialization with exponential backoff
+      if (_initRetryCount < _maxInitRetries) {
+        _initRetryCount++;
+        final delaySeconds = _initRetryCount * 3; // 3s, 6s, 9s
+        if (kDebugMode) {
+          print(
+            '🔄 Retrying AdMob initialization in ${delaySeconds}s (attempt $_initRetryCount/$_maxInitRetries)',
+          );
+        }
+        Future.delayed(Duration(seconds: delaySeconds), () {
+          initialize();
+        });
+      } else {
+        if (kDebugMode) {
+          print(
+            '⚠️ Max initialization retries reached. AdMob initialization failed.',
+          );
+        }
+        _initRetryCount = 0; // Reset for next session
       }
     }
   }
@@ -194,10 +250,26 @@ class AdMobService {
   /// Load interstitial ad
   Future<void> loadInterstitialAd() async {
     if (_isInterstitialAdLoading || _interstitialAd != null) {
+      if (kDebugMode) {
+        print('⏭️ Interstitial ad: Already loading or loaded. Skipping.');
+      }
+      return;
+    }
+
+    // Don't load ads if AdMob isn't initialized
+    if (!_isInitialized) {
+      if (kDebugMode) {
+        print('⚠️ AdMob not initialized yet, skipping interstitial ad load');
+      }
       return;
     }
 
     _isInterstitialAdLoading = true;
+
+    if (kDebugMode) {
+      print('🔄 Interstitial ad: Starting to load...');
+      print('   Ad Unit ID: $interstitialAdUnitId');
+    }
 
     try {
       await InterstitialAd.load(
@@ -207,9 +279,11 @@ class AdMobService {
           onAdLoaded: (InterstitialAd ad) {
             if (kDebugMode) {
               print('✅ Interstitial ad loaded successfully');
+              print('   Ad Unit ID: $interstitialAdUnitId');
             }
             _interstitialAd = ad;
             _isInterstitialAdLoading = false;
+            _interstitialRetryCount = 0; // Reset retry count on success
 
             // Set up ad event callbacks
             _interstitialAd!
@@ -284,9 +358,33 @@ class AdMobService {
           onAdFailedToLoad: (LoadAdError error) {
             if (kDebugMode) {
               print('❌ Interstitial ad failed to load: $error');
+              print(
+                '   Error code: ${error.code}, Domain: ${error.domain}, Message: ${error.message}',
+              );
             }
             _isInterstitialAdLoading = false;
             _interstitialAd = null;
+
+            // Retry logic with exponential backoff
+            if (_interstitialRetryCount < _maxRetries) {
+              _interstitialRetryCount++;
+              final delaySeconds = _interstitialRetryCount * 2; // 2s, 4s, 6s
+              if (kDebugMode) {
+                print(
+                  '🔄 Retrying interstitial ad load in ${delaySeconds}s (attempt $_interstitialRetryCount/$_maxRetries)',
+                );
+              }
+              Future.delayed(Duration(seconds: delaySeconds), () {
+                loadInterstitialAd();
+              });
+            } else {
+              if (kDebugMode) {
+                print(
+                  '⚠️ Max retries reached for interstitial ad. Will retry on next app session.',
+                );
+              }
+              _interstitialRetryCount = 0; // Reset for next session
+            }
           },
         ),
       );
@@ -302,26 +400,119 @@ class AdMobService {
   /// Note: Interstitial ads are controlled by AdMob and will close automatically
   /// when the user dismisses them or when the ad completes (typically 5-30 seconds)
   Future<bool> showInterstitialAd() async {
-    if (_interstitialAd == null || _isInterstitialAdShowing) {
+    // Check if AdMob is initialized first
+    if (!_isInitialized) {
       if (kDebugMode) {
-        print('Interstitial ad not ready or already showing');
+        print('⚠️ Cannot show interstitial ad: AdMob not initialized yet');
       }
-      // Try to load ad if not available
-      if (_interstitialAd == null) {
-        await loadInterstitialAd();
+
+      // Try to initialize if not already initializing
+      if (!_isInitializing) {
+        if (kDebugMode) {
+          print('🔄 Attempting to initialize AdMob...');
+        }
+        await initialize();
+      } else {
+        if (kDebugMode) {
+          print('⏳ AdMob initialization in progress, waiting...');
+        }
+      }
+
+      // Wait for initialization to complete (with timeout)
+      int waitAttempts = 0;
+      const maxWaitAttempts = 10; // Wait up to 5 seconds (10 * 500ms)
+      while (!_isInitialized && waitAttempts < maxWaitAttempts) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        waitAttempts++;
+      }
+
+      // If still not initialized, return false
+      if (!_isInitialized) {
+        if (kDebugMode) {
+          print('❌ AdMob initialization timeout or failed. Cannot show ad.');
+        }
+        return false;
+      }
+
+      if (kDebugMode) {
+        print('✅ AdMob initialized, proceeding to show ad...');
+      }
+    }
+
+    if (_isInterstitialAdShowing) {
+      if (kDebugMode) {
+        print('⚠️ Interstitial ad is already showing');
       }
       return false;
     }
 
-    try {
-      _interstitialAd!.show();
+    // If ad is not loaded, try to load it first
+    if (_interstitialAd == null) {
       if (kDebugMode) {
-        print('✅ Interstitial ad displayed (will close automatically)');
+        if (_isInterstitialAdLoading) {
+          print('⏳ Interstitial ad is already loading, waiting...');
+        } else {
+          print('🔄 Interstitial ad not loaded, loading now...');
+          await loadInterstitialAd();
+        }
+      } else {
+        if (!_isInterstitialAdLoading) {
+          await loadInterstitialAd();
+        }
+      }
+
+      // Wait for ad to load (with timeout)
+      int waitAttempts = 0;
+      const maxWaitAttempts = 20; // Wait up to 10 seconds (20 * 500ms)
+      while (_interstitialAd == null && waitAttempts < maxWaitAttempts) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        waitAttempts++;
+
+        // If we're not loading anymore and ad is still null, it failed
+        if (!_isInterstitialAdLoading && _interstitialAd == null) {
+          if (kDebugMode) {
+            print('⚠️ Ad loading completed but ad is still null (load failed)');
+          }
+          break;
+        }
+      }
+
+      // Check if ad loaded successfully
+      if (_interstitialAd == null) {
+        if (kDebugMode) {
+          print(
+            '❌ Interstitial ad failed to load or timeout after ${waitAttempts * 500}ms. Cannot show ad.',
+          );
+        }
+        return false;
+      }
+
+      if (kDebugMode) {
+        print('✅ Interstitial ad loaded successfully, proceeding to show...');
+      }
+    }
+
+    try {
+      if (kDebugMode) {
+        print('🎬 Attempting to display interstitial ad...');
+        print('   Ad is ready: ${_interstitialAd != null}');
+        print('   Ad is showing: $_isInterstitialAdShowing');
+      }
+
+      _interstitialAd!.show();
+      _isInterstitialAdShowing = true;
+
+      if (kDebugMode) {
+        print(
+          '✅ Interstitial ad displayed successfully (will close automatically)',
+        );
       }
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _isInterstitialAdShowing = false;
       if (kDebugMode) {
-        print('Error showing interstitial ad: $e');
+        print('❌ Error showing interstitial ad: $e');
+        print('Stack trace: $stackTrace');
       }
       return false;
     }
@@ -330,6 +521,14 @@ class AdMobService {
   /// Load App Open Ad
   Future<void> loadAppOpenAd() async {
     if (_isAppOpenAdLoading || _appOpenAd != null) {
+      return;
+    }
+
+    // Don't load ads if AdMob isn't initialized
+    if (!_isInitialized) {
+      if (kDebugMode) {
+        print('⚠️ AdMob not initialized yet, skipping app open ad load');
+      }
       return;
     }
 
@@ -347,13 +546,38 @@ class AdMobService {
             _appOpenAd = ad;
             _isAppOpenAdLoading = false;
             _appOpenAdLoadTime = DateTime.now();
+            _appOpenRetryCount = 0; // Reset retry count on success
           },
           onAdFailedToLoad: (LoadAdError error) {
             if (kDebugMode) {
               print('❌ App Open ad failed to load: $error');
+              print(
+                '   Error code: ${error.code}, Domain: ${error.domain}, Message: ${error.message}',
+              );
             }
             _isAppOpenAdLoading = false;
             _appOpenAd = null;
+
+            // Retry logic with exponential backoff
+            if (_appOpenRetryCount < _maxRetries) {
+              _appOpenRetryCount++;
+              final delaySeconds = _appOpenRetryCount * 2; // 2s, 4s, 6s
+              if (kDebugMode) {
+                print(
+                  '🔄 Retrying app open ad load in ${delaySeconds}s (attempt $_appOpenRetryCount/$_maxRetries)',
+                );
+              }
+              Future.delayed(Duration(seconds: delaySeconds), () {
+                loadAppOpenAd();
+              });
+            } else {
+              if (kDebugMode) {
+                print(
+                  '⚠️ Max retries reached for app open ad. Will retry on next app session.',
+                );
+              }
+              _appOpenRetryCount = 0; // Reset for next session
+            }
           },
         ),
       );
