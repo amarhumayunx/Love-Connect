@@ -188,7 +188,7 @@ class TermsOfServiceView extends StatelessWidget {
                       metrics,
                       Icons.contact_support_outlined,
                       '11. Contact Information',
-                      'If you have any questions about these Terms of Service, please contact us at:\n\nEmail: support@loveconnect.app',
+                      'If you have any questions about these Terms of Service, please contact us at:\n\nEmail: amarhumayun@outlook.com',
                     ),
 
                     SizedBox(height: metrics.sectionSpacing * 2),

@@ -408,7 +408,7 @@
 //   }
 //
 //   Future<void> contactSupport() async {
-//     final email = 'support@loveconnect.app';
+//     final email = 'amarhumayun@outlook.com';
 //     final Uri emailUri = Uri(
 //       scheme: 'mailto',
 //       path: email,

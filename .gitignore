@@ -46,6 +46,7 @@ app.*.map.json
 
 # Keystore files - NEVER commit these!
 *.jks
+*.jks.backup
 *.keystore
 android/key.properties
 android/upload-keystore.jks

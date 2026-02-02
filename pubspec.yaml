@@ -1,8 +1,8 @@
 name: love_connect
-description: "A new Flutter project."
+description: "Love Connect - A beautiful app for couples to plan dates, share ideas, maintain journals, and strengthen their relationship with surprise features and reminders."
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.1+1
 
 environment:
   sdk: ^3.10.0

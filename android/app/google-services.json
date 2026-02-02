@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1047344298062:android:9cb004e1dbac0d4830ab1f",
+        "mobilesdk_app_id": "1:1047344298062:android:b19b25949d722d1f30ab1f",
         "android_client_info": {
-          "package_name": "com.loveconnect.app"
+          "package_name": "com.amarhumayun.loveconnect"
         }
       },
       "oauth_client": [
@@ -30,6 +30,57 @@
             {
               "client_id": "1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.loveconnect.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047344298062:android:9cb004e1dbac0d4830ab1f",
+        "android_client_info": {
+          "package_name": "com.loveconnect.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1047344298062-9qipbjshstt6vr1p195lbittjn04e7l6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.loveconnect.app",
+            "certificate_hash": "3a66440b6a9420f795fd230b9405369b877d1219"
+          }
+        },
+        {
+          "client_id": "1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaDQlcAoQV_MwNyH6We4y3Kfdy9UjO-xA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1047344298062-teer5r32396gsgok09sof5u2asogr97m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.loveconnect.app"
+              }
             }
           ]
         }

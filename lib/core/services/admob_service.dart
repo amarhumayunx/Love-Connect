@@ -47,7 +47,7 @@ class AdMobService {
     } else {
       // Use your actual ad unit IDs in release mode
       return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/6300978111' // Android banner ad unit ID (TODO: Replace with your Android ad unit ID)
+          ? 'ca-app-pub-3425673808153409/8464817871' // Android Home Banner ad unit ID
           : 'ca-app-pub-3425673808153409/8464817871'; // iOS Home Banner ad unit ID
     }
   }

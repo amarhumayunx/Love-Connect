@@ -1,0 +1,13 @@
+🎉 Welcome to Love Connect!
+
+Initial release with all core features:
+
+• 📅 Smart Date Planning
+• 💡 Inspiration Hub - Browse date ideas
+• 🎁 Surprise Hub - Spin wheel or scratch cards
+• 📖 Shared Journal
+• 🔔 Smart Notifications
+• ⚙️ Profile & Settings
+• 🔒 Privacy & Security
+
+Thank you for testing! 💕

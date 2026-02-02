@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k.apps.googleusercontent.com</string>
+	<string>1047344298062-2ak9vt536hve2tgevc5b8tdltmbklthl.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.1047344298062-62d6im3dnt0c68rkgrpbt8tjo5744r1k</string>
+	<string>com.googleusercontent.apps.1047344298062-2ak9vt536hve2tgevc5b8tdltmbklthl</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1047344298062-9qipbjshstt6vr1p195lbittjn04e7l6.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyD-UauxoaFgOSYI_CuSCwxXKY45iyYI0vI</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.loveconnect.app</string>
+	<string>com.amarhumayun.loveconnect</string>
 	<key>PROJECT_ID</key>
 	<string>loveconnect-app-live-4d22a</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1047344298062:ios:e0edea80bfe9570b30ab1f</string>
+	<string>1:1047344298062:ios:9fd0e7c087a99c8730ab1f</string>
 	<key>DATABASE_URL</key>
 	<string>https://loveconnect-app-live-4d22a-default-rtdb.firebaseio.com</string>
 </dict>

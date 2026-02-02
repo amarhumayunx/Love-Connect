@@ -186,7 +186,7 @@ class PrivacyPolicyView extends StatelessWidget {
                       metrics,
                       Icons.contact_support_outlined,
                       '11. Contact Us',
-                      'If you have any questions about this Privacy Policy or our privacy practices, please contact us at:\n\nEmail: support@loveconnect.app\n\nWe will respond to your inquiry within a reasonable timeframe.',
+                      'If you have any questions about this Privacy Policy or our privacy practices, please contact us at:\n\nEmail: amarhumayun@outlook.com\n\nWe will respond to your inquiry within a reasonable timeframe.',
                     ),
 
                     SizedBox(height: metrics.sectionSpacing * 2),

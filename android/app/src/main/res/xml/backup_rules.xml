@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude sensitive data from backup -->
+    <!-- Firebase data is synced to cloud, no need to backup locally -->
+    <!-- User preferences can be backed up -->
+    <include domain="sharedpref" path="." />
+    <!-- Exclude cache and temporary files -->
+    <exclude domain="cache" />
+    <exclude domain="external" />
+</full-backup-content>

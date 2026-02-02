@@ -5,7 +5,7 @@ import 'package:love_connect/core/utils/snackbar_helper.dart';
 
 class SupportManager {
   Future<void> contactSupport() async {
-    final email = 'support@loveconnect.app';
+    final email = 'amarhumayun@outlook.com';
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: email,
